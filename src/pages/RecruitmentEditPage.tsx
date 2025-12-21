@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { Delete01Icon, Add01Icon, DragDropVerticalIcon } from '@hugeicons/core-free-icons'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -25,6 +25,57 @@ export function RecruitmentEditPage() {
   const [newQuestion, setNewQuestion] = useState('')
   const [newQuestionType, setNewQuestionType] = useState<QuestionType>('text')
   const [newOptions, setNewOptions] = useState('')
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null)
+  const dragNodeRef = useRef<HTMLDivElement | null>(null)
+
+  const handleDragStart = (e: React.DragEvent<HTMLDivElement>, index: number) => {
+    setDraggedIndex(index)
+    dragNodeRef.current = e.currentTarget
+    e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.setData('text/plain', String(index))
+    setTimeout(() => {
+      if (dragNodeRef.current) {
+        dragNodeRef.current.style.opacity = '0.5'
+      }
+    }, 0)
+  }
+
+  const handleDragEnd = () => {
+    if (dragNodeRef.current) {
+      dragNodeRef.current.style.opacity = '1'
+    }
+    setDraggedIndex(null)
+    setDragOverIndex(null)
+    dragNodeRef.current = null
+  }
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>, index: number) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+    if (draggedIndex !== null && draggedIndex !== index) {
+      setDragOverIndex(index)
+    }
+  }
+
+  const handleDragLeave = () => {
+    setDragOverIndex(null)
+  }
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>, dropIndex: number) => {
+    e.preventDefault()
+    if (draggedIndex === null || draggedIndex === dropIndex) return
+
+    setQuestions((prev) => {
+      const newQuestions = [...prev]
+      const [draggedItem] = newQuestions.splice(draggedIndex, 1)
+      newQuestions.splice(dropIndex, 0, draggedItem)
+      return newQuestions
+    })
+
+    setDraggedIndex(null)
+    setDragOverIndex(null)
+  }
 
   const handleAddQuestion = () => {
     if (newQuestion.trim()) {
@@ -139,11 +190,19 @@ export function RecruitmentEditPage() {
                 {questions.map((q, index) => (
                   <div
                     key={q.id}
-                    className="flex items-start gap-3 rounded-lg border p-4"
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, index)}
+                    onDragEnd={handleDragEnd}
+                    onDragOver={(e) => handleDragOver(e, index)}
+                    onDragLeave={handleDragLeave}
+                    onDrop={(e) => handleDrop(e, index)}
+                    className={`flex items-start gap-3 rounded-lg border p-4 transition-all ${
+                      dragOverIndex === index ? 'border-primary border-2 bg-primary/5' : ''
+                    } ${draggedIndex === index ? 'opacity-50' : ''}`}
                   >
                     <HugeiconsIcon
                       icon={DragDropVerticalIcon}
-                      className="text-muted-foreground cursor-grab mt-1"
+                      className="text-muted-foreground cursor-grab mt-1 active:cursor-grabbing"
                     />
                     <div className="flex-1 space-y-2">
                       <div className="flex items-start justify-between">
