@@ -1,4 +1,8 @@
+import { useState } from 'react'
+import { HugeiconsIcon } from '@hugeicons/react'
+import { ArrowLeft01Icon } from '@hugeicons/core-free-icons'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 import {
   Table,
   TableBody,
@@ -7,10 +11,11 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { dummyNotices } from '@/data/dummyData'
+import { dummyNoticeDetails, type NoticeDetail } from '@/data/dummyData'
 
 export function NoticesPage() {
-  const notices = dummyNotices
+  const [selectedNotice, setSelectedNotice] = useState<NoticeDetail | null>(null)
+  const notices = dummyNoticeDetails
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
@@ -21,6 +26,52 @@ export function NoticesPage() {
     })
   }
 
+  // 상세 보기
+  if (selectedNotice) {
+    return (
+      <div className="space-y-6">
+        <Button variant="ghost" onClick={() => setSelectedNotice(null)} className="gap-2">
+          <HugeiconsIcon icon={ArrowLeft01Icon} />
+          목록으로 돌아가기
+        </Button>
+
+        <Card>
+          <CardHeader>
+            <div className="space-y-2">
+              <CardTitle className="text-xl">{selectedNotice.noticeTitle}</CardTitle>
+              <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                <span>{selectedNotice.adminName}</span>
+                <span>{formatDate(selectedNotice.noticeCreatedAt)}</span>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="whitespace-pre-wrap text-sm leading-relaxed">
+              {selectedNotice.noticeContent}
+            </div>
+
+            {selectedNotice.noticePhotos.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-sm font-medium">첨부 이미지</p>
+                <div className="grid gap-2 md:grid-cols-2">
+                  {selectedNotice.noticePhotos.map((photo, index) => (
+                    <img
+                      key={index}
+                      src={photo}
+                      alt={`첨부 이미지 ${index + 1}`}
+                      className="rounded-lg border"
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  // 목록 보기
   return (
     <div className="space-y-6">
       <div>
@@ -48,6 +99,7 @@ export function NoticesPage() {
                 <TableRow
                   key={notice.noticeUUID}
                   className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => setSelectedNotice(notice)}
                 >
                   <TableCell className="text-muted-foreground">{notices.length - index}</TableCell>
                   <TableCell className="font-medium">{notice.noticeTitle}</TableCell>
