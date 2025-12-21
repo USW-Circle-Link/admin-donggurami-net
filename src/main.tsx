@@ -1,5 +1,7 @@
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router'
+import { QueryClientProvider } from '@tanstack/react-query'
+import { queryClient } from '@/shared/lib/queryClient'
 import { ThemeProvider } from '@/components/theme-provider'
 import './index.css'
 
@@ -18,33 +20,35 @@ import { CategoryEditPage } from '@/pages/union/CategoryEditPage'
 import { UnionNoticesPage } from '@/pages/union/UnionNoticesPage'
 
 createRoot(document.getElementById('root')!).render(
-  <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
-    <BrowserRouter basename={import.meta.env.BASE_URL}>
-      <Routes>
-        {/* Public routes */}
-        <Route path="/login" element={<LoginPage />} />
+  <QueryClientProvider client={queryClient}>
+    <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
+      <BrowserRouter basename={import.meta.env.BASE_URL}>
+        <Routes>
+          {/* Public routes */}
+          <Route path="/login" element={<LoginPage />} />
 
-        {/* Club admin routes with sidebar layout */}
-        <Route element={<AdminLayout />}>
-          <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="/club/basic-info" element={<BasicInfoEditPage />} />
-          <Route path="/club/recruitment" element={<RecruitmentEditPage />} />
-          <Route path="/applicants/review" element={<ApplicationReviewPage />} />
-          <Route path="/applicants/finalize" element={<FinalizePage />} />
-          <Route path="/notices" element={<NoticesPage />} />
-        </Route>
+          {/* Club admin routes with sidebar layout */}
+          <Route element={<AdminLayout />}>
+            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/club/basic-info" element={<BasicInfoEditPage />} />
+            <Route path="/club/recruitment" element={<RecruitmentEditPage />} />
+            <Route path="/applicants/review" element={<ApplicationReviewPage />} />
+            <Route path="/applicants/finalize" element={<FinalizePage />} />
+            <Route path="/notices" element={<NoticesPage />} />
+          </Route>
 
-        {/* Union admin routes with union layout */}
-        <Route element={<UnionLayout />}>
-          <Route path="/union/dashboard" element={<UnionDashboardPage />} />
-          <Route path="/union/clubs/rooms" element={<RoomInfoEditPage />} />
-          <Route path="/union/clubs/categories" element={<CategoryEditPage />} />
-          <Route path="/union/notices" element={<UnionNoticesPage />} />
-        </Route>
+          {/* Union admin routes with union layout */}
+          <Route element={<UnionLayout />}>
+            <Route path="/union/dashboard" element={<UnionDashboardPage />} />
+            <Route path="/union/clubs/rooms" element={<RoomInfoEditPage />} />
+            <Route path="/union/clubs/categories" element={<CategoryEditPage />} />
+            <Route path="/union/notices" element={<UnionNoticesPage />} />
+          </Route>
 
-        {/* Redirect root to login */}
-        <Route path="/" element={<Navigate to="/login" replace />} />
-      </Routes>
-    </BrowserRouter>
-  </ThemeProvider>
+          {/* Redirect root to login */}
+          <Route path="/" element={<Navigate to="/login" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </ThemeProvider>
+  </QueryClientProvider>
 )

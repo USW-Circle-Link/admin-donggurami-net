@@ -93,7 +93,7 @@ export function UnionDashboardPage() {
             </div>
             <Button onClick={handleDownloadExcel} variant="outline">
               <HugeiconsIcon icon={FileDownloadIcon} className="mr-2" />
-              엑셀로 내보내기
+              내보내기
             </Button>
           </div>
         </CardHeader>

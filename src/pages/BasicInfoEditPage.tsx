@@ -136,15 +136,18 @@ export function BasicInfoEditPage() {
                   추가
                 </Button>
               </div>
-              <div className="flex gap-2 mt-2">
+              <div className="flex flex-wrap gap-3 mt-2">
                 {formData.clubHashtag.map((tag, index) => (
                   <Badge
                     key={index}
                     variant="secondary"
-                    className="cursor-pointer"
+                    className="cursor-pointer px-3 py-1.5 h-8 text-sm gap-2"
                     onClick={() => handleRemoveHashtag(index)}
                   >
-                    {tag} &times;
+                    {tag}
+                    <span className="text-muted-foreground hover:text-foreground">
+                      &times;
+                    </span>
                   </Badge>
                 ))}
               </div>

@@ -1,4 +1,5 @@
-import { useState, useRef } from 'react'
+import { useState } from 'react'
+import { Reorder, useDragControls } from 'framer-motion'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { Delete01Icon, Add01Icon, DragDropVerticalIcon } from '@hugeicons/core-free-icons'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -18,6 +19,87 @@ import {
 } from '@/components/ui/select'
 import { dummyClubSummary, dummyApplicationQuestions, type ApplicationQuestion, type QuestionType } from '@/data/dummyData'
 
+interface SortableQuestionItemProps {
+  question: ApplicationQuestion
+  index: number
+  onRemove: (id: number) => void
+  onToggleRequired: (id: number) => void
+  getQuestionTypeLabel: (type: QuestionType) => string
+}
+
+function SortableQuestionItem({
+  question,
+  index,
+  onRemove,
+  onToggleRequired,
+  getQuestionTypeLabel,
+}: SortableQuestionItemProps) {
+  const controls = useDragControls()
+
+  return (
+    <Reorder.Item
+      value={question}
+      dragListener={false}
+      dragControls={controls}
+      className="flex items-start gap-3 rounded-lg border p-4 bg-card select-none"
+    >
+      <div
+        onPointerDown={(e) => controls.start(e)}
+        className="mt-1 cursor-grab active:cursor-grabbing touch-none"
+      >
+        <HugeiconsIcon icon={DragDropVerticalIcon} className="text-muted-foreground" />
+      </div>
+      <div className="flex-1 space-y-2">
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-sm text-muted-foreground">Q{index + 1}.</span>
+              <Badge variant="outline" className="text-xs">
+                {getQuestionTypeLabel(question.type)}
+              </Badge>
+              {question.required && (
+                <Badge variant="destructive" className="text-xs">
+                  필수
+                </Badge>
+              )}
+            </div>
+            <p className="text-sm font-medium">{question.question}</p>
+            {question.options && (
+              <div className="mt-2 flex flex-wrap gap-1">
+                {question.options.map((opt, i) => (
+                  <Badge key={i} variant="secondary" className="text-xs">
+                    {opt}
+                  </Badge>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+      <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2">
+          <Label htmlFor={`required-${question.id}`} className="text-xs text-muted-foreground">
+            필수
+          </Label>
+          <Switch
+            id={`required-${question.id}`}
+            checked={question.required}
+            onCheckedChange={() => onToggleRequired(question.id)}
+          />
+        </div>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          onClick={() => onRemove(question.id)}
+        >
+          <HugeiconsIcon icon={Delete01Icon} className="text-destructive" />
+        </Button>
+      </div>
+    </Reorder.Item>
+  )
+}
+
 export function RecruitmentEditPage() {
   const [isRecruiting, setIsRecruiting] = useState(dummyClubSummary.recruitmentStatus === 'OPEN')
   const [recruitmentContent, setRecruitmentContent] = useState(dummyClubSummary.clubRecruitment || '')
@@ -25,57 +107,6 @@ export function RecruitmentEditPage() {
   const [newQuestion, setNewQuestion] = useState('')
   const [newQuestionType, setNewQuestionType] = useState<QuestionType>('text')
   const [newOptions, setNewOptions] = useState('')
-  const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
-  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null)
-  const dragNodeRef = useRef<HTMLDivElement | null>(null)
-
-  const handleDragStart = (e: React.DragEvent<HTMLDivElement>, index: number) => {
-    setDraggedIndex(index)
-    dragNodeRef.current = e.currentTarget
-    e.dataTransfer.effectAllowed = 'move'
-    e.dataTransfer.setData('text/plain', String(index))
-    setTimeout(() => {
-      if (dragNodeRef.current) {
-        dragNodeRef.current.style.opacity = '0.5'
-      }
-    }, 0)
-  }
-
-  const handleDragEnd = () => {
-    if (dragNodeRef.current) {
-      dragNodeRef.current.style.opacity = '1'
-    }
-    setDraggedIndex(null)
-    setDragOverIndex(null)
-    dragNodeRef.current = null
-  }
-
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>, index: number) => {
-    e.preventDefault()
-    e.dataTransfer.dropEffect = 'move'
-    if (draggedIndex !== null && draggedIndex !== index) {
-      setDragOverIndex(index)
-    }
-  }
-
-  const handleDragLeave = () => {
-    setDragOverIndex(null)
-  }
-
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>, dropIndex: number) => {
-    e.preventDefault()
-    if (draggedIndex === null || draggedIndex === dropIndex) return
-
-    setQuestions((prev) => {
-      const newQuestions = [...prev]
-      const [draggedItem] = newQuestions.splice(draggedIndex, 1)
-      newQuestions.splice(dropIndex, 0, draggedItem)
-      return newQuestions
-    })
-
-    setDraggedIndex(null)
-    setDragOverIndex(null)
-  }
 
   const handleAddQuestion = () => {
     if (newQuestion.trim()) {
@@ -187,72 +218,18 @@ export function RecruitmentEditPage() {
             <CardContent className="space-y-4">
               {/* 질문 목록 */}
               <div className="space-y-3">
-                {questions.map((q, index) => (
-                  <div
-                    key={q.id}
-                    draggable
-                    onDragStart={(e) => handleDragStart(e, index)}
-                    onDragEnd={handleDragEnd}
-                    onDragOver={(e) => handleDragOver(e, index)}
-                    onDragLeave={handleDragLeave}
-                    onDrop={(e) => handleDrop(e, index)}
-                    className={`flex items-start gap-3 rounded-lg border p-4 transition-all ${
-                      dragOverIndex === index ? 'border-primary border-2 bg-primary/5' : ''
-                    } ${draggedIndex === index ? 'opacity-50' : ''}`}
-                  >
-                    <HugeiconsIcon
-                      icon={DragDropVerticalIcon}
-                      className="text-muted-foreground cursor-grab mt-1 active:cursor-grabbing"
+                <Reorder.Group axis="y" values={questions} onReorder={setQuestions} className="space-y-3">
+                  {questions.map((q, index) => (
+                    <SortableQuestionItem
+                      key={q.id}
+                      question={q}
+                      index={index}
+                      onRemove={handleRemoveQuestion}
+                      onToggleRequired={handleToggleRequired}
+                      getQuestionTypeLabel={getQuestionTypeLabel}
                     />
-                    <div className="flex-1 space-y-2">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="text-sm text-muted-foreground">Q{index + 1}.</span>
-                            <Badge variant="outline" className="text-xs">
-                              {getQuestionTypeLabel(q.type)}
-                            </Badge>
-                            {q.required && (
-                              <Badge variant="destructive" className="text-xs">
-                                필수
-                              </Badge>
-                            )}
-                          </div>
-                          <p className="text-sm font-medium">{q.question}</p>
-                          {q.options && (
-                            <div className="mt-2 flex flex-wrap gap-1">
-                              {q.options.map((opt, i) => (
-                                <Badge key={i} variant="secondary" className="text-xs">
-                                  {opt}
-                                </Badge>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="flex items-center gap-2">
-                        <Label htmlFor={`required-${q.id}`} className="text-xs text-muted-foreground">
-                          필수
-                        </Label>
-                        <Switch
-                          id={`required-${q.id}`}
-                          checked={q.required}
-                          onCheckedChange={() => handleToggleRequired(q.id)}
-                        />
-                      </div>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon-sm"
-                        onClick={() => handleRemoveQuestion(q.id)}
-                      >
-                        <HugeiconsIcon icon={Delete01Icon} className="text-destructive" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
+                  ))}
+                </Reorder.Group>
               </div>
 
               <Separator />
@@ -266,13 +243,15 @@ export function RecruitmentEditPage() {
                       <Label htmlFor="questionType">질문 유형</Label>
                       <Select value={newQuestionType} onValueChange={(value) => setNewQuestionType(value as QuestionType)}>
                         <SelectTrigger id="questionType">
-                          <SelectValue />
+                          <SelectValue>
+                            {getQuestionTypeLabel(newQuestionType)}
+                          </SelectValue>
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="text">텍스트</SelectItem>
-                          <SelectItem value="radio">객관식</SelectItem>
-                          <SelectItem value="checkbox">체크박스</SelectItem>
-                          <SelectItem value="dropdown">드롭다운</SelectItem>
+                          <SelectItem value="text">{getQuestionTypeLabel('text')}</SelectItem>
+                          <SelectItem value="radio">{getQuestionTypeLabel('radio')}</SelectItem>
+                          <SelectItem value="checkbox">{getQuestionTypeLabel('checkbox')}</SelectItem>
+                          <SelectItem value="dropdown">{getQuestionTypeLabel('dropdown')}</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
