@@ -9,28 +9,42 @@ import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
-import { dummyClubSummary, dummyApplicationQuestions } from '@/data/dummyData'
-
-interface Question {
-  id: number
-  question: string
-  required: boolean
-}
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { dummyClubSummary, dummyApplicationQuestions, type ApplicationQuestion, type QuestionType } from '@/data/dummyData'
 
 export function RecruitmentEditPage() {
   const [isRecruiting, setIsRecruiting] = useState(dummyClubSummary.recruitmentStatus === 'OPEN')
   const [recruitmentContent, setRecruitmentContent] = useState(dummyClubSummary.clubRecruitment || '')
-  const [googleFormUrl, setGoogleFormUrl] = useState(dummyClubSummary.googleFormUrl || '')
-  const [questions, setQuestions] = useState<Question[]>(dummyApplicationQuestions)
+  const [questions, setQuestions] = useState<ApplicationQuestion[]>(dummyApplicationQuestions)
   const [newQuestion, setNewQuestion] = useState('')
+  const [newQuestionType, setNewQuestionType] = useState<QuestionType>('text')
+  const [newOptions, setNewOptions] = useState('')
 
   const handleAddQuestion = () => {
     if (newQuestion.trim()) {
+      const optionsArray = newQuestionType !== 'text' && newOptions.trim()
+        ? newOptions.split(',').map(opt => opt.trim()).filter(Boolean)
+        : undefined
+
       setQuestions((prev) => [
         ...prev,
-        { id: Date.now(), question: newQuestion.trim(), required: false },
+        {
+          id: Date.now(),
+          question: newQuestion.trim(),
+          type: newQuestionType,
+          required: false,
+          options: optionsArray,
+        },
       ])
       setNewQuestion('')
+      setNewOptions('')
+      setNewQuestionType('text')
     }
   }
 
@@ -47,6 +61,19 @@ export function RecruitmentEditPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     alert('모집 정보가 저장되었습니다.')
+  }
+
+  const getQuestionTypeLabel = (type: QuestionType) => {
+    switch (type) {
+      case 'text':
+        return '텍스트'
+      case 'radio':
+        return '객관식'
+      case 'checkbox':
+        return '체크박스'
+      case 'dropdown':
+        return '드롭다운'
+    }
   }
 
   return (
@@ -96,19 +123,6 @@ export function RecruitmentEditPage() {
                   />
                   <p className="text-xs text-muted-foreground">최대 3000자까지 입력 가능합니다</p>
                 </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="googleFormUrl">Google Form URL (선택)</Label>
-                  <Input
-                    id="googleFormUrl"
-                    value={googleFormUrl}
-                    onChange={(e) => setGoogleFormUrl(e.target.value)}
-                    placeholder="https://forms.google.com/..."
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    외부 Google Form을 사용하는 경우 URL을 입력하세요
-                  </p>
-                </div>
               </form>
             </CardContent>
           </Card>
@@ -120,67 +134,126 @@ export function RecruitmentEditPage() {
               <CardDescription>지원서에 포함될 질문들을 구성하세요</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* 기본 항목 */}
-              <div className="rounded-lg border p-4 bg-muted/30">
-                <p className="text-sm font-medium mb-2">기본 항목 (필수)</p>
-                <div className="flex flex-wrap gap-2">
-                  <Badge variant="outline">이름</Badge>
-                  <Badge variant="outline">학번</Badge>
-                  <Badge variant="outline">학과</Badge>
-                  <Badge variant="outline">연락처</Badge>
-                </div>
-              </div>
-
-              <Separator />
-
-              {/* 추가 질문 목록 */}
+              {/* 질문 목록 */}
               <div className="space-y-3">
-                <p className="text-sm font-medium">추가 질문</p>
                 {questions.map((q, index) => (
                   <div
                     key={q.id}
-                    className="flex items-center gap-3 rounded-lg border p-3"
+                    className="flex items-start gap-3 rounded-lg border p-4"
                   >
                     <HugeiconsIcon
                       icon={DragDropVerticalIcon}
-                      className="text-muted-foreground cursor-grab"
+                      className="text-muted-foreground cursor-grab mt-1"
                     />
-                    <span className="text-sm text-muted-foreground w-6">{index + 1}.</span>
-                    <span className="flex-1 text-sm">{q.question}</span>
-                    <div className="flex items-center gap-2">
-                      <Label htmlFor={`required-${q.id}`} className="text-xs text-muted-foreground">
-                        필수
-                      </Label>
-                      <Switch
-                        id={`required-${q.id}`}
-                        checked={q.required}
-                        onCheckedChange={() => handleToggleRequired(q.id)}
-                      />
+                    <div className="flex-1 space-y-2">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-sm text-muted-foreground">Q{index + 1}.</span>
+                            <Badge variant="outline" className="text-xs">
+                              {getQuestionTypeLabel(q.type)}
+                            </Badge>
+                            {q.required && (
+                              <Badge variant="destructive" className="text-xs">
+                                필수
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-sm font-medium">{q.question}</p>
+                          {q.options && (
+                            <div className="mt-2 flex flex-wrap gap-1">
+                              {q.options.map((opt, i) => (
+                                <Badge key={i} variant="secondary" className="text-xs">
+                                  {opt}
+                                </Badge>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon-sm"
-                      onClick={() => handleRemoveQuestion(q.id)}
-                    >
-                      <HugeiconsIcon icon={Delete01Icon} className="text-destructive" />
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2">
+                        <Label htmlFor={`required-${q.id}`} className="text-xs text-muted-foreground">
+                          필수
+                        </Label>
+                        <Switch
+                          id={`required-${q.id}`}
+                          checked={q.required}
+                          onCheckedChange={() => handleToggleRequired(q.id)}
+                        />
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        onClick={() => handleRemoveQuestion(q.id)}
+                      >
+                        <HugeiconsIcon icon={Delete01Icon} className="text-destructive" />
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>
 
+              <Separator />
+
               {/* 새 질문 추가 */}
-              <div className="flex gap-2">
-                <Input
-                  value={newQuestion}
-                  onChange={(e) => setNewQuestion(e.target.value)}
-                  placeholder="새 질문을 입력하세요"
-                  onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddQuestion())}
-                />
-                <Button type="button" variant="outline" onClick={handleAddQuestion}>
-                  <HugeiconsIcon icon={Add01Icon} className="mr-1" />
-                  추가
-                </Button>
+              <div className="space-y-3 rounded-lg border p-4 bg-muted/30">
+                <h4 className="text-sm font-medium">새 질문 추가</h4>
+                <div className="space-y-3">
+                  <div className="grid gap-3 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="questionType">질문 유형</Label>
+                      <Select value={newQuestionType} onValueChange={(value) => setNewQuestionType(value as QuestionType)}>
+                        <SelectTrigger id="questionType">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="text">텍스트</SelectItem>
+                          <SelectItem value="radio">객관식</SelectItem>
+                          <SelectItem value="checkbox">체크박스</SelectItem>
+                          <SelectItem value="dropdown">드롭다운</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="newQuestion">질문 내용</Label>
+                    <Input
+                      id="newQuestion"
+                      value={newQuestion}
+                      onChange={(e) => setNewQuestion(e.target.value)}
+                      placeholder="질문을 입력하세요"
+                    />
+                  </div>
+
+                  {newQuestionType !== 'text' && (
+                    <div className="space-y-2">
+                      <Label htmlFor="options">선택지 (쉼표로 구분)</Label>
+                      <Input
+                        id="options"
+                        value={newOptions}
+                        onChange={(e) => setNewOptions(e.target.value)}
+                        placeholder="예: 옵션1, 옵션2, 옵션3"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        쉼표(,)로 구분하여 여러 선택지를 입력하세요
+                      </p>
+                    </div>
+                  )}
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleAddQuestion}
+                    className="w-full"
+                  >
+                    <HugeiconsIcon icon={Add01Icon} className="mr-1" />
+                    질문 추가
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>

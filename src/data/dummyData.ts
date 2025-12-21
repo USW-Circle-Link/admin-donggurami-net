@@ -177,8 +177,35 @@ export const dummyNotices: NoticeListItem[] = [
 ]
 
 // Application Form Questions (지원서 양식)
-export const dummyApplicationQuestions = [
-  { id: 1, question: '지원 동기를 알려주세요.', required: true },
-  { id: 2, question: '참여 가능한 시간대가 언제인가요?', required: true },
-  { id: 3, question: '관심 있는 분야는 무엇인가요?', required: false },
+export type QuestionType = 'text' | 'radio' | 'checkbox' | 'dropdown'
+
+export interface ApplicationQuestion {
+  id: number
+  question: string
+  type: QuestionType
+  required: boolean
+  options?: string[] // radio, checkbox, dropdown에서 사용
+}
+
+export const dummyApplicationQuestions: ApplicationQuestion[] = [
+  {
+    id: 1,
+    question: '지원 동기를 알려주세요.',
+    type: 'text',
+    required: true
+  },
+  {
+    id: 2,
+    question: '참여 가능한 시간대를 선택해주세요.',
+    type: 'checkbox',
+    required: true,
+    options: ['평일 오전', '평일 오후', '평일 저녁', '주말']
+  },
+  {
+    id: 3,
+    question: '관심 있는 분야를 선택해주세요.',
+    type: 'radio',
+    required: false,
+    options: ['프론트엔드', '백엔드', '데이터 분석', 'AI/ML', '기타']
+  },
 ]

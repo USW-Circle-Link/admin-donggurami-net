@@ -62,14 +62,16 @@ export function ApplicationReviewPage() {
                   className="border rounded-lg px-4"
                 >
                   <AccordionTrigger className="hover:no-underline py-4">
-                    <div className="flex items-center gap-4 text-left">
+                    <div className="flex flex-1 items-center justify-between mr-2 text-left">
                       <div>
                         <p className="font-medium">{applicant.userName}</p>
                         <p className="text-sm text-muted-foreground">
                           {applicant.studentNumber} | {applicant.major}
                         </p>
                       </div>
-                      {getStatusBadge(applicant.aplictStatus)}
+                      <div className="mr-2 mt-0.5">
+                        {getStatusBadge(applicant.aplictStatus)}
+                      </div>
                     </div>
                   </AccordionTrigger>
                   <AccordionContent>
@@ -143,14 +145,16 @@ export function ApplicationReviewPage() {
                   className="border rounded-lg px-4"
                 >
                   <AccordionTrigger className="hover:no-underline py-4">
-                    <div className="flex items-center gap-4 text-left">
+                    <div className="flex flex-1 items-start justify-between mr-2 text-left">
                       <div>
                         <p className="font-medium">{applicant.userName}</p>
                         <p className="text-sm text-muted-foreground">
                           {applicant.studentNumber} | {applicant.major}
                         </p>
                       </div>
-                      {getStatusBadge(applicant.aplictStatus)}
+                      <div className="mr-2 mt-0.5">
+                        {getStatusBadge(applicant.aplictStatus)}
+                      </div>
                     </div>
                   </AccordionTrigger>
                   <AccordionContent>

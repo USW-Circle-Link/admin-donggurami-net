@@ -105,7 +105,7 @@ export function DashboardPage() {
                 <TableHead>학번</TableHead>
                 <TableHead>학과</TableHead>
                 <TableHead>연락처</TableHead>
-                <TableHead>구분</TableHead>
+                {/* <TableHead>구분</TableHead> */}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -115,11 +115,11 @@ export function DashboardPage() {
                   <TableCell>{member.studentNumber}</TableCell>
                   <TableCell>{member.major}</TableCell>
                   <TableCell>{member.userHp.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3')}</TableCell>
-                  <TableCell>
+                  {/* <TableCell>
                     <Badge variant={member.memberType === 'REGULARMEMBER' ? 'default' : 'secondary'}>
                       {member.memberType === 'REGULARMEMBER' ? '정회원' : '비회원'}
                     </Badge>
-                  </TableCell>
+                  </TableCell> */}
                 </TableRow>
               ))}
             </TableBody>

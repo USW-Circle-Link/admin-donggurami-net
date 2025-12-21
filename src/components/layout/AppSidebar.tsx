@@ -1,4 +1,4 @@
-import { NavLink, useNavigate } from 'react-router'
+import { useNavigate, useLocation } from 'react-router'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
   Home01Icon,
@@ -6,7 +6,7 @@ import {
   Settings01Icon,
   Megaphone01Icon,
   Logout01Icon,
-  ArrowDown01Icon,
+  SidebarLeft01Icon,
 } from '@hugeicons/core-free-icons'
 import {
   Sidebar,
@@ -22,31 +22,72 @@ import {
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
+  useSidebar,
 } from '@/components/ui/sidebar'
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible'
+import { Button } from '@/components/ui/button'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import clubIcon from '@/assets/icons/Icon-192.png'
+import { dummyClubSummary } from '@/data/dummyData'
+
+import { ModeToggle } from '@/components/mode-toggle'
 
 export function AppSidebar() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const { toggleSidebar, isMobile, setOpenMobile } = useSidebar()
+
+  const handleNavigation = (path: string) => {
+    navigate(path)
+    if (isMobile) {
+      setOpenMobile(false)
+    }
+  }
 
   const handleLogout = () => {
-    // 실제로는 로그아웃 로직 실행
     navigate('/login')
+  }
+
+  const isClubActive = location.pathname.startsWith('/club')
+  const isApplicantsActive = location.pathname.startsWith('/applicants')
+
+  // 동아리 회장 정보 (더미 데이터에서 가져옴)
+  const leaderInfo = {
+    name: dummyClubSummary.leaderName,
+    clubName: dummyClubSummary.clubName,
   }
 
   return (
     <Sidebar collapsible="icon">
+      {/* 헤더 */}
       <SidebarHeader>
-        <div className="flex items-center gap-2 px-2 py-4">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold">
-            동
-          </div>
-          <span className="font-semibold group-data-[collapsible=icon]:hidden">
-            동구라미 관리자
+        <div className="flex items-center justify-between group-data-[collapsible=icon]:justify-center px-2 py-3">
+          {/* 펼쳐진 상태: 동구라미 텍스트 */}
+          <span
+            className="font-bold text-xl group-data-[collapsible=icon]:hidden"
+            style={{ fontFamily: 'Juache, sans-serif', color: '#FFC01D' }}
+          >
+            동구라미
           </span>
+
+          {/* 접힌 상태: 사이드바 아이콘 (상단) */}
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={toggleSidebar}
+            className="hidden group-data-[collapsible=icon]:flex"
+          >
+            <HugeiconsIcon icon={SidebarLeft01Icon} className="size-5" />
+          </Button>
+
+          {/* 펼쳐진 상태: 사이드바 토글 아이콘 (오른쪽) */}
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={toggleSidebar}
+            className="group-data-[collapsible=icon]:hidden"
+          >
+            <HugeiconsIcon icon={SidebarLeft01Icon} className="size-5" />
+          </Button>
         </div>
       </SidebarHeader>
 
@@ -59,83 +100,81 @@ export function AppSidebar() {
               {/* 대시보드 */}
               <SidebarMenuItem>
                 <SidebarMenuButton
-                  render={<NavLink to="/dashboard" />}
+                  onClick={() => handleNavigation('/dashboard')}
                   tooltip="대시보드"
+                  isActive={location.pathname === '/dashboard'}
                 >
                   <HugeiconsIcon icon={Home01Icon} />
                   <span>대시보드</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
-              {/* 동아리 관리 - 접었다 폈다 */}
-              <Collapsible defaultOpen className="group/collapsible">
-                <SidebarMenuItem>
-                  <CollapsibleTrigger
-                    render={
-                      <SidebarMenuButton tooltip="동아리 관리">
-                        <HugeiconsIcon icon={Settings01Icon} />
-                        <span>동아리 관리</span>
-                        <HugeiconsIcon
-                          icon={ArrowDown01Icon}
-                          className="ml-auto transition-transform data-[panel-open]:rotate-180"
-                        />
-                      </SidebarMenuButton>
-                    }
-                  />
-                  <CollapsibleContent>
-                    <SidebarMenuSub>
-                      <SidebarMenuSubItem>
-                        <SidebarMenuSubButton render={<NavLink to="/club/basic-info" />}>
-                          <span>기본정보 수정</span>
-                        </SidebarMenuSubButton>
-                      </SidebarMenuSubItem>
-                      <SidebarMenuSubItem>
-                        <SidebarMenuSubButton render={<NavLink to="/club/recruitment" />}>
-                          <span>모집 정보 수정</span>
-                        </SidebarMenuSubButton>
-                      </SidebarMenuSubItem>
-                    </SidebarMenuSub>
-                  </CollapsibleContent>
-                </SidebarMenuItem>
-              </Collapsible>
+              {/* 동아리 관리 */}
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  onClick={() => handleNavigation('/club/basic-info')}
+                  tooltip="동아리 관리"
+                  isActive={isClubActive}
+                >
+                  <HugeiconsIcon icon={Settings01Icon} />
+                  <span>동아리 관리</span>
+                </SidebarMenuButton>
+                <SidebarMenuSub>
+                  <SidebarMenuSubItem>
+                    <SidebarMenuSubButton
+                      onClick={() => handleNavigation('/club/basic-info')}
+                      isActive={location.pathname === '/club/basic-info'}
+                    >
+                      <span>기본정보 수정</span>
+                    </SidebarMenuSubButton>
+                  </SidebarMenuSubItem>
+                  <SidebarMenuSubItem>
+                    <SidebarMenuSubButton
+                      onClick={() => handleNavigation('/club/recruitment')}
+                      isActive={location.pathname === '/club/recruitment'}
+                    >
+                      <span>모집 정보 수정</span>
+                    </SidebarMenuSubButton>
+                  </SidebarMenuSubItem>
+                </SidebarMenuSub>
+              </SidebarMenuItem>
 
-              {/* 지원자 관리 - 접었다 폈다 */}
-              <Collapsible defaultOpen className="group/collapsible">
-                <SidebarMenuItem>
-                  <CollapsibleTrigger
-                    render={
-                      <SidebarMenuButton tooltip="지원자 관리">
-                        <HugeiconsIcon icon={UserGroupIcon} />
-                        <span>지원자 관리</span>
-                        <HugeiconsIcon
-                          icon={ArrowDown01Icon}
-                          className="ml-auto transition-transform data-[panel-open]:rotate-180"
-                        />
-                      </SidebarMenuButton>
-                    }
-                  />
-                  <CollapsibleContent>
-                    <SidebarMenuSub>
-                      <SidebarMenuSubItem>
-                        <SidebarMenuSubButton render={<NavLink to="/applicants/review" />}>
-                          <span>지원서 검토</span>
-                        </SidebarMenuSubButton>
-                      </SidebarMenuSubItem>
-                      <SidebarMenuSubItem>
-                        <SidebarMenuSubButton render={<NavLink to="/applicants/finalize" />}>
-                          <span>합격자 확정</span>
-                        </SidebarMenuSubButton>
-                      </SidebarMenuSubItem>
-                    </SidebarMenuSub>
-                  </CollapsibleContent>
-                </SidebarMenuItem>
-              </Collapsible>
+              {/* 지원자 관리 */}
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  onClick={() => handleNavigation('/applicants/review')}
+                  tooltip="지원자 관리"
+                  isActive={isApplicantsActive}
+                >
+                  <HugeiconsIcon icon={UserGroupIcon} />
+                  <span>지원자 관리</span>
+                </SidebarMenuButton>
+                <SidebarMenuSub>
+                  <SidebarMenuSubItem>
+                    <SidebarMenuSubButton
+                      onClick={() => handleNavigation('/applicants/review')}
+                      isActive={location.pathname === '/applicants/review'}
+                    >
+                      <span>지원서 검토</span>
+                    </SidebarMenuSubButton>
+                  </SidebarMenuSubItem>
+                  <SidebarMenuSubItem>
+                    <SidebarMenuSubButton
+                      onClick={() => handleNavigation('/applicants/finalize')}
+                      isActive={location.pathname === '/applicants/finalize'}
+                    >
+                      <span>합격자 확정</span>
+                    </SidebarMenuSubButton>
+                  </SidebarMenuSubItem>
+                </SidebarMenuSub>
+              </SidebarMenuItem>
 
               {/* 공지사항 */}
               <SidebarMenuItem>
                 <SidebarMenuButton
-                  render={<NavLink to="/notices" />}
+                  onClick={() => handleNavigation('/notices')}
                   tooltip="공지사항"
+                  isActive={location.pathname === '/notices'}
                 >
                   <HugeiconsIcon icon={Megaphone01Icon} />
                   <span>공지사항</span>
@@ -147,24 +186,61 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter>
-        <SidebarMenu>
-          {/* 로그아웃 */}
-          <SidebarMenuItem>
-            <SidebarMenuButton onClick={handleLogout} tooltip="로그아웃">
-              <HugeiconsIcon icon={Logout01Icon} />
-              <span>로그아웃</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
+        {/* 펼쳐진 상태: 동아리 회장 정보 */}
+        <div className="group-data-[collapsible=icon]:hidden border-t pt-3">
+          <div className="flex items-center gap-3 px-2 py-2">
+            <Avatar className="h-9 w-9">
+              <AvatarImage src={clubIcon} alt={leaderInfo.clubName} />
+              <AvatarFallback>{leaderInfo.clubName.charAt(0)}</AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium truncate">{leaderInfo.name}</p>
+              <p className="text-xs text-muted-foreground truncate">{leaderInfo.clubName} 회장</p>
+            </div>
+          </div>
 
-        {/* 하단 링크들 */}
-        <div className="flex gap-4 px-2 py-2 text-xs text-muted-foreground group-data-[collapsible=icon]:hidden">
-          <a href="/privacy" className="hover:underline">
-            개인정보처리방침
-          </a>
-          <a href="/terms" className="hover:underline">
-            이용약관
-          </a>
+          {/* 테마 설정 */}
+          <div className="flex items-center justify-between px-2 py-2">
+            <span className="text-sm text-muted-foreground">테마 설정</span>
+            <ModeToggle />
+          </div>
+
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton onClick={handleLogout}>
+                <HugeiconsIcon icon={Logout01Icon} />
+                <span>로그아웃</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+
+          {/* 하단 링크들 */}
+          <div className="flex gap-4 px-2 py-2 text-xs text-muted-foreground">
+            <a href="/privacy" className="hover:underline">
+              개인정보처리방침
+            </a>
+            <a href="/terms" className="hover:underline">
+              이용약관
+            </a>
+          </div>
+        </div>
+
+        {/* 접힌 상태: 동아리 아이콘 */}
+        <div className="hidden group-data-[collapsible=icon]:flex flex-col items-center gap-2 py-2">
+          <Avatar className="h-8 w-8">
+            <AvatarImage src={clubIcon} alt={leaderInfo.clubName} />
+            <AvatarFallback>{leaderInfo.clubName.charAt(0)}</AvatarFallback>
+          </Avatar>
+          <div className="flex justify-center">
+            <ModeToggle />
+          </div>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton onClick={handleLogout} tooltip="로그아웃">
+                <HugeiconsIcon icon={Logout01Icon} />
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
         </div>
       </SidebarFooter>
     </Sidebar>

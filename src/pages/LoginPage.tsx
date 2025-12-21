@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import logoIcon from '@/assets/icons/logo.png'
 
 export function LoginPage() {
   const navigate = useNavigate()
@@ -21,11 +22,13 @@ export function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-muted/40 px-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-xl bg-primary text-2xl font-bold text-primary-foreground">
-            동
-          </div>
-          <CardTitle className="text-2xl">동구라미 관리자</CardTitle>
-          <CardDescription>동아리 관리 시스템에 로그인하세요</CardDescription>
+          {/* <div className="mx-auto mb-3 flex h-20 w-20 items-center justify-center">
+            <img src={logoIcon} alt="동구라미 로고" className="w-full h-full object-contain" />
+          </div> */}
+          <CardTitle className="text-3xl" style={{ fontFamily: 'Juache, sans-serif', color: '#FFC01D' }}>
+            동구라미
+          </CardTitle>
+          {/* <CardDescription>동아리 관리 시스템에 로그인하세요</CardDescription> */}
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
