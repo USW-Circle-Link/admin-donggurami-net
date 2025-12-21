@@ -1,9 +1,7 @@
-import { LoginPage } from '@features/auth';
+import { ComponentExample } from "@/components/component-example";
 
-function App() {
-  return (
-    <LoginPage />
-  );
+export function App() {
+return <ComponentExample />;
 }
 
 export default App;
