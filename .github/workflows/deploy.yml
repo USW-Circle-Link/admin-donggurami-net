@@ -27,8 +27,12 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Create 404.html for SPA fallback
+        run: cp ./dist/index.html ./dist/404.html
+
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./dist
+          destination_dir: v2
