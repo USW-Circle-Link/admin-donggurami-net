@@ -156,6 +156,11 @@ export function ClubAddPage() {
     }
   }
 
+  const onFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    handleSubmit()
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -163,7 +168,8 @@ export function ClubAddPage() {
         <p className="text-muted-foreground">새로운 동아리를 등록합니다</p>
       </div>
 
-      <Card>
+      <form onSubmit={onFormSubmit} className="space-y-6">
+        <Card>
         <CardHeader>
           <CardTitle>동아리 회장 계정</CardTitle>
           <CardDescription>동아리 회장이 사용할 계정 정보를 입력하세요</CardDescription>
@@ -172,7 +178,7 @@ export function ClubAddPage() {
           {/* 아이디 */}
           <div className="space-y-2">
             <Label htmlFor="leaderAccount">아이디</Label>
-            <div className="flex gap-2">
+            <div className="flex items-center gap-2">
               <div className="relative flex-1">
                 <Input
                   id="leaderAccount"
@@ -180,6 +186,7 @@ export function ClubAddPage() {
                   value={formData.leaderAccount}
                   onChange={(e) => handleChange('leaderAccount', e.target.value)}
                   className={errors.leaderAccount ? 'border-destructive' : ''}
+                  autoComplete="username"
                 />
               </div>
               <Button
@@ -190,7 +197,9 @@ export function ClubAddPage() {
               >
                 중복 확인
               </Button>
-              {getValidationIcon(validation.leaderAccount)}
+              <span className="w-20 flex justify-center">
+                {getValidationIcon(validation.leaderAccount)}
+              </span>
             </div>
             {errors.leaderAccount && (
               <p className="text-sm text-destructive">{errors.leaderAccount}</p>
@@ -208,6 +217,7 @@ export function ClubAddPage() {
                 value={formData.leaderPw}
                 onChange={(e) => handleChange('leaderPw', e.target.value)}
                 className={errors.leaderPw ? 'border-destructive pr-10' : 'pr-10'}
+                autoComplete="new-password"
               />
               <button
                 type="button"
@@ -231,6 +241,7 @@ export function ClubAddPage() {
                 value={formData.leaderPwConfirm}
                 onChange={(e) => handleChange('leaderPwConfirm', e.target.value)}
                 className={errors.leaderPwConfirm ? 'border-destructive pr-10' : 'pr-10'}
+                autoComplete="new-password"
               />
               <button
                 type="button"
@@ -259,7 +270,7 @@ export function ClubAddPage() {
           {/* 동아리명 */}
           <div className="space-y-2">
             <Label htmlFor="clubName">동아리명</Label>
-            <div className="flex gap-2">
+            <div className="flex items-center gap-2">
               <div className="relative flex-1">
                 <Input
                   id="clubName"
@@ -278,7 +289,9 @@ export function ClubAddPage() {
               >
                 중복 확인
               </Button>
-              {getValidationIcon(validation.clubName)}
+              <span className="w-20 flex justify-center">
+                {getValidationIcon(validation.clubName)}
+              </span>
             </div>
             {errors.clubName && <p className="text-sm text-destructive">{errors.clubName}</p>}
           </div>
@@ -341,6 +354,7 @@ export function ClubAddPage() {
                 value={formData.adminPw}
                 onChange={(e) => handleChange('adminPw', e.target.value)}
                 className={errors.adminPw ? 'border-destructive pr-10' : 'pr-10'}
+                autoComplete="off"
               />
               <button
                 type="button"
@@ -358,15 +372,16 @@ export function ClubAddPage() {
         </CardContent>
       </Card>
 
-      {/* 저장 버튼 */}
-      <div className="flex justify-end gap-2">
-        <Button variant="outline" onClick={() => navigate('/union/dashboard')}>
-          취소
-        </Button>
-        <Button onClick={handleSubmit} disabled={isSubmitting}>
-          {isSubmitting ? '추가 중...' : '동아리 추가'}
-        </Button>
-      </div>
+        {/* 저장 버튼 */}
+        <div className="flex justify-end gap-2">
+          <Button type="button" variant="outline" onClick={() => navigate('/union/dashboard')}>
+            취소
+          </Button>
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? '추가 중...' : '동아리 추가'}
+          </Button>
+        </div>
+      </form>
     </div>
   )
 }
