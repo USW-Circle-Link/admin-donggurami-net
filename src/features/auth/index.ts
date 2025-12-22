@@ -9,6 +9,3 @@ export * from './store'
 
 // Hooks
 export * from './hooks'
-
-// UI
-export * from './ui'

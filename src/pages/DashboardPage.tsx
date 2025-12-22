@@ -141,12 +141,14 @@ export function DashboardPage() {
             <div className="flex gap-2">
               {selectedIds.length > 0 && (
                 <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="destructive" size="sm">
-                      <HugeiconsIcon icon={Delete01Icon} className="mr-2 size-4" />
-                      {selectedIds.length}명 삭제
-                    </Button>
-                  </AlertDialogTrigger>
+                  <AlertDialogTrigger
+                    render={
+                      <Button variant="destructive" size="sm">
+                        <HugeiconsIcon icon={Delete01Icon} className="mr-2 size-4" />
+                        {selectedIds.length}명 삭제
+                      </Button>
+                    }
+                  />
                   <AlertDialogContent>
                     <AlertDialogHeader>
                       <AlertDialogTitle>회원 정보를 삭제하시겠습니까?</AlertDialogTitle>

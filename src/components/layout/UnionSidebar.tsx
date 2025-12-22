@@ -7,6 +7,7 @@ import {
   Logout01Icon,
   SidebarLeft01Icon,
   Building03Icon,
+  Add01Icon,
 } from '@hugeicons/core-free-icons'
 import {
   Sidebar,
@@ -91,6 +92,18 @@ export function UnionSidebar() {
                 >
                   <HugeiconsIcon icon={Home01Icon} />
                   <span>대시보드</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              {/* 동아리 추가 */}
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  onClick={() => handleNavigation('/union/clubs/add')}
+                  tooltip="동아리 추가"
+                  isActive={location.pathname === '/union/clubs/add'}
+                >
+                  <HugeiconsIcon icon={Add01Icon} />
+                  <span>동아리 추가</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
 

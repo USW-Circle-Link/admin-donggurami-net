@@ -18,6 +18,7 @@ import { UnionDashboardPage } from '@/pages/union/UnionDashboardPage'
 import { RoomInfoEditPage } from '@/pages/union/RoomInfoEditPage'
 import { CategoryEditPage } from '@/pages/union/CategoryEditPage'
 import { UnionNoticesPage } from '@/pages/union/UnionNoticesPage'
+import { ClubAddPage } from '@/pages/union/ClubAddPage'
 
 createRoot(document.getElementById('root')!).render(
   <QueryClientProvider client={queryClient}>
@@ -40,6 +41,7 @@ createRoot(document.getElementById('root')!).render(
           {/* Union admin routes with union layout */}
           <Route element={<UnionLayout />}>
             <Route path="/union/dashboard" element={<UnionDashboardPage />} />
+            <Route path="/union/clubs/add" element={<ClubAddPage />} />
             <Route path="/union/clubs/rooms" element={<RoomInfoEditPage />} />
             <Route path="/union/clubs/categories" element={<CategoryEditPage />} />
             <Route path="/union/notices" element={<UnionNoticesPage />} />
