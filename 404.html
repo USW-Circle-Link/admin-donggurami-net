@@ -24,5 +24,15 @@
   <link rel="manifest" href="/manifest.webmanifest"><script id="vite-plugin-pwa:register-sw" src="/registerSW.js"></script></head>
   <body>
     <div id="root"></div>
+    <script>
+      // GitHub Pages SPA redirect handler
+      (function() {
+        const params = new URLSearchParams(window.location.search);
+        const path = params.get('p');
+        if (path) {
+          window.history.replaceState(null, '', decodeURIComponent(path));
+        }
+      })();
+    </script>
   </body>
 </html>
