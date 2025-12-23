@@ -23,6 +23,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
+import { Checkbox } from '@/components/ui/checkbox'
 import { dummyClubSummary, dummyClubMembers } from '@/data/dummyData'
 import { useDeleteClubMembers } from '@/features/club-leader/hooks/useClubLeader'
 
@@ -181,11 +182,9 @@ export function DashboardPage() {
             <TableHeader>
               <TableRow>
                 <TableHead className="w-[50px]">
-                  <input
-                    type="checkbox"
+                  <Checkbox
                     checked={members.length > 0 && selectedIds.length === members.length}
-                    onChange={toggleSelectAll}
-                    className="h-4 w-4 rounded border-gray-300"
+                    onCheckedChange={toggleSelectAll}
                   />
                 </TableHead>
                 <TableHead>이름</TableHead>
@@ -208,11 +207,9 @@ export function DashboardPage() {
                     className={selectedIds.includes(member.clubMemberUUID) ? 'bg-muted/50' : ''}
                   >
                     <TableCell>
-                      <input
-                        type="checkbox"
+                      <Checkbox
                         checked={selectedIds.includes(member.clubMemberUUID)}
-                        onChange={() => toggleSelectMember(member.clubMemberUUID)}
-                        className="h-4 w-4 rounded border-gray-300"
+                        onCheckedChange={() => toggleSelectMember(member.clubMemberUUID)}
                       />
                     </TableCell>
                     <TableCell className="font-medium">{member.userName}</TableCell>
