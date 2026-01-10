@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
+import { Checkbox } from '@/components/ui/checkbox'
 import { dummyApplicants, type ApplicantWithStatus } from '@/data/dummyData'
 import type { ApplicantStatus } from '@features/club-leader/domain/clubLeaderSchemas'
 
@@ -121,11 +122,9 @@ export function FinalizePage() {
                         {applicant.studentNumber} | {applicant.major}
                       </p>
                     </div>
-                    <input
-                      type="checkbox"
+                    <Checkbox
                       checked={selectedPass.has(applicant.aplictUUID)}
-                      onChange={() => {}}
-                      className="h-4 w-4 rounded border-gray-300"
+                      onCheckedChange={() => {}}
                     />
                   </div>
                 ))
@@ -188,11 +187,9 @@ export function FinalizePage() {
                         {applicant.studentNumber} | {applicant.major}
                       </p>
                     </div>
-                    <input
-                      type="checkbox"
+                    <Checkbox
                       checked={selectedFail.has(applicant.aplictUUID)}
-                      onChange={() => {}}
-                      className="h-4 w-4 rounded border-gray-300"
+                      onCheckedChange={() => {}}
                     />
                   </div>
                 ))
