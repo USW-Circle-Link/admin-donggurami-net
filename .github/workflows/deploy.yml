@@ -37,13 +37,18 @@ jobs:
       - name: Create 404.html for SPA fallback
         run: cp ./dist/index.html ./dist/404.html
 
+      - name: Move dist to v2 folder
+        run: |
+          mkdir -p ./deploy/v2
+          mv ./dist/* ./deploy/v2/
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./dist
+          path: ./deploy
 
   deploy:
     environment:
