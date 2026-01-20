@@ -600,4 +600,67 @@ export const handlers = [
       },
     })
   }),
+
+  // ===== Form Management Handlers =====
+
+  // Create form
+  http.post(`${API_BASE}/api/clubs/:clubId/forms`, () => {
+    return HttpResponse.json({
+      message: '지원서 폼 생성 성공',
+      data: {
+        formId: '550e8400-e29b-41d4-a716-446655440001',
+      },
+    })
+  }),
+
+  // Update form status
+  http.patch(`${API_BASE}/api/clubs/:clubId/forms/:formId/status`, () => {
+    return HttpResponse.json({
+      message: '지원서 상태 변경 성공',
+      data: null,
+    })
+  }),
+
+  // Submit application
+  http.post(`${API_BASE}/api/clubs/:clubId/forms/:formId/applications`, () => {
+    return HttpResponse.json({
+      message: '지원서 제출 성공',
+      data: {
+        applicationId: '550e8400-e29b-41d4-a716-446655440002',
+      },
+    })
+  }),
+
+  // Get application detail
+  http.get(`${API_BASE}/api/clubs/:clubId/applications/:applicationId`, () => {
+    return HttpResponse.json({
+      message: '지원서 상세 조회 성공',
+      data: {
+        applicationId: 15,
+        applicant: {
+          name: '홍길동',
+          studentId: '20231234',
+          department: '컴퓨터공학과',
+          phone: '010-1234-5678',
+        },
+        status: 'SUBMITTED',
+        isRead: true,
+        submittedAt: '2026-03-02T14:00:00',
+        answers: [
+          {
+            questionId: 101,
+            question: '학년을 선택해주세요.',
+            type: 'RADIO',
+            answer: '1학년',
+          },
+          {
+            questionId: 102,
+            question: '지원 동기',
+            type: 'LONG_TEXT',
+            answer: '코딩이 너무 재미있어서...',
+          },
+        ],
+      },
+    })
+  }),
 ]
