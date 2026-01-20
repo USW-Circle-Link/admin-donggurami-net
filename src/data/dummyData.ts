@@ -28,6 +28,7 @@ export const dummyClubMembers: ClubMember[] = [
     studentNumber: '20210001',
     userHp: '01012345678',
     memberType: 'REGULARMEMBER',
+    role: 'LEADER',
   },
   {
     clubMemberUUID: '550e8400-e29b-41d4-a716-446655440002',
@@ -36,6 +37,7 @@ export const dummyClubMembers: ClubMember[] = [
     studentNumber: '20220002',
     userHp: '01098765432',
     memberType: 'REGULARMEMBER',
+    role: 'VICE_LEADER',
   },
   {
     clubMemberUUID: '550e8400-e29b-41d4-a716-446655440003',
@@ -44,6 +46,7 @@ export const dummyClubMembers: ClubMember[] = [
     studentNumber: '20230003',
     userHp: '01011112222',
     memberType: 'REGULARMEMBER',
+    role: 'MEMBER',
   },
   {
     clubMemberUUID: '550e8400-e29b-41d4-a716-446655440004',
@@ -52,6 +55,7 @@ export const dummyClubMembers: ClubMember[] = [
     studentNumber: '20240004',
     userHp: '01033334444',
     memberType: 'NONMEMBER',
+    role: 'MEMBER',
   },
   {
     clubMemberUUID: '550e8400-e29b-41d4-a716-446655440005',
@@ -60,6 +64,7 @@ export const dummyClubMembers: ClubMember[] = [
     studentNumber: '20210005',
     userHp: '01055556666',
     memberType: 'REGULARMEMBER',
+    role: 'MEMBER',
   },
 ]
 
@@ -185,6 +190,7 @@ export interface ApplicationQuestion {
   type: QuestionType
   required: boolean
   options?: string[] // radio, checkbox, dropdown에서 사용
+  maxLength?: number // 서술형 글자수 제한 (기본 300)
 }
 
 export const dummyApplicationQuestions: ApplicationQuestion[] = [
@@ -192,7 +198,8 @@ export const dummyApplicationQuestions: ApplicationQuestion[] = [
     id: 1,
     question: '지원 동기를 알려주세요.',
     type: 'text',
-    required: true
+    required: true,
+    maxLength: 500,
   },
   {
     id: 2,
