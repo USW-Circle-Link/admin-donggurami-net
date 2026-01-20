@@ -2,6 +2,7 @@ import { z } from 'zod'
 
 // ===== Common Enums =====
 export const memberTypeSchema = z.enum(['REGULARMEMBER', 'NONMEMBER'])
+export const memberRoleSchema = z.enum(['LEADER', 'VICE_LEADER', 'MEMBER'])
 export const applicantStatusSchema = z.enum(['WAIT', 'PASS', 'FAIL'])
 export const recruitmentStatusSchema = z.enum(['OPEN', 'CLOSED'])
 
@@ -89,6 +90,7 @@ export const clubMemberSchema = z.object({
   studentNumber: z.string(),
   userHp: z.string(),
   memberType: memberTypeSchema,
+  role: memberRoleSchema.optional(),
 })
 
 export const clubMemberDeleteRequestSchema = z.object({
@@ -167,6 +169,7 @@ export const fcmTokenRequestSchema = z.object({
 
 // Type inference
 export type MemberType = z.infer<typeof memberTypeSchema>
+export type MemberRole = z.infer<typeof memberRoleSchema>
 export type ApplicantStatus = z.infer<typeof applicantStatusSchema>
 export type RecruitmentStatus = z.infer<typeof recruitmentStatusSchema>
 export type ClubIntroResponse = z.infer<typeof clubIntroResponseSchema>
