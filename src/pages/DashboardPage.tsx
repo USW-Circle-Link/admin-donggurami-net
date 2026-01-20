@@ -1,6 +1,8 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
+import { useNavigate } from 'react-router'
 import { HugeiconsIcon } from '@hugeicons/react'
-import { FileDownloadIcon, Delete01Icon } from '@hugeicons/core-free-icons'
+import { FileDownloadIcon, Delete01Icon, Edit01Icon, ArrowUp01Icon, ArrowDown01Icon, Search01Icon } from '@hugeicons/core-free-icons'
+import type { MemberRole } from '@/features/club-leader/domain/clubLeaderSchemas'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -24,24 +26,93 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
 import { Checkbox } from '@/components/ui/checkbox'
+import { Input } from '@/components/ui/input'
 import { dummyClubSummary, dummyClubMembers } from '@/data/dummyData'
+import { useDebounce } from '@/shared/hooks/useDebounce'
 import { useDeleteClubMembers } from '@/features/club-leader/hooks/useClubLeader'
 
+type SortField = 'userName' | 'studentNumber' | 'major' | 'userHp' | 'role'
+type SortDirection = 'asc' | 'desc'
+
+const getRoleLabel = (role?: MemberRole) => {
+  switch (role) {
+    case 'LEADER':
+      return '회장'
+    case 'VICE_LEADER':
+      return '부회장'
+    default:
+      return '회원'
+  }
+}
+
+const getRoleOrder = (role?: MemberRole) => {
+  switch (role) {
+    case 'LEADER':
+      return 0
+    case 'VICE_LEADER':
+      return 1
+    default:
+      return 2
+  }
+}
+
 export function DashboardPage() {
+  const navigate = useNavigate()
   const club = dummyClubSummary
   const [members, setMembers] = useState(dummyClubMembers)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
+  const [sortField, setSortField] = useState<SortField | null>(null)
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
+  const [searchQuery, setSearchQuery] = useState('')
+  const debouncedSearch = useDebounce(searchQuery, 300)
   const { mutate: deleteMembers, isPending: isDeleting } = useDeleteClubMembers()
+
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'))
+    } else {
+      setSortField(field)
+      setSortDirection('asc')
+    }
+  }
+
+  const filteredMembers = useMemo(() => {
+    if (!debouncedSearch.trim()) return members
+    const query = debouncedSearch.toLowerCase()
+    return members.filter(
+      (m) =>
+        m.userName.toLowerCase().includes(query) ||
+        m.studentNumber.toLowerCase().includes(query) ||
+        m.major.toLowerCase().includes(query)
+    )
+  }, [members, debouncedSearch])
+
+  const sortedMembers = useMemo(() => {
+    if (!sortField) return filteredMembers
+    return [...filteredMembers].sort((a, b) => {
+      let comparison = 0
+      if (sortField === 'role') {
+        comparison = getRoleOrder(a.role) - getRoleOrder(b.role)
+      } else {
+        const aVal = a[sortField] || ''
+        const bVal = b[sortField] || ''
+        comparison = aVal.localeCompare(bVal, 'ko')
+      }
+      return sortDirection === 'asc' ? comparison : -comparison
+    })
+  }, [filteredMembers, sortField, sortDirection])
 
   const handleExportExcel = () => {
     alert('명단을 엑셀로 내보냅니다.')
   }
 
   const toggleSelectAll = () => {
-    if (selectedIds.length === members.length) {
-      setSelectedIds([])
+    const currentIds = filteredMembers.map((m) => m.clubMemberUUID)
+    const allSelected = currentIds.every((id) => selectedIds.includes(id))
+    if (allSelected) {
+      setSelectedIds((prev) => prev.filter((id) => !currentIds.includes(id)))
     } else {
-      setSelectedIds(members.map((m) => m.clubMemberUUID))
+      setSelectedIds((prev) => [...new Set([...prev, ...currentIds])])
     }
   }
 
@@ -92,6 +163,10 @@ export function DashboardPage() {
               </CardTitle>
               <CardDescription>{club.clubCategories.join(', ')}</CardDescription>
             </div>
+            <Button variant="outline" size="sm" onClick={() => navigate('/club/basic-info')}>
+              <HugeiconsIcon icon={Edit01Icon} className="mr-2 size-4" />
+              기본 정보 수정
+            </Button>
           </div>
         </CardHeader>
         <CardContent>
@@ -133,11 +208,15 @@ export function DashboardPage() {
 
       {/* 동아리 명단 */}
       <Card>
-        <CardHeader>
+        <CardHeader className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <CardTitle>동아리 명단</CardTitle>
-              <CardDescription>총 {members.length}명</CardDescription>
+              <CardDescription>
+                {debouncedSearch
+                  ? `검색 결과 ${filteredMembers.length}명 / 총 ${members.length}명`
+                  : `총 ${members.length}명`}
+              </CardDescription>
             </div>
             <div className="flex gap-2">
               {selectedIds.length > 0 && (
@@ -170,11 +249,35 @@ export function DashboardPage() {
                   </AlertDialogContent>
                 </AlertDialog>
               )}
-              <Button onClick={handleExportExcel} variant="outline" size="sm">
-                <HugeiconsIcon icon={FileDownloadIcon} className="mr-2 size-4" />
-                내보내기
+              <Button onClick={handleExportExcel} variant="outline" size="sm" className="relative">
+                {/* 데스크톱 */}
+                <span className="hidden sm:flex items-center">
+                  <HugeiconsIcon icon={FileDownloadIcon} className="mr-2 size-4" />
+                  {selectedIds.length > 0
+                    ? `${selectedIds.length}명 내보내기`
+                    : `${members.length}명 내보내기`}
+                </span>
+                {/* 모바일 */}
+                <span className="flex sm:hidden items-center">
+                  <HugeiconsIcon icon={FileDownloadIcon} className="size-4" />
+                  <Badge className="absolute -top-2 -right-2 size-5 p-0 flex items-center justify-center text-xs">
+                    {selectedIds.length > 0 ? selectedIds.length : members.length}
+                  </Badge>
+                </span>
               </Button>
             </div>
+          </div>
+          <div className="relative">
+            <HugeiconsIcon
+              icon={Search01Icon}
+              className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground"
+            />
+            <Input
+              placeholder="이름, 학번, 학과로 검색..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
           </div>
         </CardHeader>
         <CardContent>
@@ -183,25 +286,96 @@ export function DashboardPage() {
               <TableRow>
                 <TableHead className="w-[50px]">
                   <Checkbox
-                    checked={members.length > 0 && selectedIds.length === members.length}
+                    checked={
+                      filteredMembers.length > 0 &&
+                      filteredMembers.every((m) => selectedIds.includes(m.clubMemberUUID))
+                    }
                     onCheckedChange={toggleSelectAll}
                   />
                 </TableHead>
-                <TableHead>이름</TableHead>
-                <TableHead>학번</TableHead>
-                <TableHead>학과</TableHead>
-                <TableHead>연락처</TableHead>
+                <TableHead
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => handleSort('userName')}
+                >
+                  <div className="flex items-center gap-1">
+                    이름
+                    {sortField === 'userName' && (
+                      <HugeiconsIcon
+                        icon={sortDirection === 'asc' ? ArrowUp01Icon : ArrowDown01Icon}
+                        className="size-4"
+                      />
+                    )}
+                  </div>
+                </TableHead>
+                <TableHead
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => handleSort('studentNumber')}
+                >
+                  <div className="flex items-center gap-1">
+                    학번
+                    {sortField === 'studentNumber' && (
+                      <HugeiconsIcon
+                        icon={sortDirection === 'asc' ? ArrowUp01Icon : ArrowDown01Icon}
+                        className="size-4"
+                      />
+                    )}
+                  </div>
+                </TableHead>
+                <TableHead
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => handleSort('major')}
+                >
+                  <div className="flex items-center gap-1">
+                    학과
+                    {sortField === 'major' && (
+                      <HugeiconsIcon
+                        icon={sortDirection === 'asc' ? ArrowUp01Icon : ArrowDown01Icon}
+                        className="size-4"
+                      />
+                    )}
+                  </div>
+                </TableHead>
+                <TableHead
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => handleSort('userHp')}
+                >
+                  <div className="flex items-center gap-1">
+                    연락처
+                    {sortField === 'userHp' && (
+                      <HugeiconsIcon
+                        icon={sortDirection === 'asc' ? ArrowUp01Icon : ArrowDown01Icon}
+                        className="size-4"
+                      />
+                    )}
+                  </div>
+                </TableHead>
+                <TableHead
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => handleSort('role')}
+                >
+                  <div className="flex items-center gap-1">
+                    역할
+                    {sortField === 'role' && (
+                      <HugeiconsIcon
+                        icon={sortDirection === 'asc' ? ArrowUp01Icon : ArrowDown01Icon}
+                        className="size-4"
+                      />
+                    )}
+                  </div>
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {members.length === 0 ? (
+              {sortedMembers.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-10 text-muted-foreground">
-                    등록된 회원이 없습니다.
+                  <TableCell colSpan={6} className="text-center py-10 text-muted-foreground">
+                    {debouncedSearch
+                      ? `"${debouncedSearch}" 검색 결과가 없습니다.`
+                      : '등록된 회원이 없습니다.'}
                   </TableCell>
                 </TableRow>
               ) : (
-                members.map((member) => (
+                sortedMembers.map((member) => (
                   <TableRow
                     key={member.clubMemberUUID}
                     className={selectedIds.includes(member.clubMemberUUID) ? 'bg-muted/50' : ''}
@@ -216,6 +390,19 @@ export function DashboardPage() {
                     <TableCell>{member.studentNumber}</TableCell>
                     <TableCell>{member.major}</TableCell>
                     <TableCell>{member.userHp.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3')}</TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={
+                          member.role === 'LEADER'
+                            ? 'default'
+                            : member.role === 'VICE_LEADER'
+                              ? 'secondary'
+                              : 'outline'
+                        }
+                      >
+                        {getRoleLabel(member.role)}
+                      </Badge>
+                    </TableCell>
                   </TableRow>
                 ))
               )}
