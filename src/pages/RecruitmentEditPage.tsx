@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Reorder, useDragControls } from 'framer-motion'
 import { HugeiconsIcon } from '@hugeicons/react'
-import { Delete01Icon, Add01Icon, DragDropVerticalIcon } from '@hugeicons/core-free-icons'
+import { Delete01Icon, Add01Icon, ArrowUp01Icon, ArrowDown01Icon, DragDropVerticalIcon } from '@hugeicons/core-free-icons'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -18,36 +18,67 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { dummyClubSummary, dummyApplicationQuestions, type ApplicationQuestion, type QuestionType } from '@/data/dummyData'
+import { ApplicationPreviewModal } from './components/ApplicationPreviewModal'
 
 interface SortableQuestionItemProps {
   question: ApplicationQuestion
   index: number
+  totalCount: number
   onRemove: (id: number) => void
   onToggleRequired: (id: number) => void
+  onMoveUp: (id: number) => void
+  onMoveDown: (id: number) => void
   getQuestionTypeLabel: (type: QuestionType) => string
 }
 
 function SortableQuestionItem({
   question,
   index,
+  totalCount,
   onRemove,
   onToggleRequired,
+  onMoveUp,
+  onMoveDown,
   getQuestionTypeLabel,
 }: SortableQuestionItemProps) {
-  const controls = useDragControls()
+  const dragControls = useDragControls()
 
   return (
     <Reorder.Item
       value={question}
       dragListener={false}
-      dragControls={controls}
+      dragControls={dragControls}
       className="flex items-start gap-3 rounded-lg border p-4 bg-card select-none"
     >
+      {/* 드래그 핸들 */}
       <div
-        onPointerDown={(e) => controls.start(e)}
-        className="mt-1 cursor-grab active:cursor-grabbing touch-none"
+        className="cursor-grab active:cursor-grabbing touch-none flex items-center justify-center py-2"
+        onPointerDown={(e) => dragControls.start(e)}
       >
-        <HugeiconsIcon icon={DragDropVerticalIcon} className="text-muted-foreground" />
+        <HugeiconsIcon icon={DragDropVerticalIcon} className="size-5 text-muted-foreground" />
+      </div>
+      {/* 위/아래 버튼 */}
+      <div className="flex flex-col gap-1">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="size-7"
+          disabled={index === 0}
+          onClick={() => onMoveUp(question.id)}
+        >
+          <HugeiconsIcon icon={ArrowUp01Icon} className="size-4 text-muted-foreground" />
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="size-7"
+          disabled={index === totalCount - 1}
+          onClick={() => onMoveDown(question.id)}
+        >
+          <HugeiconsIcon icon={ArrowDown01Icon} className="size-4 text-muted-foreground" />
+        </Button>
       </div>
       <div className="flex-1 space-y-2">
         <div className="flex items-start justify-between">
@@ -57,11 +88,6 @@ function SortableQuestionItem({
               <Badge variant="outline" className="text-xs">
                 {getQuestionTypeLabel(question.type)}
               </Badge>
-              {question.required && (
-                <Badge variant="destructive" className="text-xs">
-                  필수
-                </Badge>
-              )}
             </div>
             <p className="text-sm font-medium">{question.question}</p>
             {question.options && (
@@ -71,6 +97,13 @@ function SortableQuestionItem({
                     {opt}
                   </Badge>
                 ))}
+              </div>
+            )}
+            {question.type === 'text' && question.maxLength && (
+              <div className="mt-2">
+                <Badge variant="outline" className="text-xs">
+                  최대 {question.maxLength}자
+                </Badge>
               </div>
             )}
           </div>
@@ -100,6 +133,41 @@ function SortableQuestionItem({
   )
 }
 
+interface QuestionPreset {
+  label: string
+  question: string
+  type: QuestionType
+  options?: string[]
+  maxLength?: number
+}
+
+const QUESTION_PRESETS: QuestionPreset[] = [
+  {
+    label: '지원동기',
+    question: '지원 동기를 작성해주세요.',
+    type: 'text',
+    maxLength: 500,
+  },
+  {
+    label: '자기소개',
+    question: '간단한 자기소개를 해주세요.',
+    type: 'text',
+    maxLength: 300,
+  },
+  {
+    label: '성별',
+    question: '성별을 선택해주세요.',
+    type: 'radio',
+    options: ['남성', '여성', '기타'],
+  },
+  {
+    label: '학년',
+    question: '현재 학년을 선택해주세요.',
+    type: 'dropdown',
+    options: ['1학년', '2학년', '3학년', '4학년'],
+  },
+]
+
 export function RecruitmentEditPage() {
   const [isRecruiting, setIsRecruiting] = useState(dummyClubSummary.recruitmentStatus === 'OPEN')
   const [recruitmentContent, setRecruitmentContent] = useState(dummyClubSummary.clubRecruitment || '')
@@ -107,6 +175,15 @@ export function RecruitmentEditPage() {
   const [newQuestion, setNewQuestion] = useState('')
   const [newQuestionType, setNewQuestionType] = useState<QuestionType>('text')
   const [newOptions, setNewOptions] = useState('')
+  const [newMaxLength, setNewMaxLength] = useState(300)
+  const [previewOpen, setPreviewOpen] = useState(false)
+
+  const handlePresetSelect = (preset: QuestionPreset) => {
+    setNewQuestion(preset.question)
+    setNewQuestionType(preset.type)
+    setNewOptions(preset.options?.join(', ') || '')
+    setNewMaxLength(preset.maxLength || 300)
+  }
 
   const handleAddQuestion = () => {
     if (newQuestion.trim()) {
@@ -122,11 +199,13 @@ export function RecruitmentEditPage() {
           type: newQuestionType,
           required: false,
           options: optionsArray,
+          maxLength: newQuestionType === 'text' ? newMaxLength : undefined,
         },
       ])
       setNewQuestion('')
       setNewOptions('')
       setNewQuestionType('text')
+      setNewMaxLength(300)
     }
   }
 
@@ -140,6 +219,26 @@ export function RecruitmentEditPage() {
     )
   }
 
+  const handleMoveUp = (id: number) => {
+    setQuestions((prev) => {
+      const index = prev.findIndex((q) => q.id === id)
+      if (index <= 0) return prev
+      const newQuestions = [...prev]
+      ;[newQuestions[index - 1], newQuestions[index]] = [newQuestions[index], newQuestions[index - 1]]
+      return newQuestions
+    })
+  }
+
+  const handleMoveDown = (id: number) => {
+    setQuestions((prev) => {
+      const index = prev.findIndex((q) => q.id === id)
+      if (index >= prev.length - 1) return prev
+      const newQuestions = [...prev]
+      ;[newQuestions[index], newQuestions[index + 1]] = [newQuestions[index + 1], newQuestions[index]]
+      return newQuestions
+    })
+  }
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     alert('모집 정보가 저장되었습니다.')
@@ -148,7 +247,7 @@ export function RecruitmentEditPage() {
   const getQuestionTypeLabel = (type: QuestionType) => {
     switch (type) {
       case 'text':
-        return '텍스트'
+        return '서술형'
       case 'radio':
         return '객관식'
       case 'checkbox':
@@ -224,8 +323,11 @@ export function RecruitmentEditPage() {
                       key={q.id}
                       question={q}
                       index={index}
+                      totalCount={questions.length}
                       onRemove={handleRemoveQuestion}
                       onToggleRequired={handleToggleRequired}
+                      onMoveUp={handleMoveUp}
+                      onMoveDown={handleMoveDown}
                       getQuestionTypeLabel={getQuestionTypeLabel}
                     />
                   ))}
@@ -237,6 +339,27 @@ export function RecruitmentEditPage() {
               {/* 새 질문 추가 */}
               <div className="space-y-3 rounded-lg border p-4 bg-muted/30">
                 <h4 className="text-sm font-medium">새 질문 추가</h4>
+
+                {/* 퀵 버튼 */}
+                <div className="space-y-2">
+                  <p className="text-xs text-muted-foreground">빠른 추가</p>
+                  <div className="flex flex-wrap gap-2">
+                    {QUESTION_PRESETS.map((preset) => (
+                      <Button
+                        key={preset.label}
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handlePresetSelect(preset)}
+                      >
+                        {preset.label}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+
+                <Separator />
+
                 <div className="space-y-3">
                   <div className="grid gap-3 md:grid-cols-2">
                     <div className="space-y-2">
@@ -282,6 +405,24 @@ export function RecruitmentEditPage() {
                     </div>
                   )}
 
+                  {newQuestionType === 'text' && (
+                    <div className="space-y-2">
+                      <Label htmlFor="maxLength">최대 글자수</Label>
+                      <Input
+                        id="maxLength"
+                        type="number"
+                        value={newMaxLength}
+                        onChange={(e) => setNewMaxLength(Number(e.target.value) || 300)}
+                        placeholder="300"
+                        min={50}
+                        max={3000}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        기본값: 300자 (최소 50자, 최대 3000자)
+                      </p>
+                    </div>
+                  )}
+
                   <Button
                     type="button"
                     variant="outline"
@@ -300,11 +441,24 @@ export function RecruitmentEditPage() {
 
       {/* 저장 버튼 */}
       <div className="flex justify-end gap-2">
+        {isRecruiting && (
+          <Button type="button" variant="outline" onClick={() => setPreviewOpen(true)}>
+            미리보기
+          </Button>
+        )}
         <Button type="button" variant="outline">
           취소
         </Button>
         <Button onClick={handleSubmit}>저장</Button>
       </div>
+
+      {/* 미리보기 모달 */}
+      <ApplicationPreviewModal
+        open={previewOpen}
+        onOpenChange={setPreviewOpen}
+        questions={questions}
+        clubName={dummyClubSummary.clubName}
+      />
     </div>
   )
 }
