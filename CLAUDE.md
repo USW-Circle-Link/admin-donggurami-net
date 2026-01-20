@@ -45,6 +45,7 @@ npm run preview  # Preview production build locally
 
 ## Development Guidelines
 
+- **Always use gitflow strategies when working on certain functions**
 - Follow TDD: Write tests first, then implementation
 - Focus on data layer and API communication, not UI
 - Use TypeScript types matching API schemas (e.g., `ClubSummaryResponse`)
