@@ -667,6 +667,8 @@ FCM 토큰 갱신
 ##### GET `/notices`
 공지사항 목록 조회
 
+**권한:** 인증 필요 (USER, LEADER, ADMIN)
+
 **Response (200):**
 ```json
 {
@@ -690,6 +692,8 @@ FCM 토큰 갱신
 
 ##### POST `/notices`
 공지사항 생성
+
+**권한:** ADMIN
 
 **Request Body (Multipart):**
 ```json
@@ -726,6 +730,8 @@ FCM 토큰 갱신
 ##### GET `/notices/{noticeUUID}`
 공지사항 상세 조회
 
+**권한:** 인증 필요 (USER, LEADER, ADMIN)
+
 **Potential Errors:**
 *   `NOT-201`: 공지사항이 존재하지 않습니다.
 
@@ -746,6 +752,8 @@ FCM 토큰 갱신
 
 ##### PUT `/notices/{noticeUUID}`
 공지사항 수정
+
+**권한:** ADMIN
 
 **Request Body (Multipart):**
 ```json
@@ -775,6 +783,8 @@ FCM 토큰 갱신
 ##### DELETE `/notices/{noticeUUID}`
 공지사항 삭제
 
+**권한:** ADMIN
+
 **Potential Errors:**
 *   `NOT-201`: 공지사항이 존재하지 않습니다.
 
@@ -793,6 +803,8 @@ FCM 토큰 갱신
 ##### GET `/admin/floor/photo/{floor}`
 층별 사진 조회 (`B1`, `F1`, `F2`)
 
+**권한:** 인증 필요 (USER, LEADER, ADMIN)
+
 **Potential Errors:**
 *   `PHOTO-505`: 해당 사진이 존재하지 않습니다.
 
@@ -809,6 +821,8 @@ FCM 토큰 갱신
 
 ##### PUT `/admin/floor/photo/{floor}`
 층별 사진 업로드
+
+**권한:** ADMIN
 
 **Request Body (Multipart):**
 - `photo`: file
@@ -830,6 +844,8 @@ FCM 토큰 갱신
 ##### DELETE `/admin/floor/photo/{floor}`
 층별 사진 삭제
 
+**권한:** ADMIN
+
 **Potential Errors:**
 *   `PHOTO-505`: 해당 사진이 존재하지 않습니다.
 
@@ -848,6 +864,8 @@ FCM 토큰 갱신
 ##### GET `/admin/clubs`
 모든 동아리 목록 조회
 
+**권한:** 인증 필요 (USER, LEADER, ADMIN)
+
 **Response (200):**
 ```json
 {
@@ -859,7 +877,7 @@ FCM 토큰 갱신
         "clubName": "string",
         "leaderName": "string",
         "department": "학술",
-        "leaderHp": "string"
+        "numberOfClubMembers": 1
       }
     ],
     "totalPages": 1,
@@ -871,6 +889,8 @@ FCM 토큰 갱신
 
 ##### POST `/admin/clubs`
 동아리 추가
+
+**권한:** ADMIN
 
 **Request Body:**
 ```json
@@ -913,6 +933,8 @@ FCM 토큰 갱신
 ##### GET `/admin/clubs/{clubUUID}`
 동아리 소개/모집글 페이지 조회
 
+**권한:** 인증 필요 (USER, LEADER, ADMIN)
+
 **Response (200):**
 ```json
 {
@@ -938,6 +960,8 @@ FCM 토큰 갱신
 
 ##### DELETE `/admin/clubs/{clubUUID}`
 동아리 삭제
+
+**권한:** ADMIN
 
 **Request Body:**
 ```json
@@ -967,6 +991,8 @@ FCM 토큰 갱신
 ##### GET `/admin/clubs/leader/check`
 동아리 회장 아이디 중복 확인
 
+**권한:** ADMIN
+
 **Potential Errors:**
 *   `CLDR-203`: 이미 존재하는 동아리 회장 계정입니다.
 
@@ -980,6 +1006,8 @@ FCM 토큰 갱신
 
 ##### GET `/admin/clubs/name/check`
 동아리 이름 중복 확인
+
+**권한:** ADMIN
 
 **Potential Errors:**
 *   `CLUB-203`: 이미 존재하는 동아리 이름입니다.
@@ -999,6 +1027,8 @@ FCM 토큰 갱신
 ##### GET `/admin/clubs/category`
 카테고리 조회
 
+**권한:** 인증 필요 (USER, LEADER, ADMIN)
+
 **Response (200):**
 ```json
 {
@@ -1014,6 +1044,8 @@ FCM 토큰 갱신
 
 ##### POST `/admin/clubs/category`
 카테고리 추가
+
+**권한:** ADMIN
 
 **Request Body:**
 ```json
@@ -1045,6 +1077,8 @@ FCM 토큰 갱신
 ##### DELETE `/admin/clubs/category/{clubCategoryUUID}`
 카테고리 삭제
 
+**권한:** ADMIN
+
 **Potential Errors:**
 *   `CTG-201`: 존재하지 않는 카테고리입니다.
 
@@ -1065,6 +1099,8 @@ FCM 토큰 갱신
 
 ##### POST `/club-leader/login`
 회장 로그인
+
+**권한:** 공개 (인증 불필요)
 
 **Request Body:**
 ```json
@@ -1108,6 +1144,8 @@ FCM 토큰 갱신
 ##### POST `/admin/login`
 관리자 로그인
 
+**권한:** 공개 (인증 불필요)
+
 **Request Body:**
 ```json
 {
@@ -1146,6 +1184,8 @@ FCM 토큰 갱신
 ##### GET `/apply/can-apply/{clubUUID}`
 지원 가능 여부 확인
 
+**권한:** 인증 필요 (USER, LEADER, ADMIN)
+
 **Potential Errors:**
 *   `CLUB-201`: 존재하지 않는 동아리입니다.
 
@@ -1159,6 +1199,8 @@ FCM 토큰 갱신
 
 ##### GET `/apply/{clubUUID}`
 구글 폼 URL 조회
+
+**권한:** 인증 필요 (USER, LEADER, ADMIN)
 
 **Potential Errors:**
 *   `CLUB-201`: 존재하지 않는 동아리입니다.
@@ -1175,6 +1217,8 @@ FCM 토큰 갱신
 
 ##### POST `/apply/{clubUUID}`
 동아리 지원서 제출
+
+**권한:** 인증 필요 (USER, LEADER, ADMIN)
 
 **Potential Errors:**
 *   `CLUB-201`: 존재하지 않는 동아리입니다.
@@ -1198,6 +1242,8 @@ FCM 토큰 갱신
 ##### GET `/mypages/my-clubs`
 소속된 동아리 조회
 
+**권한:** 인증 필요 (USER, LEADER, ADMIN)
+
 **Response (200):**
 ```json
 {
@@ -1218,6 +1264,8 @@ FCM 토큰 갱신
 
 ##### GET `/mypages/aplict-clubs`
 지원한 동아리 조회
+
+**권한:** 인증 필요 (USER, LEADER, ADMIN)
 
 **Response (200):**
 ```json
@@ -1241,6 +1289,8 @@ FCM 토큰 갱신
 ##### GET `/mypages/clubs/{floor}/photo`
 동아리방 층별 사진 조회
 
+**권한:** 인증 필요 (USER, LEADER, ADMIN)
+
 **Potential Errors:**
 *   `PHOTO-505`: 해당 사진이 존재하지 않습니다.
 
@@ -1262,6 +1312,8 @@ FCM 토큰 갱신
 ##### GET `/my-notices`
 내 공지사항 목록 조회
 
+**권한:** 인증 필요 (USER, LEADER, ADMIN)
+
 **Response (200):**
 ```json
 {
@@ -1279,6 +1331,8 @@ FCM 토큰 갱신
 
 ##### GET `/my-notices/{noticeUUID}/details`
 공지사항 상세 조회
+
+**권한:** 인증 필요 (USER, LEADER, ADMIN)
 
 **Potential Errors:**
 *   `NOT-201`: 공지사항이 존재하지 않습니다.
@@ -1305,6 +1359,8 @@ FCM 토큰 갱신
 ##### GET `/clubs`
 전체 동아리 조회 (모바일)
 
+**권한:** 공개 (인증 불필요)
+
 **Response (200):**
 ```json
 {
@@ -1324,6 +1380,8 @@ FCM 토큰 갱신
 ##### GET `/clubs/list`
 모든 동아리 정보 출력 (모바일 기존회원가입시)
 
+**권한:** 공개 (인증 불필요)
+
 **Response (200):**
 ```json
 {
@@ -1340,6 +1398,18 @@ FCM 토큰 갱신
 
 ##### GET `/clubs/filter`
 카테고리별 전체 동아리 조회
+
+**Query Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `clubCategoryUUIDs` | String | **Yes** | 카테고리 UUID 목록 (콤마로 구분, URL 인코딩 `%2C` 사용) |
+
+**Example:**
+```
+GET /clubs/filter?clubCategoryUUIDs=c154d193-0224-4838-9052-0a0418468d5b
+GET /clubs/filter?clubCategoryUUIDs=c154d193-0224-4838-9052-0a0418468d5b%2Ca6411488-a218-4541-8149-88452e27b2f3
+```
 
 **Response (200):**
 ```json
@@ -1366,6 +1436,8 @@ FCM 토큰 갱신
 ##### GET `/clubs/open`
 모집 중인 전체 동아리 조회
 
+**권한:** 공개 (인증 불필요)
+
 **Response (200):**
 ```json
 {
@@ -1379,6 +1451,18 @@ FCM 토큰 갱신
 ##### GET `/clubs/open/filter`
 카테고리별 모집 중인 동아리 조회
 
+**Query Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `clubCategoryUUIDs` | String | **Yes** | 카테고리 UUID 목록 (콤마로 구분, URL 인코딩 `%2C` 사용) |
+
+**Example:**
+```
+GET /clubs/open/filter?clubCategoryUUIDs=c154d193-0224-4838-9052-0a0418468d5b
+GET /clubs/open/filter?clubCategoryUUIDs=c154d193-0224-4838-9052-0a0418468d5b%2Ca6411488-a218-4541-8149-88452e27b2f3
+```
+
 **Response (200):**
 ```json
 {
@@ -1391,6 +1475,8 @@ FCM 토큰 갱신
 
 ##### GET `/clubs/categories`
 카테고리 리스트 조회
+
+**권한:** 공개 (인증 불필요)
 
 **Response (200):**
 ```json
@@ -1407,6 +1493,8 @@ FCM 토큰 갱신
 
 ##### GET `/clubs/intro/{clubUUID}`
 동아리 소개글 조회
+
+**권한:** 공개 (인증 불필요)
 
 **Potential Errors:**
 *   `CLUB-201`: 존재하지 않는 동아리입니다.
@@ -1461,6 +1549,8 @@ FCM 토큰 갱신
 #### 13.1 회원 정보 관리
 ##### PATCH `/users/userpw`
 비밀번호 변경
+
+**권한:** 인증 필요 (USER, LEADER, ADMIN)
 
 **Request Body:**
 ```json
@@ -1522,7 +1612,15 @@ FCM 토큰 갱신
 | Field | Type | Required | Constraints | Description |
 | :--- | :--- | :--- | :--- | :--- |
 | `userAccount` | String | **Yes** | 5~20 chars, Alphanumeric | 아이디 |
-| `email` | String | **Yes** | 1~30 chars | 이메일 |
+| `email` | String | **Yes** | 학번 (도메인 제외) | 이메일 (학번만 입력) |
+
+**Example:**
+```json
+{
+  "userAccount": "woochang",
+  "email": "21016082"
+}
+```
 
 **Potential Errors:**
 *   `USR-209`: 올바르지 않은 이메일 혹은 아이디입니다.
@@ -1537,6 +1635,8 @@ FCM 토큰 갱신
 
 ##### POST `/users/auth/verify-token`
 인증 코드 검증
+
+**권한:** 공개 (인증 불필요)
 
 **Request Body:**
 ```json
@@ -1565,6 +1665,8 @@ FCM 토큰 갱신
 
 ##### PATCH `/users/reset-password`
 비밀번호 재설정
+
+**권한:** 공개 (인증 불필요)
 
 **Request Body:**
 ```json
@@ -1597,6 +1699,8 @@ FCM 토큰 갱신
 ##### POST `/users/check/{email}/duplicate`
 기존회원 가입시 이메일 중복 확인
 
+**권한:** 공개 (인증 불필요)
+
 **Request Body:**
 ```json
 {
@@ -1614,6 +1718,8 @@ FCM 토큰 갱신
 ##### GET `/users/verify-duplicate/{account}`
 아이디 중복 체크
 
+**권한:** 공개 (인증 불필요)
+
 **Response (200):**
 ```json
 {
@@ -1624,6 +1730,8 @@ FCM 토큰 갱신
 
 ##### POST `/users/temporary/register`
 신규회원가입 요청 - 인증 메일 전송
+
+**권한:** 공개 (인증 불필요)
 
 **Request Body:**
 ```json
@@ -1655,6 +1763,8 @@ FCM 토큰 갱신
 ##### GET `/users/email/verify-token`
 이메일 인증 여부 검증 (링크 클릭 처리)
 
+**권한:** 공개 (인증 불필요)
+
 **Potential Errors:**
 *   `EMAIL_TOKEN-001`: 해당 토큰이 존재하지 않습니다.
 *   `EMAIL_TOKEN-002`: 토큰이 만료되었습니다.
@@ -1663,6 +1773,8 @@ FCM 토큰 갱신
 
 ##### POST `/users/email/verification`
 인증 확인 버튼 클릭
+
+**권한:** 공개 (인증 불필요)
 
 **Request Body:**
 ```json
@@ -1687,6 +1799,8 @@ FCM 토큰 갱신
 
 ##### POST `/users/signup`
 회원 가입 정보 등록
+
+**권한:** 공개 (인증 불필요)
 
 **Request Body:**
 ```json
@@ -1726,39 +1840,13 @@ FCM 토큰 갱신
 }
 ```
 
-##### POST `/users/existing/register`
-기존 동아리원 회원가입 (현재 비활성화됨)
 
-**Request Body:**
-```json
-{
-  "account": "string",
-  "password": "string",
-  "confirmPassword": "string",
-  "userName": "string",
-  "telephone": "string",
-  "studentNumber": "string",
-  "major": "string",
-  "email": "string",
-  "clubs": [
-    {
-      "clubUUID": "uuid",
-      "clubName": "string"
-    }
-  ]
-}
-```
-**Response (400):**
-```json
-{
-  "message": "현재 기존 동아리원 회원가입이 불가능합니다.",
-  "data": null
-}
-```
 
 #### 13.3 로그인/탈퇴
 ##### POST `/users/login`
 사용자 로그인
+
+**권한:** 공개 (인증 불필요)
 
 **Request Body:**
 ```json
@@ -1794,6 +1882,8 @@ FCM 토큰 갱신
 ##### POST `/users/exit/send-code`
 회원 탈퇴 요청 및 메일 전송
 
+**권한:** 인증 필요 (USER, LEADER, ADMIN)
+
 **Response (200):**
 ```json
 {
@@ -1804,6 +1894,8 @@ FCM 토큰 갱신
 
 ##### DELETE `/users/exit`
 회원 탈퇴 인증 및 탈퇴 처리
+
+**권한:** 인증 필요 (USER, LEADER, ADMIN)
 
 **Request Body:**
 ```json
@@ -1836,6 +1928,8 @@ FCM 토큰 갱신
 
 ##### PATCH `/profiles/change`
 프로필 수정
+
+**권한:** 인증 필요 (USER, LEADER, ADMIN)
 
 **Request Body:**
 ```json
@@ -1878,6 +1972,8 @@ FCM 토큰 갱신
 ##### GET `/profiles/me`
 내 프로필 조회
 
+**권한:** 인증 필요 (USER, LEADER, ADMIN)
+
 **Response (200):**
 ```json
 {
@@ -1893,6 +1989,8 @@ FCM 토큰 갱신
 
 ##### POST `/profiles/duplication-check`
 프로필 중복 확인
+
+**권한:** 인증 필요 (USER, LEADER, ADMIN)
 
 **Request Body:**
 ```json
@@ -1933,7 +2031,225 @@ FCM 토큰 갱신
 
 ---
 
-### 15. Health Check
+### 15. Form Management (지원서 폼 관리)
+
+#### 15.1 질문 유형 (Question Types)
+
+| TYPE | 설명 |
+| :--- | :--- |
+| `RADIO` | 단일 선택 (라디오) |
+| `CHECKBOX` | 다중 선택 |
+| `DROPDOWN` | 단일 선택 (드롭다운) |
+| `SHORT_TEXT` | 단답형 |
+| `LONG_TEXT` | 서술형 |
+
+#### 15.2 폼 관리 API
+
+##### POST `/api/clubs/{clubId}/forms`
+지원서 폼 생성 (통합)
+
+**권한:** 회장 (LEADER)
+
+**설명:** 기존 폼 생성 → 질문 추가 → 옵션 추가 3단계를 하나의 요청으로 처리. 지원서 기본 정보, 질문, 옵션을 일괄 생성하며 기본 상태는 DRAFT
+
+**Request Body:**
+```json
+{
+  "title": "2026-1학기 신입 부원 모집",
+  "description": "열정 있는 개발자를 찾습니다!",
+  "startDate": "2026-03-01T09:00:00",
+  "endDate": "2026-03-15T23:59:59",
+  "questions": [
+    {
+      "sequence": 1,
+      "type": "RADIO",
+      "content": "학년을 선택해주세요.",
+      "required": true,
+      "options": [
+        {"sequence": 1, "content": "1학년", "value": "GRADE_1"},
+        {"sequence": 2, "content": "2학년", "value": "GRADE_2"}
+      ]
+    },
+    {
+      "sequence": 2,
+      "type": "CHECKBOX",
+      "content": "관심 분야 (다중 선택)",
+      "required": false,
+      "options": [
+        {"sequence": 1, "content": "백엔드", "value": "BACK"},
+        {"sequence": 2, "content": "프론트엔드", "value": "FRONT"}
+      ]
+    },
+    {
+      "sequence": 3,
+      "type": "LONG_TEXT",
+      "content": "지원 동기 및 포부",
+      "required": true,
+      "options": []
+    }
+  ]
+}
+```
+
+**Response (201):**
+```json
+{
+  "message": "지원서 폼 생성 성공",
+  "data": {
+    "formId": "uuid"
+  }
+}
+```
+
+**Response Header:**
+```
+Location: /api/clubs/{clubId}/forms/{createdFormId}
+```
+
+**Potential Errors:**
+*   `400`: 요청 오류
+*   `403`: 권한 없음
+*   `404`: 동아리 없음
+
+---
+
+##### PATCH `/api/clubs/{clubId}/forms/{formId}/status`
+지원서 상태 변경 (공개 / 마감)
+
+**권한:** 회장 (LEADER)
+
+**설명:** 작성된 지원서를 공개(PUBLISHED) 또는 마감(CLOSED) 처리
+
+**Request Body:**
+```json
+{
+  "status": "PUBLISHED"
+}
+```
+
+**Constraints:**
+
+| Field | Type | Required | Constraints | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| `status` | String | **Yes** | `DRAFT`, `PUBLISHED`, `CLOSED` | 폼 상태 |
+
+**Response (200):**
+```json
+{
+  "message": "지원서 상태 변경 성공",
+  "data": null
+}
+```
+
+---
+
+#### 15.3 지원서 제출 API
+
+##### POST `/api/clubs/{clubId}/forms/{formId}/applications`
+지원서 제출
+
+**권한:** 지원자 (USER)
+
+**설명:** 지원서 답변 제출 (중복 지원 불가)
+
+**Request Body:**
+```json
+{
+  "answers": [
+    {
+      "questionId": 101,
+      "optionId": 501,
+      "answerText": null
+    },
+    {
+      "questionId": 102,
+      "optionId": null,
+      "answerText": "열심히 하겠습니다!"
+    },
+    {
+      "questionId": 103,
+      "optionId": 505,
+      "answerText": null
+    },
+    {
+      "questionId": 103,
+      "optionId": 506,
+      "answerText": null
+    }
+  ]
+}
+```
+
+**Constraints (`answers` Item):**
+
+| Field | Type | Required | Constraints | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| `questionId` | UUID | **Yes** | Valid UUID | 질문 ID |
+| `optionId` | UUID | No | Valid UUID | 선택지 ID (RADIO/DROPDOWN/CHECKBOX) |
+| `answerText` | String | No | - | 답변 텍스트 (SHORT_TEXT/LONG_TEXT) |
+
+**Response (201):**
+```json
+{
+  "message": "지원서 제출 성공",
+  "data": {
+    "applicationId": "uuid"
+  }
+}
+```
+
+**Potential Errors:**
+*   `409`: 이미 지원함 (Conflict)
+
+---
+
+#### 15.4 지원서 조회 API
+
+##### GET `/api/clubs/{clubId}/applications/{applicationId}`
+지원서 상세 조회 및 읽음 처리
+
+**권한:** 회장 (LEADER)
+
+**설명:** 지원자 정보와 답변 조회 + 읽음 처리 (이 API 호출 시 자동으로 `isRead = true` 처리)
+
+**Response (200):**
+```json
+{
+  "applicationId": 15,
+  "applicant": {
+    "name": "홍길동",
+    "studentId": "20231234",
+    "department": "컴퓨터공학과",
+    "phone": "010-1234-5678"
+  },
+  "status": "SUBMITTED",
+  "isRead": true,
+  "submittedAt": "2026-03-02T14:00:00",
+  "answers": [
+    {
+      "questionId": 101,
+      "question": "학년을 선택해주세요.",
+      "type": "RADIO",
+      "answer": "1학년"
+    },
+    {
+      "questionId": 102,
+      "question": "지원 동기",
+      "type": "LONG_TEXT",
+      "answer": "코딩이 너무 재미있어서..."
+    }
+  ]
+}
+```
+
+**Potential Errors:**
+*   `404`: 지원서가 존재하지 않습니다
+
+---
+
+---
+
+### 16. Health Check
 
 ##### GET `/health-check`
 서버 상태 확인
