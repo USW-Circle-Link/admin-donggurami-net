@@ -49,3 +49,4 @@ npm run preview  # Preview production build locally
 - Follow TDD: Write tests first, then implementation
 - Focus on data layer and API communication, not UI
 - Use TypeScript types matching API schemas (e.g., `ClubSummaryResponse`)
+- 이 페이지는 동아리 회장 (club leader) 동아리 연합회 (admin or union) 을 위한 서비스 입니다. 일반 사용자(동아리 회원)에 대한 내용은 들어가면 안됨.
