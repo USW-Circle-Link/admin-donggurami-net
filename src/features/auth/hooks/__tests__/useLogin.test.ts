@@ -21,7 +21,6 @@ describe('useClubLeaderLogin', () => {
     result.current.mutate({
       leaderAccount: 'testleader',
       leaderPw: 'password123',
-      loginType: 'LEADER',
     })
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
@@ -50,7 +49,6 @@ describe('useClubLeaderLogin', () => {
     result.current.mutate({
       leaderAccount: 'wrong',
       leaderPw: 'wrong',
-      loginType: 'LEADER',
     })
 
     await waitFor(() => expect(result.current.isError).toBe(true))

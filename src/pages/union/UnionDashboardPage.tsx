@@ -1,25 +1,45 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { HugeiconsIcon } from '@hugeicons/react'
-import { FileDownloadIcon, Search01Icon } from '@hugeicons/core-free-icons'
+import { FileDownloadIcon, Search01Icon, Group01Icon } from '@hugeicons/core-free-icons'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useAdminClubs } from '@/features/admin/hooks/useAdmin'
+import { apiClient } from '@/shared/api/apiClient'
 
 export function UnionDashboardPage() {
   const { data: clubsData, isLoading, error } = useAdminClubs()
   const clubs = clubsData?.data?.content || []
   const [searchTerm, setSearchTerm] = useState('')
+  const [memberCounts, setMemberCounts] = useState<Record<string, number>>({})
+  const [loadingMembers, setLoadingMembers] = useState(false)
+
+  // Fetch member counts for all clubs
+  useEffect(() => {
+    if (clubs.length === 0) return
+
+    const fetchMemberCounts = async () => {
+      setLoadingMembers(true)
+      try {
+        const counts: Record<string, number> = {}
+        for (const club of clubs) {
+          try {
+            const response = await apiClient.get(`/clubs/${club.clubUUID}/members`)
+            counts[club.clubUUID] = response.data?.data?.length || 0
+          } catch {
+            counts[club.clubUUID] = 0
+          }
+        }
+        setMemberCounts(counts)
+      } finally {
+        setLoadingMembers(false)
+      }
+    }
+
+    fetchMemberCounts()
+  }, [clubs])
 
   const filteredClubs = clubs.filter(
     (club) =>
@@ -29,14 +49,14 @@ export function UnionDashboardPage() {
   )
 
   const handleDownloadExcel = () => {
-    const headers = ['동아리명', '회장명', '분과']
+    const headers = ['동아리명', '회장명', '회원수', '분과']
     const csvContent = [
       headers.join(','),
       ...filteredClubs.map((club) =>
         [
           club.clubName,
           club.leaderName,
-          club.leaderHp,
+          memberCounts[club.clubUUID] || 0,
           club.department || '-',
         ].join(',')
       ),
@@ -166,39 +186,43 @@ export function UnionDashboardPage() {
             />
           </div>
 
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>동아리명</TableHead>
-                  <TableHead>회장</TableHead>
-                  <TableHead>연락처</TableHead>
-                  <TableHead>분과</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredClubs.length > 0 ? (
-                  filteredClubs.map((club) => (
-                    <TableRow key={club.clubUUID}>
-                      <TableCell className="font-medium">{club.clubName}</TableCell>
-                      <TableCell>{club.leaderName}</TableCell>
-                      <TableCell>{club.leaderHp}</TableCell>
-                      <TableCell>
-                        <Badge variant="secondary" className="text-xs">
-                          {club.department || '-'}
-                        </Badge>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={4} className="h-24 text-center">
-                      검색 결과가 없습니다.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
+          <div className="space-y-3">
+            {filteredClubs.length > 0 ? (
+              filteredClubs.map((club) => (
+                <div
+                  key={club.clubUUID}
+                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                >
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3">
+                      <div>
+                        <h3 className="font-semibold text-sm">{club.clubName}</h3>
+                        <p className="text-xs text-muted-foreground mt-1">{club.leaderName}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-6">
+                    <div className="flex items-center gap-2 text-sm">
+                      <HugeiconsIcon icon={Group01Icon} className="size-4 text-muted-foreground" />
+                      <span className="font-medium">
+                        {loadingMembers ? <Skeleton className="h-4 w-8 inline-block" /> : memberCounts[club.clubUUID] || 0}
+                      </span>
+                      <span className="text-muted-foreground">명</span>
+                    </div>
+
+                    <Badge variant="secondary" className="text-xs">
+                      {club.department || '-'}
+                    </Badge>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
+                <HugeiconsIcon icon={Group01Icon} className="size-8 mb-2 opacity-50" />
+                <p className="text-sm">검색 결과가 없습니다.</p>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

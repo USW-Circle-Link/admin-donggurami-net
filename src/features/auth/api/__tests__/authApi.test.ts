@@ -16,7 +16,6 @@ describe('Auth API', () => {
       const result = await loginClubLeader({
         leaderAccount: 'testleader',
         leaderPw: 'password123',
-        loginType: 'LEADER',
       })
 
       expect(result.message).toBe('동아리 회장 로그인 성공')
@@ -48,7 +47,6 @@ describe('Auth API', () => {
         loginClubLeader({
           leaderAccount: 'wrong',
           leaderPw: 'wrong',
-          loginType: 'LEADER',
         })
       ).rejects.toThrow()
     })
