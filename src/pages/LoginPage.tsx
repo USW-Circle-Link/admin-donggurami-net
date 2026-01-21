@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
+import { useClubLeaderLogin, useAdminLogin } from '@/features/auth/hooks/useLogin'
 
 export function LoginPage() {
   const navigate = useNavigate()
@@ -12,24 +13,62 @@ export function LoginPage() {
   const [clubPassword, setClubPassword] = useState('')
   const [unionAccount, setUnionAccount] = useState('')
   const [unionPassword, setUnionPassword] = useState('')
+  const [error, setError] = useState('')
+
+  const { mutate: clubLeaderLogin, isPending: isClubLoading } = useClubLeaderLogin()
+  const { mutate: adminLogin, isPending: isAdminLoading } = useAdminLogin()
 
   const handleClubLogin = (e: React.FormEvent) => {
     e.preventDefault()
-    // 동아리 관리자 로그인 → 동아리 대시보드로 이동
-    navigate('/dashboard')
+    setError('')
+
+    if (!clubAccount.trim() || !clubPassword.trim()) {
+      setError('아이디와 비밀번호를 입력해주세요.')
+      return
+    }
+
+    clubLeaderLogin(
+      { leaderAccount: clubAccount, leaderPw: clubPassword },
+      {
+        onSuccess: () => {
+          navigate('/dashboard')
+        },
+        onError: (err) => {
+          setError('아이디 또는 비밀번호가 올바르지 않습니다.')
+          console.error('Club leader login failed:', err)
+        },
+      }
+    )
   }
 
   const handleUnionLogin = (e: React.FormEvent) => {
     e.preventDefault()
-    // 동아리 연합회 로그인 → 연합회 대시보드로 이동
-    navigate('/union/dashboard')
+    setError('')
+
+    if (!unionAccount.trim() || !unionPassword.trim()) {
+      setError('아이디와 비밀번호를 입력해주세요.')
+      return
+    }
+
+    adminLogin(
+      { adminAccount: unionAccount, adminPw: unionPassword },
+      {
+        onSuccess: () => {
+          navigate('/union/dashboard')
+        },
+        onError: (err) => {
+          setError('아이디 또는 비밀번호가 올바르지 않습니다.')
+          console.error('Admin login failed:', err)
+        },
+      }
+    )
   }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted/40 px-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-3xl" style={{ fontFamily: 'Juache, sans-serif', color: '#FFC01D' }}>
+          <CardTitle className="text-3xl font-[Juache,sans-serif] text-[hsl(var(--primary))]">
             동구라미
           </CardTitle>
         </CardHeader>
@@ -42,6 +81,11 @@ export function LoginPage() {
 
             <TabsContent value="club">
               <form onSubmit={handleClubLogin} className="space-y-4">
+                {error && (
+                  <div className="text-sm text-destructive text-center p-2 bg-destructive/10 rounded">
+                    {error}
+                  </div>
+                )}
                 <div className="space-y-2">
                   <Label htmlFor="clubAccount">아이디</Label>
                   <Input
@@ -50,6 +94,7 @@ export function LoginPage() {
                     placeholder="아이디를 입력하세요"
                     value={clubAccount}
                     onChange={(e) => setClubAccount(e.target.value)}
+                    disabled={isClubLoading}
                   />
                 </div>
                 <div className="space-y-2">
@@ -60,16 +105,22 @@ export function LoginPage() {
                     placeholder="비밀번호를 입력하세요"
                     value={clubPassword}
                     onChange={(e) => setClubPassword(e.target.value)}
+                    disabled={isClubLoading}
                   />
                 </div>
-                <Button type="submit" className="w-full">
-                  로그인
+                <Button type="submit" className="w-full" disabled={isClubLoading}>
+                  {isClubLoading ? '로그인 중...' : '로그인'}
                 </Button>
               </form>
             </TabsContent>
 
             <TabsContent value="union">
               <form onSubmit={handleUnionLogin} className="space-y-4">
+                {error && (
+                  <div className="text-sm text-destructive text-center p-2 bg-destructive/10 rounded">
+                    {error}
+                  </div>
+                )}
                 <div className="space-y-2">
                   <Label htmlFor="unionAccount">아이디</Label>
                   <Input
@@ -78,6 +129,7 @@ export function LoginPage() {
                     placeholder="아이디를 입력하세요"
                     value={unionAccount}
                     onChange={(e) => setUnionAccount(e.target.value)}
+                    disabled={isAdminLoading}
                   />
                 </div>
                 <div className="space-y-2">
@@ -88,10 +140,11 @@ export function LoginPage() {
                     placeholder="비밀번호를 입력하세요"
                     value={unionPassword}
                     onChange={(e) => setUnionPassword(e.target.value)}
+                    disabled={isAdminLoading}
                   />
                 </div>
-                <Button type="submit" className="w-full">
-                  로그인
+                <Button type="submit" className="w-full" disabled={isAdminLoading}>
+                  {isAdminLoading ? '로그인 중...' : '로그인'}
                 </Button>
               </form>
             </TabsContent>

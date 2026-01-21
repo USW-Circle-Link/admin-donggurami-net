@@ -7,6 +7,8 @@ import './index.css'
 
 import { AdminLayout } from '@/components/layout/AdminLayout'
 import { UnionLayout } from '@/components/layout/UnionLayout'
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
+import { AuthInitializer } from '@/components/auth/AuthInitializer'
 import { LoginPage } from '@/pages/LoginPage'
 import { DashboardPage } from '@/pages/DashboardPage'
 import { BasicInfoEditPage } from '@/pages/BasicInfoEditPage'
@@ -24,12 +26,13 @@ createRoot(document.getElementById('root')!).render(
   <QueryClientProvider client={queryClient}>
     <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
       <BrowserRouter basename={import.meta.env.BASE_URL}>
-        <Routes>
+        <AuthInitializer>
+          <Routes>
           {/* Public routes */}
           <Route path="/login" element={<LoginPage />} />
 
           {/* Club admin routes with sidebar layout */}
-          <Route element={<AdminLayout />}>
+          <Route element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/club/basic-info" element={<BasicInfoEditPage />} />
             <Route path="/club/recruitment" element={<RecruitmentEditPage />} />
@@ -39,7 +42,7 @@ createRoot(document.getElementById('root')!).render(
           </Route>
 
           {/* Union admin routes with union layout */}
-          <Route element={<UnionLayout />}>
+          <Route element={<ProtectedRoute><UnionLayout /></ProtectedRoute>}>
             <Route path="/union/dashboard" element={<UnionDashboardPage />} />
             <Route path="/union/clubs/add" element={<ClubAddPage />} />
             <Route path="/union/clubs/rooms" element={<RoomInfoEditPage />} />
@@ -50,6 +53,7 @@ createRoot(document.getElementById('root')!).render(
           {/* Redirect root to login */}
           <Route path="/" element={<Navigate to="/login" replace />} />
         </Routes>
+        </AuthInitializer>
       </BrowserRouter>
     </ThemeProvider>
   </QueryClientProvider>

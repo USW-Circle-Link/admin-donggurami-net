@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
+import { toast } from 'sonner'
 import {
   Table,
   TableBody,
@@ -113,7 +114,7 @@ export function DashboardPage() {
   }, [filteredMembers, sortField, sortDirection])
 
   const handleExportExcel = () => {
-    alert('명단을 엑셀로 내보냅니다.')
+    toast.info('명단을 엑셀로 내보냅니다.')
   }
 
   // Track carousel position for photo counter and indicators
@@ -159,10 +160,10 @@ export function DashboardPage() {
       {
         onSuccess: () => {
           setSelectedIds([])
-          alert('선택한 회원이 삭제되었습니다.')
+          toast.success('선택한 회원이 삭제되었습니다.')
         },
         onError: () => {
-          alert('회원 삭제에 실패했습니다.')
+          toast.error('회원 삭제에 실패했습니다.')
         },
       }
     )
@@ -353,13 +354,15 @@ export function DashboardPage() {
               {club.introPhotos.length > 1 && (
                 <div className="flex justify-center gap-2 mt-3">
                   {club.introPhotos.map((_, index) => (
-                    <button
+                    <Button
                       key={index}
+                      variant="ghost"
+                      size="icon"
                       onClick={() => {
                         carouselApi?.scrollTo(index)
                       }}
-                      className={`w-2 h-2 rounded-full transition-colors ${
-                        index === currentPhotoIndex ? 'bg-foreground' : 'bg-muted-foreground'
+                      className={`w-2 h-2 p-0 rounded-full transition-colors ${
+                        index === currentPhotoIndex ? 'bg-foreground hover:bg-foreground' : 'bg-muted-foreground hover:bg-muted-foreground/70'
                       }`}
                       aria-label={`Go to slide ${index + 1}`}
                     />

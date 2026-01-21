@@ -4,7 +4,11 @@ import { z } from 'zod'
 export const clubLeaderLoginSchema = z.object({
   leaderAccount: z.string().min(1, 'Account is required'),
   leaderPw: z.string().min(1, 'Password is required'),
-  loginType: z.literal('LEADER').optional().default('LEADER'),
+})
+
+// Type for API call (includes loginType)
+export const clubLeaderLoginApiSchema = clubLeaderLoginSchema.extend({
+  loginType: z.literal('LEADER').default('LEADER'),
 })
 
 // Admin Login Request

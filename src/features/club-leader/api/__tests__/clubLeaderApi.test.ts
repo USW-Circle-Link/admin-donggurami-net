@@ -1,6 +1,7 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { http, HttpResponse } from 'msw'
 import { server } from '@test/mocks/server'
+import { apiClient, setAccessToken } from '@shared/api/apiClient'
 import {
   getClubIntro,
   updateClubIntro,
@@ -19,6 +20,11 @@ const API_BASE = 'https://api.donggurami.net'
 
 describe('Club Leader API', () => {
   const clubUUID = 'test-club-uuid'
+
+  beforeEach(() => {
+    // Set a mock access token for all tests
+    setAccessToken('mock_access_token')
+  })
 
   describe('getClubIntro', () => {
     it('should return club intro', async () => {
@@ -52,6 +58,14 @@ describe('Club Leader API', () => {
 
   describe('updateClubIntro', () => {
     it('should update club intro without photos', async () => {
+      // Mock apiClient.put directly for this test due to MSW + FormData + Node.js issue
+      const putSpy = vi.spyOn(apiClient, 'put').mockResolvedValueOnce({
+        data: {
+          message: '동아리 소개 수정 성공',
+          data: null,
+        },
+      } as any)
+
       const request = {
         clubIntro: '새로운 소개',
         recruitmentStatus: 'OPEN' as const,
@@ -63,6 +77,15 @@ describe('Club Leader API', () => {
 
       expect(result.message).toBe('동아리 소개 수정 성공')
       expect(result.data).toBeNull()
+      expect(putSpy).toHaveBeenCalledWith(
+        `/club-leader/${clubUUID}/intro`,
+        expect.any(FormData),
+        expect.objectContaining({
+          headers: { 'Content-Type': 'multipart/form-data' },
+        })
+      )
+
+      putSpy.mockRestore()
     })
   })
 

@@ -33,18 +33,16 @@ export async function updateClubIntro(
   request: ClubIntroRequest,
   photos?: File[]
 ): Promise<ApiResponse<null>> {
-  if (photos && photos.length > 0) {
-    const formData = new FormData()
-    formData.append('clubIntroRequest', new Blob([JSON.stringify(request)], { type: 'application/json' }))
-    photos.forEach((photo) => formData.append('introPhotos', photo))
+  const formData = new FormData()
+  formData.append('clubIntroRequest', new Blob([JSON.stringify(request)], { type: 'application/json' }))
 
-    const response = await apiClient.put<ApiResponse<null>>(`/club-leader/${clubUUID}/intro`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    })
-    return response.data
+  if (photos && photos.length > 0) {
+    photos.forEach((photo) => formData.append('introPhotos', photo))
   }
 
-  const response = await apiClient.put<ApiResponse<null>>(`/club-leader/${clubUUID}/intro`, { clubIntroRequest: request })
+  const response = await apiClient.put<ApiResponse<null>>(`/club-leader/${clubUUID}/intro`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
   return response.data
 }
 
@@ -63,23 +61,19 @@ export async function updateClubInfo(
   leaderUpdatePwRequest?: LeaderUpdatePwRequest,
   mainPhoto?: File
 ): Promise<ApiResponse<null>> {
-  if (mainPhoto) {
-    const formData = new FormData()
-    formData.append('mainPhoto', mainPhoto)
-    formData.append('clubInfoRequest', new Blob([JSON.stringify(clubInfoRequest)], { type: 'application/json' }))
-    if (leaderUpdatePwRequest) {
-      formData.append('leaderUpdatePwRequest', new Blob([JSON.stringify(leaderUpdatePwRequest)], { type: 'application/json' }))
-    }
+  const formData = new FormData()
+  formData.append('clubInfoRequest', new Blob([JSON.stringify(clubInfoRequest)], { type: 'application/json' }))
 
-    const response = await apiClient.put<ApiResponse<null>>(`/club-leader/${clubUUID}/info`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    })
-    return response.data
+  if (leaderUpdatePwRequest) {
+    formData.append('leaderUpdatePwRequest', new Blob([JSON.stringify(leaderUpdatePwRequest)], { type: 'application/json' }))
   }
 
-  const response = await apiClient.put<ApiResponse<null>>(`/club-leader/${clubUUID}/info`, {
-    clubInfoRequest,
-    leaderUpdatePwRequest,
+  if (mainPhoto) {
+    formData.append('mainPhoto', mainPhoto)
+  }
+
+  const response = await apiClient.put<ApiResponse<null>>(`/club-leader/${clubUUID}/info`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
   })
   return response.data
 }

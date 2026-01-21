@@ -1,23 +1,79 @@
-import { useState } from 'react'
+import { useRef, useState, useEffect, useMemo } from 'react'
+import { useNavigate } from 'react-router'
+import { HugeiconsIcon } from '@hugeicons/react'
+import { Image01Icon, Delete01Icon } from '@hugeicons/core-free-icons'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
-import { dummyClubSummary } from '@/data/dummyData'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Textarea } from '@/components/ui/textarea'
+import { toast } from 'sonner'
+import { useAuthStore } from '@/features/auth/store/authStore'
+import { useClubInfo, useClubIntro, useUpdateClubInfo, useUpdateClubIntro } from '@/features/club-leader/hooks/useClubLeader'
 
 export function BasicInfoEditPage() {
-  const [formData, setFormData] = useState({
-    leaderName: dummyClubSummary.leaderName,
-    leaderHp: dummyClubSummary.leaderHp,
-    clubRoomNumber: dummyClubSummary.clubRoomNumber,
-    clubInsta: dummyClubSummary.clubInsta || '',
-    clubIntro: dummyClubSummary.clubIntro || '',
-    clubHashtag: dummyClubSummary.clubHashtag,
-  })
+  const navigate = useNavigate()
+  const { clubUUID } = useAuthStore()
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
 
+  const { data: clubInfoData, isLoading, error } = useClubInfo(clubUUID || '')
+  const clubInfo = clubInfoData?.data
+
+  // For fetching current club intro info
+  const { data: clubIntroData } = useClubIntro(clubUUID || '')
+  const currentClubIntro = clubIntroData?.data
+
+  const { mutate: updateClubInfo, isPending: isUpdatingInfo } = useUpdateClubInfo()
+  const { mutate: updateClubIntro, isPending: isUpdatingIntro } = useUpdateClubIntro()
+
+  const initialFormData = useMemo(() => {
+    if (clubInfo) {
+      return {
+        leaderName: clubInfo.leaderName,
+        leaderHp: clubInfo.leaderHp,
+        clubRoomNumber: clubInfo.clubRoomNumber,
+        clubInsta: clubInfo.clubInsta || '',
+        clubHashtag: clubInfo.clubHashtag,
+      }
+    }
+    return {
+      leaderName: '',
+      leaderHp: '',
+      clubRoomNumber: '',
+      clubInsta: '',
+      clubHashtag: [] as string[],
+    }
+  }, [clubInfo])
+
+  const [formData, setFormData] = useState(initialFormData)
   const [newHashtag, setNewHashtag] = useState('')
+  const [clubIntro, setClubIntro] = useState(currentClubIntro?.clubIntro || '')
+  const [mainPhotoFile, setMainPhotoFile] = useState<File | null>(null)
+  const [mainPhotoPreview, setMainPhotoPreview] = useState(clubInfo?.mainPhotoUrl || '')
+
+  useEffect(() => {
+    if (clubInfo) {
+      setFormData({
+        leaderName: clubInfo.leaderName,
+        leaderHp: clubInfo.leaderHp,
+        clubRoomNumber: clubInfo.clubRoomNumber,
+        clubInsta: clubInfo.clubInsta || '',
+        clubHashtag: clubInfo.clubHashtag,
+      })
+      setMainPhotoPreview(clubInfo.mainPhotoUrl || '')
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clubUUID])
+
+  useEffect(() => {
+    if (currentClubIntro) {
+      setClubIntro(currentClubIntro.clubIntro || '')
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentClubIntro?.clubIntro])
+
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -41,10 +97,143 @@ export function BasicInfoEditPage() {
     }))
   }
 
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      setMainPhotoFile(file)
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setMainPhotoPreview(reader.result as string)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const handleRemoveImage = () => {
+    setMainPhotoFile(null)
+    setMainPhotoPreview('')
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
+  }
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    // 실제로는 API 호출
-    alert('기본정보가 저장되었습니다.')
+    if (!clubUUID) return
+
+    let completionCount = 0
+    let hasError = false
+
+    // Update club info (with or without mainPhoto)
+    updateClubInfo(
+      {
+        clubUUID,
+        clubInfoRequest: {
+          leaderName: formData.leaderName,
+          leaderHp: formData.leaderHp,
+          clubRoomNumber: formData.clubRoomNumber,
+          clubInsta: formData.clubInsta || undefined,
+          clubHashtag: formData.clubHashtag,
+        },
+        mainPhoto: mainPhotoFile || undefined,
+      },
+      {
+        onSuccess: () => {
+          completionCount++
+          if (completionCount === (clubIntro ? 2 : 1) && !hasError) {
+            toast.success('기본정보가 저장되었습니다.')
+            navigate('/club/dashboard')
+          }
+        },
+        onError: () => {
+          hasError = true
+          toast.error('기본정보 저장에 실패했습니다.')
+        },
+      }
+    )
+
+    // Update club intro if it changed
+    if (currentClubIntro) {
+      updateClubIntro(
+        {
+          clubUUID,
+          request: {
+            clubIntro: clubIntro.trim() || undefined,
+            recruitmentStatus: currentClubIntro.recruitmentStatus,
+            clubRecruitment: currentClubIntro.clubRecruitment || undefined,
+            googleFormUrl: currentClubIntro.googleFormUrl || undefined,
+          },
+        },
+        {
+          onSuccess: () => {
+            completionCount++
+            if (completionCount === 2 && !hasError) {
+              toast.success('기본정보가 저장되었습니다.')
+              navigate('/club/dashboard')
+            }
+          },
+          onError: () => {
+            hasError = true
+            toast.error('소개글 저장에 실패했습니다.')
+          },
+        }
+      )
+    }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold">기본정보 수정</h1>
+          <p className="text-muted-foreground">동아리의 기본 정보를 수정하세요</p>
+        </div>
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-6 w-1/3" />
+            <Skeleton className="h-4 w-1/2 mt-2" />
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6">
+              <div className="grid gap-4 md:grid-cols-2">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="space-y-2">
+                    <Skeleton className="h-4 w-20" />
+                    <Skeleton className="h-10 w-full" />
+                  </div>
+                ))}
+              </div>
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-32 w-full" />
+              </div>
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-10 w-2/3" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  if (error || !clubInfo) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold">기본정보 수정</h1>
+          <p className="text-muted-foreground">동아리의 기본 정보를 수정하세요</p>
+        </div>
+        <Card className="border-destructive bg-destructive/10">
+          <CardContent className="pt-6">
+            <p className="text-destructive">
+              {error ? '동아리 정보를 불러오는 중 오류가 발생했습니다.' : '동아리 정보를 찾을 수 없습니다.'}
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    )
   }
 
   return (
@@ -56,7 +245,7 @@ export function BasicInfoEditPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>{dummyClubSummary.clubName}</CardTitle>
+          <CardTitle>{clubInfo.clubName}</CardTitle>
           <CardDescription>동아리 정보를 수정할 수 있습니다</CardDescription>
         </CardHeader>
         <CardContent>
@@ -70,6 +259,7 @@ export function BasicInfoEditPage() {
                   value={formData.leaderName}
                   onChange={handleChange}
                   placeholder="대표자 이름"
+                  required
                 />
               </div>
               <div className="space-y-2">
@@ -80,6 +270,7 @@ export function BasicInfoEditPage() {
                   value={formData.leaderHp}
                   onChange={handleChange}
                   placeholder="01012345678"
+                  required
                 />
                 <p className="text-xs text-muted-foreground">하이픈(-) 없이 입력하세요</p>
               </div>
@@ -91,6 +282,7 @@ export function BasicInfoEditPage() {
                   value={formData.clubRoomNumber}
                   onChange={handleChange}
                   placeholder="301호"
+                  required
                 />
               </div>
               <div className="space-y-2">
@@ -105,17 +297,73 @@ export function BasicInfoEditPage() {
               </div>
             </div>
 
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="mainPhoto">동아리 로고</Label>
+                <Input
+                  ref={fileInputRef}
+                  type="file"
+                  id="mainPhoto"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleImageUpload}
+                  disabled={isUpdatingInfo}
+                />
+                <div className="relative">
+                  {mainPhotoPreview ? (
+                    <div className="relative inline-block">
+                      <img
+                        src={mainPhotoPreview}
+                        alt="동아리 로고"
+                        className="max-w-xs h-auto rounded-lg border"
+                        onError={(e) => {
+                          e.currentTarget.src = '/v2/circle_default_image.png'
+                        }}
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        className="absolute -top-2 -right-2"
+                        onClick={handleRemoveImage}
+                        disabled={isUpdatingInfo}
+                      >
+                        <HugeiconsIcon icon={Delete01Icon} className="text-destructive" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => !isUpdatingInfo && fileInputRef.current?.click()}
+                      className="flex flex-col items-center justify-center w-full h-auto border-2 border-dashed rounded-lg p-12 cursor-pointer hover:bg-muted/50 transition-colors"
+                      disabled={isUpdatingInfo}
+                    >
+                      <HugeiconsIcon icon={Image01Icon} className="size-12 text-muted-foreground mb-4" />
+                      <p className="text-sm text-muted-foreground">
+                        {isUpdatingInfo ? '업로드 중...' : '클릭하여 로고를 업로드하세요'}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">PNG, JPG, GIF 지원</p>
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="clubIntro">동아리 소개</Label>
               <Textarea
                 id="clubIntro"
-                name="clubIntro"
-                value={formData.clubIntro}
-                onChange={handleChange}
-                placeholder="동아리 소개를 입력하세요"
-                rows={4}
+                value={clubIntro}
+                onChange={(e) => setClubIntro(e.target.value)}
+                placeholder="동아리를 소개하는 글을 작성하세요"
+                maxLength={3000}
+                rows={6}
+                disabled={isUpdatingIntro}
               />
-              <p className="text-xs text-muted-foreground">최대 3000자까지 입력 가능합니다</p>
+              <p className="text-xs text-muted-foreground">
+                {clubIntro.length}/3000자
+              </p>
             </div>
 
             <div className="space-y-2">
@@ -154,10 +402,12 @@ export function BasicInfoEditPage() {
             </div>
 
             <div className="flex justify-end gap-2">
-              <Button type="button" variant="outline">
+              <Button type="button" variant="outline" onClick={() => navigate('/club/dashboard')} disabled={isUpdatingInfo || isUpdatingIntro}>
                 취소
               </Button>
-              <Button type="submit">저장</Button>
+              <Button type="submit" disabled={isUpdatingInfo || isUpdatingIntro}>
+                {isUpdatingInfo || isUpdatingIntro ? '저장 중...' : '저장'}
+              </Button>
             </div>
           </form>
         </CardContent>

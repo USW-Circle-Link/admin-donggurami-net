@@ -52,7 +52,7 @@ export function UnionSidebar() {
         <div className="flex items-center justify-between group-data-[collapsible=icon]:justify-center px-2 py-3">
           <span
             className="font-bold text-xl group-data-[collapsible=icon]:hidden"
-            style={{ fontFamily: 'Juache, sans-serif', color: '#FFC01D' }}
+            style={{ fontFamily: 'Juache, sans-serif', color: 'var(--brand-primary)' }}
           >
             동구라미
           </span>

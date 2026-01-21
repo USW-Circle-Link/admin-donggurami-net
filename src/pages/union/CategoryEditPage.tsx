@@ -5,48 +5,78 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { dummyCategories, type ClubCategory } from '@/data/dummyData'
+import { Skeleton } from '@/components/ui/skeleton'
+import { toast } from 'sonner'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import { useAdminCategories, useCreateCategory, useDeleteCategory } from '@/features/admin/hooks/useAdmin'
+import type { AdminCategory } from '@/features/admin/domain/adminSchemas'
 
 export function CategoryEditPage() {
-  const [categories, setCategories] = useState<ClubCategory[]>(dummyCategories)
+  const { data: categoriesData, isLoading, error } = useAdminCategories()
+  const categories: AdminCategory[] = categoriesData?.data || []
+  const { mutate: createCategory } = useCreateCategory()
+  const { mutate: deleteCategory } = useDeleteCategory()
+
   const [newCategoryName, setNewCategoryName] = useState('')
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editingName, setEditingName] = useState('')
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [categoryToDelete, setCategoryToDelete] = useState<AdminCategory | null>(null)
 
   const handleAddCategory = () => {
-    if (newCategoryName.trim()) {
-      const exists = categories.some(
-        (cat) => cat.categoryName.toLowerCase() === newCategoryName.trim().toLowerCase()
-      )
-      if (exists) {
-        alert('이미 존재하는 카테고리입니다.')
-        return
-      }
-      setCategories((prev) => [
-        ...prev,
-        {
-          categoryUUID: `cat-${Date.now()}`,
-          categoryName: newCategoryName.trim(),
-          clubCount: 0,
+    if (!newCategoryName.trim()) return
+
+    createCategory(
+      { clubCategoryName: newCategoryName.trim() },
+      {
+        onSuccess: () => {
+          toast.success('카테고리가 추가되었습니다.')
+          setNewCategoryName('')
         },
-      ])
-      setNewCategoryName('')
-    }
-  }
-
-  const handleRemoveCategory = (categoryUUID: string) => {
-    const category = categories.find((cat) => cat.categoryUUID === categoryUUID)
-    if (category && category.clubCount > 0) {
-      if (!confirm(`이 카테고리에 ${category.clubCount}개의 동아리가 있습니다. 삭제하시겠습니까?`)) {
-        return
+        onError: () => {
+          toast.error('카테고리 추가에 실패했습니다.')
+        },
       }
-    }
-    setCategories((prev) => prev.filter((cat) => cat.categoryUUID !== categoryUUID))
+    )
   }
 
-  const handleStartEdit = (category: ClubCategory) => {
-    setEditingId(category.categoryUUID)
-    setEditingName(category.categoryName)
+  const handleRemoveCategory = (clubCategoryUUID: string) => {
+    const category = categories.find((cat: AdminCategory) => cat.clubCategoryUUID === clubCategoryUUID)
+    if (!category) return
+
+    setCategoryToDelete(category)
+    setDeleteDialogOpen(true)
+  }
+
+  const confirmDelete = () => {
+    if (!categoryToDelete) return
+
+    deleteCategory(categoryToDelete.clubCategoryUUID, {
+      onSuccess: () => {
+        toast.success('카테고리가 삭제되었습니다.')
+        setDeleteDialogOpen(false)
+        setCategoryToDelete(null)
+      },
+      onError: () => {
+        toast.error('카테고리 삭제에 실패했습니다.')
+        setDeleteDialogOpen(false)
+        setCategoryToDelete(null)
+      },
+    })
+  }
+
+  const handleStartEdit = (category: AdminCategory) => {
+    setEditingId(category.clubCategoryUUID)
+    setEditingName(category.clubCategoryName)
   }
 
   const handleCancelEdit = () => {
@@ -54,27 +84,72 @@ export function CategoryEditPage() {
     setEditingName('')
   }
 
-  const handleSaveEdit = (categoryUUID: string) => {
-    if (editingName.trim()) {
-      const exists = categories.some(
-        (cat) => cat.categoryUUID !== categoryUUID && cat.categoryName.toLowerCase() === editingName.trim().toLowerCase()
-      )
-      if (exists) {
-        alert('이미 존재하는 카테고리 이름입니다.')
-        return
-      }
-      setCategories((prev) =>
-        prev.map((cat) =>
-          cat.categoryUUID === categoryUUID ? { ...cat, categoryName: editingName.trim() } : cat
-        )
-      )
-      setEditingId(null)
-      setEditingName('')
+  const handleSaveEdit = (clubCategoryUUID: string) => {
+    if (!editingName.trim()) return
+
+    const exists = categories.some(
+      (cat: AdminCategory) => cat.clubCategoryUUID !== clubCategoryUUID && cat.clubCategoryName.toLowerCase() === editingName.trim().toLowerCase()
+    )
+
+    if (exists) {
+      toast.error('이미 존재하는 카테고리 이름입니다.')
+      return
     }
+
+    createCategory(
+      { clubCategoryName: editingName.trim() },
+      {
+        onSuccess: () => {
+          setEditingId(null)
+          setEditingName('')
+          toast.success('카테고리 이름이 수정되었습니다.')
+        },
+        onError: () => {
+          toast.error('카테고리 이름 수정에 실패했습니다.')
+        },
+      }
+    )
   }
 
-  const handleSubmit = () => {
-    alert('카테고리 정보가 저장되었습니다.')
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold">동아리 카테고리 수정</h1>
+          <p className="text-muted-foreground">동아리 회장이 선택할 수 있는 카테고리를 관리하세요</p>
+        </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>카테고리 목록</CardTitle>
+            <CardDescription>총 {0}개의 카테고리가 등록되어 있습니다</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {[...Array(3)].map((_, i) => (
+                <Skeleton key={i} className="h-12 w-full" />
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold">동아리 카테고리 수정</h1>
+          <p className="text-muted-foreground">동아리 회장이 선택할 수 있는 카테고리를 관리하세요</p>
+        </div>
+        <Card className="border-destructive bg-destructive/10">
+          <CardContent className="pt-6">
+            <p className="text-destructive">카테고리를 불러오는 중 오류가 발생했습니다.</p>
+          </CardContent>
+        </Card>
+      </div>
+    )
   }
 
   return (
@@ -84,7 +159,6 @@ export function CategoryEditPage() {
         <p className="text-muted-foreground">동아리 회장이 선택할 수 있는 카테고리를 관리하세요</p>
       </div>
 
-      {/* 카테고리 추가 */}
       <Card>
         <CardHeader>
           <CardTitle>새 카테고리 추가</CardTitle>
@@ -96,7 +170,6 @@ export function CategoryEditPage() {
               placeholder="카테고리 이름 (예: 음악, 스포츠)"
               value={newCategoryName}
               onChange={(e) => setNewCategoryName(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleAddCategory()}
               className="max-w-xs"
             />
             <Button onClick={handleAddCategory}>
@@ -107,7 +180,6 @@ export function CategoryEditPage() {
         </CardContent>
       </Card>
 
-      {/* 카테고리 목록 */}
       <Card>
         <CardHeader>
           <CardTitle>카테고리 목록</CardTitle>
@@ -116,28 +188,24 @@ export function CategoryEditPage() {
         <CardContent>
           {categories.length > 0 ? (
             <div className="space-y-2">
-              {categories.map((category) => (
+              {categories.map((category: AdminCategory) => (
                 <div
-                  key={category.categoryUUID}
+                  key={category.clubCategoryUUID}
                   className="flex items-center justify-between rounded-lg border p-4"
                 >
-                  {editingId === category.categoryUUID ? (
+                  {editingId === category.clubCategoryUUID ? (
                     <div className="flex items-center gap-2 flex-1">
                       <Input
                         value={editingName}
                         onChange={(e) => setEditingName(e.target.value)}
                         onKeyDown={(e) => {
-                          if (e.key === 'Enter') handleSaveEdit(category.categoryUUID)
+                          if (e.key === 'Enter') handleSaveEdit(category.clubCategoryUUID)
                           if (e.key === 'Escape') handleCancelEdit()
                         }}
                         className="max-w-xs"
                         autoFocus
                       />
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        onClick={() => handleSaveEdit(category.categoryUUID)}
-                      >
+                      <Button variant="ghost" size="icon-sm" onClick={() => handleSaveEdit(category.clubCategoryUUID)}>
                         <HugeiconsIcon icon={Tick01Icon} className="text-green-600" />
                       </Button>
                       <Button variant="ghost" size="icon-sm" onClick={handleCancelEdit}>
@@ -146,22 +214,16 @@ export function CategoryEditPage() {
                     </div>
                   ) : (
                     <>
-                      <div className="flex items-center gap-3">
-                        <span className="font-medium">{category.categoryName}</span>
-                        <Badge variant="secondary">{category.clubCount}개 동아리</Badge>
-                      </div>
+                      <span className="font-medium">{category.clubCategoryName}</span>
+                      <Badge variant="secondary">0개 동아리</Badge>
                       <div className="flex items-center gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          onClick={() => handleStartEdit(category)}
-                        >
+                        <Button variant="ghost" size="icon-sm" onClick={() => handleStartEdit(category)}>
                           <HugeiconsIcon icon={Edit02Icon} className="text-muted-foreground" />
                         </Button>
                         <Button
                           variant="ghost"
                           size="icon-sm"
-                          onClick={() => handleRemoveCategory(category.categoryUUID)}
+                          onClick={() => handleRemoveCategory(category.clubCategoryUUID)}
                         >
                           <HugeiconsIcon icon={Delete01Icon} className="text-destructive" />
                         </Button>
@@ -179,11 +241,25 @@ export function CategoryEditPage() {
         </CardContent>
       </Card>
 
-      {/* 저장 버튼 */}
       <div className="flex justify-end gap-2">
         <Button variant="outline">취소</Button>
-        <Button onClick={handleSubmit}>저장</Button>
+        <Button onClick={() => toast.success('카테고리 정보가 저장되었습니다.')}>저장</Button>
       </div>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>카테고리 삭제</AlertDialogTitle>
+            <AlertDialogDescription>
+              이 카테고리에 {categoryToDelete?.clubCategoryName} 동아리가 있습니다. 삭제하시겠습니까?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setCategoryToDelete(null)}>취소</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete}>삭제</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
