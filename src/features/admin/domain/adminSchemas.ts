@@ -14,7 +14,9 @@ export const adminClubListItemSchema = z.object({
   clubName: z.string(),
   leaderName: z.string(),
   department: departmentSchema,
-  leaderHp: z.string(),
+  leaderHp: z.string().optional(),
+  numberOfClubMembers: z.number().optional(),
+  mainPhoto: z.string().nullable().optional(),
 })
 
 // Paginated club list response
