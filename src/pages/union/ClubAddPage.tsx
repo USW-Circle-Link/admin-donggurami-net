@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { toast } from 'sonner'
 import {
   Select,
   SelectContent,
@@ -14,6 +15,11 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { createClubRequestSchema, type Department } from '@/features/admin/domain/adminSchemas'
+import {
+  useCheckLeaderAccount,
+  useCheckClubName,
+  useCreateClub,
+} from '@/features/admin/hooks/useAdmin'
 
 const DEPARTMENTS: { value: Department; label: string }[] = [
   { value: '학술', label: '학술' },
@@ -57,7 +63,10 @@ export function ClubAddPage() {
     leaderAccount: 'idle',
     clubName: 'idle',
   })
-  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const { mutate: checkLeaderAccount, isPending: isCheckingAccount } = useCheckLeaderAccount()
+  const { mutate: checkClubName, isPending: isCheckingName } = useCheckClubName()
+  const { mutate: createClub, isPending: isCreating } = useCreateClub()
 
   const handleChange = (field: keyof FormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
@@ -78,31 +87,41 @@ export function ClubAddPage() {
     }
   }
 
-  const handleCheckLeaderAccount = async () => {
+  const handleCheckLeaderAccount = () => {
     if (!formData.leaderAccount) {
       setErrors((prev) => ({ ...prev, leaderAccount: '아이디를 입력해주세요.' }))
       return
     }
     setValidation((prev) => ({ ...prev, leaderAccount: 'checking' }))
-    // TODO: API 호출로 중복 확인
-    // const response = await checkLeaderAccount(formData.leaderAccount)
-    await new Promise((resolve) => setTimeout(resolve, 500)) // Simulate API call
-    setValidation((prev) => ({ ...prev, leaderAccount: 'valid' }))
+    checkLeaderAccount(formData.leaderAccount, {
+      onSuccess: () => {
+        setValidation((prev) => ({ ...prev, leaderAccount: 'valid' }))
+      },
+      onError: () => {
+        setValidation((prev) => ({ ...prev, leaderAccount: 'invalid' }))
+        setErrors((prev) => ({ ...prev, leaderAccount: '이미 사용중인 아이디입니다.' }))
+      },
+    })
   }
 
-  const handleCheckClubName = async () => {
+  const handleCheckClubName = () => {
     if (!formData.clubName) {
       setErrors((prev) => ({ ...prev, clubName: '동아리명을 입력해주세요.' }))
       return
     }
     setValidation((prev) => ({ ...prev, clubName: 'checking' }))
-    // TODO: API 호출로 중복 확인
-    // const response = await checkClubName(formData.clubName)
-    await new Promise((resolve) => setTimeout(resolve, 500)) // Simulate API call
-    setValidation((prev) => ({ ...prev, clubName: 'valid' }))
+    checkClubName(formData.clubName, {
+      onSuccess: () => {
+        setValidation((prev) => ({ ...prev, clubName: 'valid' }))
+      },
+      onError: () => {
+        setValidation((prev) => ({ ...prev, clubName: 'invalid' }))
+        setErrors((prev) => ({ ...prev, clubName: '이미 사용중인 동아리명입니다.' }))
+      },
+    })
   }
 
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
     // Validate form data using Zod schema
     const result = createClubRequestSchema.safeParse({
       ...formData,
@@ -129,18 +148,15 @@ export function ClubAddPage() {
       return
     }
 
-    setIsSubmitting(true)
-    try {
-      // TODO: API 호출
-      // await createClub(result.data)
-      await new Promise((resolve) => setTimeout(resolve, 1000)) // Simulate API call
-      alert('동아리가 성공적으로 추가되었습니다.')
-      navigate('/union/dashboard')
-    } catch {
-      alert('동아리 추가에 실패했습니다.')
-    } finally {
-      setIsSubmitting(false)
-    }
+    createClub(result.data, {
+      onSuccess: () => {
+        toast.success('동아리가 성공적으로 추가되었습니다.')
+        navigate('/union/dashboard')
+      },
+      onError: () => {
+        toast.error('동아리 추가에 실패했습니다.')
+      },
+    })
   }
 
   const getValidationIcon = (state: 'idle' | 'checking' | 'valid' | 'invalid') => {
@@ -170,215 +186,228 @@ export function ClubAddPage() {
 
       <form onSubmit={onFormSubmit} className="space-y-6">
         <Card>
-        <CardHeader>
-          <CardTitle>동아리 회장 계정</CardTitle>
-          <CardDescription>동아리 회장이 사용할 계정 정보를 입력하세요</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* 아이디 */}
-          <div className="space-y-2">
-            <Label htmlFor="leaderAccount">아이디</Label>
-            <div className="flex items-center gap-2">
-              <div className="relative flex-1">
-                <Input
-                  id="leaderAccount"
-                  placeholder="5-20자, 영문/숫자"
-                  value={formData.leaderAccount}
-                  onChange={(e) => handleChange('leaderAccount', e.target.value)}
-                  className={errors.leaderAccount ? 'border-destructive' : ''}
-                  autoComplete="username"
-                />
+          <CardHeader>
+            <CardTitle>동아리 회장 계정</CardTitle>
+            <CardDescription>동아리 회장이 사용할 계정 정보를 입력하세요</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* 아이디 */}
+            <div className="space-y-2">
+              <Label htmlFor="leaderAccount">아이디</Label>
+              <div className="flex items-center gap-2">
+                <div className="relative flex-1">
+                  <Input
+                    id="leaderAccount"
+                    placeholder="5-20자, 영문/숫자"
+                    value={formData.leaderAccount}
+                    onChange={(e) => handleChange('leaderAccount', e.target.value)}
+                    className={errors.leaderAccount ? 'border-destructive' : ''}
+                    autoComplete="username"
+                    disabled={isCreating}
+                  />
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleCheckLeaderAccount}
+                  disabled={isCheckingAccount || isCreating}
+                >
+                  중복 확인
+                </Button>
+                <span className="w-20 flex justify-center">
+                  {getValidationIcon(validation.leaderAccount)}
+                </span>
               </div>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleCheckLeaderAccount}
-                disabled={validation.leaderAccount === 'checking'}
-              >
-                중복 확인
-              </Button>
-              <span className="w-20 flex justify-center">
-                {getValidationIcon(validation.leaderAccount)}
-              </span>
+              {errors.leaderAccount && (
+                <p className="text-sm text-destructive">{errors.leaderAccount}</p>
+              )}
             </div>
-            {errors.leaderAccount && (
-              <p className="text-sm text-destructive">{errors.leaderAccount}</p>
-            )}
-          </div>
 
-          {/* 비밀번호 */}
-          <div className="space-y-2">
-            <Label htmlFor="leaderPw">비밀번호</Label>
-            <div className="relative">
-              <Input
-                id="leaderPw"
-                type={showPassword ? 'text' : 'password'}
-                placeholder="8-20자, 영문/숫자/특수문자 포함"
-                value={formData.leaderPw}
-                onChange={(e) => handleChange('leaderPw', e.target.value)}
-                className={errors.leaderPw ? 'border-destructive pr-10' : 'pr-10'}
-                autoComplete="new-password"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              >
-                <HugeiconsIcon icon={showPassword ? ViewOffIcon : ViewIcon} className="size-5" />
-              </button>
-            </div>
-            {errors.leaderPw && <p className="text-sm text-destructive">{errors.leaderPw}</p>}
-          </div>
-
-          {/* 비밀번호 확인 */}
-          <div className="space-y-2">
-            <Label htmlFor="leaderPwConfirm">비밀번호 확인</Label>
-            <div className="relative">
-              <Input
-                id="leaderPwConfirm"
-                type={showConfirmPassword ? 'text' : 'password'}
-                placeholder="비밀번호를 다시 입력하세요"
-                value={formData.leaderPwConfirm}
-                onChange={(e) => handleChange('leaderPwConfirm', e.target.value)}
-                className={errors.leaderPwConfirm ? 'border-destructive pr-10' : 'pr-10'}
-                autoComplete="new-password"
-              />
-              <button
-                type="button"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              >
-                <HugeiconsIcon
-                  icon={showConfirmPassword ? ViewOffIcon : ViewIcon}
-                  className="size-5"
-                />
-              </button>
-            </div>
-            {errors.leaderPwConfirm && (
-              <p className="text-sm text-destructive">{errors.leaderPwConfirm}</p>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>동아리 정보</CardTitle>
-          <CardDescription>동아리 기본 정보를 입력하세요</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* 동아리명 */}
-          <div className="space-y-2">
-            <Label htmlFor="clubName">동아리명</Label>
-            <div className="flex items-center gap-2">
-              <div className="relative flex-1">
+            {/* 비밀번호 */}
+            <div className="space-y-2">
+              <Label htmlFor="leaderPw">비밀번호</Label>
+              <div className="relative">
                 <Input
-                  id="clubName"
-                  placeholder="최대 10자"
-                  value={formData.clubName}
-                  onChange={(e) => handleChange('clubName', e.target.value)}
-                  className={errors.clubName ? 'border-destructive' : ''}
-                  maxLength={10}
+                  id="leaderPw"
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="8-20자, 영문/숫자/특수문자 포함"
+                  value={formData.leaderPw}
+                  onChange={(e) => handleChange('leaderPw', e.target.value)}
+                  className={errors.leaderPw ? 'border-destructive pr-10' : 'pr-10'}
+                  autoComplete="new-password"
+                  disabled={isCreating}
                 />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-3 top-1/2 -translate-y-1/2"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  <HugeiconsIcon icon={showPassword ? ViewOffIcon : ViewIcon} className="size-5" />
+                </Button>
               </div>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleCheckClubName}
-                disabled={validation.clubName === 'checking'}
-              >
-                중복 확인
-              </Button>
-              <span className="w-20 flex justify-center">
-                {getValidationIcon(validation.clubName)}
-              </span>
+              {errors.leaderPw && <p className="text-sm text-destructive">{errors.leaderPw}</p>}
             </div>
-            {errors.clubName && <p className="text-sm text-destructive">{errors.clubName}</p>}
-          </div>
 
-          {/* 분과 */}
-          <div className="space-y-2">
-            <Label htmlFor="department">분과</Label>
-            <Select
-              value={formData.department || undefined}
-              onValueChange={(value) => handleChange('department', value as Department)}
-            >
-              <SelectTrigger className={`w-full ${errors.department ? 'border-destructive' : ''}`}>
-                <SelectValue>
-                  {formData.department
-                    ? DEPARTMENTS.find((d) => d.value === formData.department)?.label
-                    : '분과를 선택하세요'}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {DEPARTMENTS.map((dept) => (
-                  <SelectItem key={dept.value} value={dept.value}>
-                    {dept.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {errors.department && <p className="text-sm text-destructive">{errors.department}</p>}
-          </div>
-
-          {/* 동아리방 호수 */}
-          <div className="space-y-2">
-            <Label htmlFor="clubRoomNumber">동아리방 호수</Label>
-            <Input
-              id="clubRoomNumber"
-              placeholder="예: B101, 201"
-              value={formData.clubRoomNumber}
-              onChange={(e) => handleChange('clubRoomNumber', e.target.value)}
-              className={errors.clubRoomNumber ? 'border-destructive' : ''}
-            />
-            {errors.clubRoomNumber && (
-              <p className="text-sm text-destructive">{errors.clubRoomNumber}</p>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>관리자 인증</CardTitle>
-          <CardDescription>동아리 추가를 위해 관리자 비밀번호를 입력하세요</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            <Label htmlFor="adminPw">관리자 비밀번호</Label>
-            <div className="relative">
-              <Input
-                id="adminPw"
-                type={showAdminPassword ? 'text' : 'password'}
-                placeholder="관리자 비밀번호를 입력하세요"
-                value={formData.adminPw}
-                onChange={(e) => handleChange('adminPw', e.target.value)}
-                className={errors.adminPw ? 'border-destructive pr-10' : 'pr-10'}
-                autoComplete="off"
-              />
-              <button
-                type="button"
-                onClick={() => setShowAdminPassword(!showAdminPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              >
-                <HugeiconsIcon
-                  icon={showAdminPassword ? ViewOffIcon : ViewIcon}
-                  className="size-5"
+            {/* 비밀번호 확인 */}
+            <div className="space-y-2">
+              <Label htmlFor="leaderPwConfirm">비밀번호 확인</Label>
+              <div className="relative">
+                <Input
+                  id="leaderPwConfirm"
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  placeholder="비밀번호를 다시 입력하세요"
+                  value={formData.leaderPwConfirm}
+                  onChange={(e) => handleChange('leaderPwConfirm', e.target.value)}
+                  className={errors.leaderPwConfirm ? 'border-destructive pr-10' : 'pr-10'}
+                  autoComplete="new-password"
+                  disabled={isCreating}
                 />
-              </button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-3 top-1/2 -translate-y-1/2"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                >
+                  <HugeiconsIcon
+                    icon={showConfirmPassword ? ViewOffIcon : ViewIcon}
+                    className="size-5"
+                  />
+                </Button>
+              </div>
+              {errors.leaderPwConfirm && (
+                <p className="text-sm text-destructive">{errors.leaderPwConfirm}</p>
+              )}
             </div>
-            {errors.adminPw && <p className="text-sm text-destructive">{errors.adminPw}</p>}
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>동아리 정보</CardTitle>
+            <CardDescription>동아리 기본 정보를 입력하세요</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* 동아리명 */}
+            <div className="space-y-2">
+              <Label htmlFor="clubName">동아리명</Label>
+              <div className="flex items-center gap-2">
+                <div className="relative flex-1">
+                  <Input
+                    id="clubName"
+                    placeholder="최대 10자"
+                    value={formData.clubName}
+                    onChange={(e) => handleChange('clubName', e.target.value)}
+                    className={errors.clubName ? 'border-destructive' : ''}
+                    maxLength={10}
+                    disabled={isCreating}
+                  />
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleCheckClubName}
+                  disabled={isCheckingName || isCreating}
+                >
+                  중복 확인
+                </Button>
+                <span className="w-20 flex justify-center">
+                  {getValidationIcon(validation.clubName)}
+                </span>
+              </div>
+              {errors.clubName && <p className="text-sm text-destructive">{errors.clubName}</p>}
+            </div>
+
+            {/* 분과 */}
+            <div className="space-y-2">
+              <Label htmlFor="department">분과</Label>
+              <Select
+                value={formData.department || undefined}
+                onValueChange={(value) => handleChange('department', value as Department)}
+                disabled={isCreating}
+              >
+                <SelectTrigger className={`w-full ${errors.department ? 'border-destructive' : ''}`}>
+                  <SelectValue>
+                    {formData.department
+                      ? DEPARTMENTS.find((d) => d.value === formData.department)?.label
+                      : '분과를 선택하세요'}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {DEPARTMENTS.map((dept) => (
+                    <SelectItem key={dept.value} value={dept.value}>
+                      {dept.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.department && <p className="text-sm text-destructive">{errors.department}</p>}
+            </div>
+
+            {/* 동아리방 호수 */}
+            <div className="space-y-2">
+              <Label htmlFor="clubRoomNumber">동아리방 호수</Label>
+              <Input
+                id="clubRoomNumber"
+                placeholder="예: B101, 201"
+                value={formData.clubRoomNumber}
+                onChange={(e) => handleChange('clubRoomNumber', e.target.value)}
+                className={errors.clubRoomNumber ? 'border-destructive' : ''}
+                disabled={isCreating}
+              />
+              {errors.clubRoomNumber && (
+                <p className="text-sm text-destructive">{errors.clubRoomNumber}</p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>관리자 인증</CardTitle>
+            <CardDescription>동아리 추가를 위해 관리자 비밀번호를 입력하세요</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <Label htmlFor="adminPw">관리자 비밀번호</Label>
+              <div className="relative">
+                <Input
+                  id="adminPw"
+                  type={showAdminPassword ? 'text' : 'password'}
+                  placeholder="관리자 비밀번호를 입력하세요"
+                  value={formData.adminPw}
+                  onChange={(e) => handleChange('adminPw', e.target.value)}
+                  className={errors.adminPw ? 'border-destructive pr-10' : 'pr-10'}
+                  autoComplete="off"
+                  disabled={isCreating}
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-3 top-1/2 -translate-y-1/2"
+                  onClick={() => setShowAdminPassword(!showAdminPassword)}
+                >
+                  <HugeiconsIcon
+                    icon={showAdminPassword ? ViewOffIcon : ViewIcon}
+                    className="size-5"
+                  />
+                </Button>
+              </div>
+              {errors.adminPw && <p className="text-sm text-destructive">{errors.adminPw}</p>}
+            </div>
+          </CardContent>
+        </Card>
 
         {/* 저장 버튼 */}
         <div className="flex justify-end gap-2">
-          <Button type="button" variant="outline" onClick={() => navigate('/union/dashboard')}>
+          <Button type="button" variant="outline" onClick={() => navigate('/union/dashboard')} disabled={isCreating}>
             취소
           </Button>
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? '추가 중...' : '동아리 추가'}
+          <Button type="submit" disabled={isCreating}>
+            {isCreating ? '추가 중...' : '동아리 추가'}
           </Button>
         </div>
       </form>

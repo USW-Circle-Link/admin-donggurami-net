@@ -1,73 +1,192 @@
-import { useState, useRef } from 'react'
+import { useRef, useState } from 'react'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { Image01Icon, Delete01Icon, Add01Icon } from '@hugeicons/core-free-icons'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { dummyFloorRoomInfo, type FloorRoomInfo } from '@/data/dummyData'
+import { Skeleton } from '@/components/ui/skeleton'
+import { toast } from 'sonner'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import { useFloorPhoto, useUploadFloorPhoto, useDeleteFloorPhoto } from '@/features/admin/hooks/useAdmin'
+import type { FloorType } from '@/features/admin/domain/adminSchemas'
 
-export function RoomInfoEditPage() {
-  const [floors, setFloors] = useState<FloorRoomInfo[]>(dummyFloorRoomInfo)
-  const [newFloorNumber, setNewFloorNumber] = useState('')
-  const fileInputRefs = useRef<{ [key: number]: HTMLInputElement | null }>({})
+const FLOOR_TYPES: FloorType[] = ['B1', 'F1', 'F2']
 
-  const handleImageUpload = (floorNumber: number, e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setFloors((prev) =>
-          prev.map((floor) =>
-            floor.floor === floorNumber ? { ...floor, imageUrl: reader.result as string } : floor
-          )
-        )
-      }
-      reader.readAsDataURL(file)
+function FloorPhotoCard({ floor }: { floor: FloorType }) {
+  const { data: floorPhotoData, isLoading, error } = useFloorPhoto(floor)
+  const { mutate: uploadFloorPhoto, isPending: isUploading } = useUploadFloorPhoto()
+  const { mutate: deleteFloorPhoto, isPending: isDeleting } = useDeleteFloorPhoto()
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+
+  const floorData = floorPhotoData?.data
+  const imageUrl = floorData?.presignedUrl
+
+  const getFloorLabel = (floor: FloorType) => {
+    switch (floor) {
+      case 'B1':
+        return '지하층'
+      case 'F1':
+        return '1층'
+      case 'F2':
+        return '2층'
     }
   }
 
-  const handleRemoveImage = (floorNumber: number) => {
-    setFloors((prev) =>
-      prev.map((floor) =>
-        floor.floor === floorNumber ? { ...floor, imageUrl: null } : floor
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      uploadFloorPhoto(
+        { floor, photo: file },
+        {
+          onSuccess: () => {
+            if (fileInputRef.current) {
+              fileInputRef.current.value = ''
+            }
+          },
+          onError: () => {
+            toast.error('층면도 이미지 업로드에 실패했습니다.')
+          },
+        }
       )
+    }
+  }
+
+  const handleRemoveImage = () => {
+    if (imageUrl) {
+      setDeleteDialogOpen(true)
+    }
+  }
+
+  const confirmDelete = () => {
+    deleteFloorPhoto(floor, {
+      onSuccess: () => {
+        toast.success('층면도 이미지가 삭제되었습니다.')
+        setDeleteDialogOpen(false)
+      },
+      onError: () => {
+        toast.error('층면도 이미지 삭제에 실패했습니다.')
+        setDeleteDialogOpen(false)
+      },
+    })
+  }
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <Skeleton className="h-6 w-1/4" />
+          <Skeleton className="h-4 w-1/2 mt-2" />
+        </CardHeader>
+        <CardContent>
+          <Skeleton className="h-48 w-full" />
+        </CardContent>
+      </Card>
     )
   }
 
-  const handleAddFloor = () => {
-    const floorNum = parseInt(newFloorNumber)
-    if (!isNaN(floorNum)) {
-      const exists = floors.some((f) => f.floor === floorNum)
-      if (exists) {
-        alert('이미 존재하는 층입니다.')
-        return
-      }
-      setFloors((prev) => [
-        ...prev,
-        {
-          floor: floorNum,
-          imageUrl: null,
-          rooms: [],
-        },
-      ].sort((a, b) => a.floor - b.floor))
-      setNewFloorNumber('')
-    }
+  if (error) {
+    return (
+      <Card className="border-destructive bg-destructive/10">
+        <CardHeader>
+          <CardTitle>{getFloorLabel(floor)}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-destructive">층면도 정보를 불러오는 중 오류가 발생했습니다.</p>
+        </CardContent>
+      </Card>
+    )
   }
 
-  const handleRemoveFloor = (floorNumber: number) => {
-    setFloors((prev) => prev.filter((floor) => floor.floor !== floorNumber))
-  }
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle>{getFloorLabel(floor)}</CardTitle>
+            <CardDescription>
+              동아리방 배치도 이미지를 업로드하세요
+              {imageUrl && ` (현재 이미지 있음)`}
+            </CardDescription>
+          </div>
+          {imageUrl && (
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              onClick={handleRemoveImage}
+              disabled={isDeleting}
+            >
+              <HugeiconsIcon icon={Delete01Icon} className="text-destructive" />
+            </Button>
+          )}
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          <div>
+            <Label htmlFor={`floor-image-${floor}`}>배치도 이미지</Label>
+            <input
+              type="file"
+              id={`floor-image-${floor}`}
+              accept="image/*"
+              className="hidden"
+              ref={fileInputRef}
+              onChange={handleImageUpload}
+              disabled={isUploading}
+            />
+            <div className="relative mt-2">
+              {imageUrl ? (
+                <img
+                  src={imageUrl}
+                  alt={`${getFloorLabel(floor)} 배치도`}
+                  className="max-w-full h-auto rounded-lg border"
+                />
+              ) : (
+                <div
+                  onClick={() => !isUploading && fileInputRef.current?.click()}
+                  className="flex flex-col items-center justify-center border-2 border-dashed rounded-lg p-12 cursor-pointer hover:bg-muted/50 transition-colors"
+                >
+                  <HugeiconsIcon icon={Image01Icon} className="size-12 text-muted-foreground mb-4" />
+                  <p className="text-sm text-muted-foreground">
+                    {isUploading ? '업로드 중...' : '클릭하여 이미지를 업로드하세요'}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">PNG, JPG, GIF 지원</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </CardContent>
 
-  const getFloorName = (floorNum: number) => {
-    if (floorNum < 0) return `지하${Math.abs(floorNum)}층`
-    return `${floorNum}층`
-  }
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>층면도 이미지 삭제</AlertDialogTitle>
+            <AlertDialogDescription>
+              {getFloorLabel(floor)}의 층면도 이미지를 삭제하시겠습니까?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>취소</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete}>삭제</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </Card>
+  )
+}
 
-  const handleSubmit = () => {
-    alert('동아리방 정보가 저장되었습니다.')
-  }
-
+export function RoomInfoEditPage() {
   return (
     <div className="space-y-6">
       <div>
@@ -86,11 +205,9 @@ export function RoomInfoEditPage() {
             <Input
               type="number"
               placeholder="층 번호 (예: 3, -1)"
-              value={newFloorNumber}
-              onChange={(e) => setNewFloorNumber(e.target.value)}
               className="max-w-xs"
             />
-            <Button onClick={handleAddFloor}>
+            <Button onClick={() => toast.info('기능 개발 중입니다.')}>
               <HugeiconsIcon icon={Add01Icon} className="mr-1" />
               추가
             </Button>
@@ -99,88 +216,13 @@ export function RoomInfoEditPage() {
       </Card>
 
       {/* 층별 정보 */}
-      {floors.map((floor) => (
-        <Card key={floor.floor}>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>{getFloorName(floor.floor)}</CardTitle>
-                <CardDescription>
-                  동아리방 배치도 이미지를 업로드하세요
-                  {floor.rooms.length > 0 && ` (${floor.rooms.join(', ')})`}
-                </CardDescription>
-              </div>
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                onClick={() => handleRemoveFloor(floor.floor)}
-              >
-                <HugeiconsIcon icon={Delete01Icon} className="text-destructive" />
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor={`floor-image-${floor.floor}`}>배치도 이미지</Label>
-                <input
-                  type="file"
-                  id={`floor-image-${floor.floor}`}
-                  accept="image/*"
-                  className="hidden"
-                  ref={(el) => { fileInputRefs.current[floor.floor] = el }}
-                  onChange={(e) => handleImageUpload(floor.floor, e)}
-                />
-              </div>
-
-              {floor.imageUrl ? (
-                <div className="relative">
-                  <img
-                    src={floor.imageUrl}
-                    alt={`${getFloorName(floor.floor)} 배치도`}
-                    className="max-w-full h-auto rounded-lg border"
-                  />
-                  <div className="mt-2 flex gap-2">
-                    <Button
-                      variant="outline"
-                      onClick={() => fileInputRefs.current[floor.floor]?.click()}
-                    >
-                      <HugeiconsIcon icon={Image01Icon} className="mr-1" />
-                      이미지 변경
-                    </Button>
-                    <Button variant="destructive" onClick={() => handleRemoveImage(floor.floor)}>
-                      <HugeiconsIcon icon={Delete01Icon} className="mr-1" />
-                      이미지 삭제
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <div
-                  className="flex flex-col items-center justify-center border-2 border-dashed rounded-lg p-12 cursor-pointer hover:bg-muted/50 transition-colors"
-                  onClick={() => fileInputRefs.current[floor.floor]?.click()}
-                >
-                  <HugeiconsIcon icon={Image01Icon} className="size-12 text-muted-foreground mb-4" />
-                  <p className="text-sm text-muted-foreground">클릭하여 이미지를 업로드하세요</p>
-                  <p className="text-xs text-muted-foreground mt-1">PNG, JPG, GIF 지원</p>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+      {FLOOR_TYPES.map((floor) => (
+        <FloorPhotoCard key={floor} floor={floor} />
       ))}
 
-      {floors.length === 0 && (
-        <Card>
-          <CardContent className="py-12 text-center text-muted-foreground">
-            등록된 층 정보가 없습니다. 위에서 새 층을 추가해주세요.
-          </CardContent>
-        </Card>
-      )}
-
-      {/* 저장 버튼 */}
       <div className="flex justify-end gap-2">
         <Button variant="outline">취소</Button>
-        <Button onClick={handleSubmit}>저장</Button>
+        <Button onClick={() => toast.success('층면도 정보가 저장되었습니다.')}>저장</Button>
       </div>
     </div>
   )

@@ -6,18 +6,24 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Checkbox } from '@/components/ui/checkbox'
-import { dummyApplicants, type ApplicantWithStatus } from '@/data/dummyData'
+import { Skeleton } from '@/components/ui/skeleton'
+import { toast } from 'sonner'
+import { dummyApplicants } from '@/data/dummyData'
+import { useAuthStore } from '@/features/auth/store/authStore'
+import { useFailedApplicants, useProcessFailedApplicants } from '@/features/club-leader/hooks/useClubLeader'
 import type { ApplicantStatus } from '@features/club-leader/domain/clubLeaderSchemas'
 
 export function FinalizePage() {
-  const [applicants, setApplicants] = useState<ApplicantWithStatus[]>(
-    dummyApplicants.filter((a) => a.aplictStatus !== 'WAIT')
-  )
+  const { clubUUID } = useAuthStore()
+  const { isLoading, error } = useFailedApplicants(clubUUID || '')
+  const { mutate: processFailedApplicants } = useProcessFailedApplicants()
+
+  const failedApplicants = dummyApplicants.filter((a) => a.aplictStatus !== 'WAIT')
   const [selectedPass, setSelectedPass] = useState<Set<string>>(new Set())
   const [selectedFail, setSelectedFail] = useState<Set<string>>(new Set())
 
-  const passedApplicants = applicants.filter((a) => a.aplictStatus === 'PASS')
-  const failedApplicants = applicants.filter((a) => a.aplictStatus === 'FAIL')
+  const passedApplicants = failedApplicants.filter((a) => a.aplictStatus === 'PASS')
+  const failedApplicantsList = failedApplicants.filter((a) => a.aplictStatus === 'FAIL')
 
   const handleToggleSelect = (uuid: string, status: ApplicantStatus) => {
     if (status === 'PASS') {
@@ -44,29 +50,101 @@ export function FinalizePage() {
   }
 
   const handleMoveToFail = () => {
-    setApplicants((prev) =>
-      prev.map((a) =>
-        selectedPass.has(a.aplictUUID) ? { ...a, aplictStatus: 'FAIL' as ApplicantStatus } : a
-      )
+    if (!clubUUID || selectedPass.size === 0) return
+
+    const updates = Array.from(selectedPass).map((uuid) => ({
+      aplictUUID: uuid,
+      aplictStatus: 'FAIL' as ApplicantStatus,
+    }))
+
+    processFailedApplicants(
+      {
+        clubUUID,
+        updates,
+      },
+      {
+        onSuccess: () => {
+          setSelectedPass(new Set())
+          toast.success(`${updates.length}명이 불합격으로 변경되었습니다.`)
+        },
+        onError: () => {
+          toast.error('불합격으로 변경에 실패했습니다.')
+        },
+      }
     )
-    setSelectedPass(new Set())
   }
 
   const handleMoveToPass = () => {
-    setApplicants((prev) =>
-      prev.map((a) =>
-        selectedFail.has(a.aplictUUID) ? { ...a, aplictStatus: 'PASS' as ApplicantStatus } : a
-      )
+    if (!clubUUID || selectedFail.size === 0) return
+
+    const updates = Array.from(selectedFail).map((uuid) => ({
+      aplictUUID: uuid,
+      aplictStatus: 'PASS' as ApplicantStatus,
+    }))
+
+    processFailedApplicants(
+      {
+        clubUUID,
+        updates,
+      },
+      {
+        onSuccess: () => {
+          setSelectedFail(new Set())
+          toast.success(`${updates.length}명이 합격으로 변경되었습니다.`)
+        },
+        onError: () => {
+          toast.error('합격으로 변경에 실패했습니다.')
+        },
+      }
     )
-    setSelectedFail(new Set())
   }
 
   const handleSendPassNotification = () => {
-    alert(`${passedApplicants.length}명에게 합격 알림을 보냅니다.`)
+    toast.success(`${passedApplicants.length}명에게 합격 알림을 보냅니다.`)
   }
 
   const handleSendFailNotification = () => {
-    alert(`${failedApplicants.length}명에게 불합격 알림을 보냅니다.`)
+    toast.success(`${failedApplicantsList.length}명에게 불합격 알림을 보냅니다.`)
+  }
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold">합격자 확정</h1>
+          <p className="text-muted-foreground">합격자와 불합격자를 최종 확정하고 알림을 보내세요</p>
+        </div>
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-6 w-1/4" />
+            <Skeleton className="h-4 w-1/3 mt-2" />
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {[...Array(3)].map((_, i) => (
+                <Skeleton key={i} className="h-16 w-full" />
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold">합격자 확정</h1>
+          <p className="text-muted-foreground">합격자와 불합격자를 최종 확정하고 알림을 보내세요</p>
+        </div>
+        <Card className="border-destructive bg-destructive/10">
+          <CardContent className="pt-6">
+            <p className="text-destructive">지원자를 불러오는 중 오류가 발생했습니다.</p>
+          </CardContent>
+        </Card>
+      </div>
+    )
   }
 
   return (
@@ -79,14 +157,13 @@ export function FinalizePage() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        {/* 합격자 목록 */}
         <Card>
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle className="flex items-center gap-2">
                   합격자
-                  <Badge className="bg-green-500">{passedApplicants.length}명</Badge>
+                  <Badge variant="success">{passedApplicants.length}명</Badge>
                 </CardTitle>
                 <CardDescription>합격 처리된 지원자 목록</CardDescription>
               </div>
@@ -134,7 +211,8 @@ export function FinalizePage() {
             <Separator className="my-4" />
 
             <Button
-              className="w-full bg-green-600 hover:bg-green-700"
+              variant="success"
+              className="w-full"
               disabled={passedApplicants.length === 0}
               onClick={handleSendPassNotification}
             >
@@ -144,14 +222,13 @@ export function FinalizePage() {
           </CardContent>
         </Card>
 
-        {/* 불합격자 목록 */}
         <Card>
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle className="flex items-center gap-2">
                   불합격자
-                  <Badge variant="destructive">{failedApplicants.length}명</Badge>
+                  <Badge variant="destructive">{failedApplicantsList.length}명</Badge>
                 </CardTitle>
                 <CardDescription>불합격 처리된 지원자 목록</CardDescription>
               </div>
@@ -161,17 +238,17 @@ export function FinalizePage() {
                 disabled={selectedFail.size === 0}
                 onClick={handleMoveToPass}
               >
-                <HugeiconsIcon icon={ArrowLeft01Icon} className="mr-1" />
                 합격으로 이동
+                <HugeiconsIcon icon={ArrowLeft01Icon} className="mr-1" />
               </Button>
             </div>
           </CardHeader>
           <CardContent>
             <div className="space-y-2 max-h-96 overflow-y-auto">
-              {failedApplicants.length === 0 ? (
+              {failedApplicantsList.length === 0 ? (
                 <p className="text-center text-muted-foreground py-8">불합격자가 없습니다</p>
               ) : (
-                failedApplicants.map((applicant) => (
+                failedApplicantsList.map((applicant) => (
                   <div
                     key={applicant.aplictUUID}
                     className={`flex items-center justify-between rounded-lg border p-3 cursor-pointer transition-colors ${
@@ -201,17 +278,16 @@ export function FinalizePage() {
             <Button
               variant="destructive"
               className="w-full"
-              disabled={failedApplicants.length === 0}
+              disabled={failedApplicantsList.length === 0}
               onClick={handleSendFailNotification}
             >
               <HugeiconsIcon icon={Notification01Icon} className="mr-2" />
-              불합격 알림 보내기 ({failedApplicants.length}명)
+              불합격 알림 보내기 ({failedApplicantsList.length}명)
             </Button>
           </CardContent>
         </Card>
       </div>
 
-      {/* 안내 문구 */}
       <Card>
         <CardContent className="py-4">
           <p className="text-sm text-muted-foreground text-center">

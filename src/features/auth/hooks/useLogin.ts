@@ -2,7 +2,7 @@ import { useMutation } from '@tanstack/react-query'
 import { loginClubLeader, loginAdmin } from '../api/authApi'
 import { useAuthStore } from '../store/authStore'
 import { setAccessToken } from '@shared/api/apiClient'
-import { clubLeaderLoginSchema, adminLoginSchema } from '../domain/authSchemas'
+import { clubLeaderLoginSchema, clubLeaderLoginApiSchema, adminLoginSchema } from '../domain/authSchemas'
 import type {
   ClubLeaderLoginInput,
   AdminLoginInput,
@@ -13,9 +13,10 @@ export function useClubLeaderLogin() {
 
   return useMutation({
     mutationFn: async (credentials: ClubLeaderLoginInput) => {
-      // Validate input before API call
+      // Validate input and add loginType
       const validatedInput = clubLeaderLoginSchema.parse(credentials)
-      return loginClubLeader(validatedInput)
+      const apiInput = clubLeaderLoginApiSchema.parse({ ...validatedInput, loginType: 'LEADER' })
+      return loginClubLeader(apiInput)
     },
     onSuccess: (response) => {
       const { accessToken, role, clubUUID, isAgreedTerms } = response.data

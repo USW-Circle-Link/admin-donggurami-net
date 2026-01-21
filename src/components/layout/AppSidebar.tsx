@@ -26,8 +26,8 @@ import {
 } from '@/components/ui/sidebar'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import clubIcon from '@/assets/icons/Icon-192.png'
-import { dummyClubSummary } from '@/data/dummyData'
+import { useAuthStore } from '@/features/auth/store/authStore'
+import { useClubSummary } from '@/features/club-leader/hooks/useClubLeader'
 
 import { ModeToggle } from '@/components/mode-toggle'
 
@@ -35,6 +35,11 @@ export function AppSidebar() {
   const navigate = useNavigate()
   const location = useLocation()
   const { toggleSidebar, isMobile, setOpenMobile } = useSidebar()
+  const { clubUUID } = useAuthStore()
+
+  // 클럽 정보 조회
+  const { data: clubSummaryData } = useClubSummary(clubUUID || '')
+  const clubSummary = clubSummaryData?.data
 
   const handleNavigation = (path: string) => {
     navigate(path)
@@ -50,10 +55,11 @@ export function AppSidebar() {
   const isClubActive = location.pathname.startsWith('/club')
   const isApplicantsActive = location.pathname.startsWith('/applicants')
 
-  // 동아리 회장 정보 (더미 데이터에서 가져옴)
+  // 동아리 회장 정보
   const leaderInfo = {
-    name: dummyClubSummary.leaderName,
-    clubName: dummyClubSummary.clubName,
+    name: clubSummary?.leaderName || '동아리 회장',
+    clubName: clubSummary?.clubName || '동아리',
+    mainPhoto: clubSummary?.mainPhoto || null,
   }
 
   return (
@@ -64,7 +70,7 @@ export function AppSidebar() {
           {/* 펼쳐진 상태: 동구라미 텍스트 */}
           <span
             className="font-bold text-xl group-data-[collapsible=icon]:hidden"
-            style={{ fontFamily: 'Juache, sans-serif', color: '#FFC01D' }}
+            style={{ fontFamily: 'Juache, sans-serif', color: 'var(--brand-primary)' }}
           >
             동구라미
           </span>
@@ -190,7 +196,7 @@ export function AppSidebar() {
         <div className="group-data-[collapsible=icon]:hidden border-t pt-3">
           <div className="flex items-center gap-3 px-2 py-2">
             <Avatar className="h-9 w-9">
-              <AvatarImage src={clubIcon} alt={leaderInfo.clubName} />
+              <AvatarImage src={leaderInfo.mainPhoto || '/v2/circle_default_image.png'} alt={leaderInfo.clubName} onError={(e: any) => { e.currentTarget.src = '/v2/circle_default_image.png' }} />
               <AvatarFallback>{leaderInfo.clubName.charAt(0)}</AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
@@ -228,7 +234,7 @@ export function AppSidebar() {
         {/* 접힌 상태: 동아리 아이콘 */}
         <div className="hidden group-data-[collapsible=icon]:flex flex-col items-center gap-2 py-2">
           <Avatar className="h-8 w-8">
-            <AvatarImage src={clubIcon} alt={leaderInfo.clubName} />
+            <AvatarImage src={leaderInfo.mainPhoto || '/v2/circle_default_image.png'} alt={leaderInfo.clubName} onError={(e: any) => { e.currentTarget.src = '/v2/circle_default_image.png' }} />
             <AvatarFallback>{leaderInfo.clubName.charAt(0)}</AvatarFallback>
           </Avatar>
           <div className="flex justify-center">

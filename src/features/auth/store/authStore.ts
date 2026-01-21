@@ -56,7 +56,9 @@ export const useAuthStore = create<AuthStore>()(
       name: 'auth-storage',
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
-        // Only persist non-sensitive data
+        // Persist auth state including accessToken
+        isAuthenticated: state.isAuthenticated,
+        accessToken: state.accessToken,
         role: state.role,
         clubUUID: state.clubUUID,
         isAgreedTerms: state.isAgreedTerms,

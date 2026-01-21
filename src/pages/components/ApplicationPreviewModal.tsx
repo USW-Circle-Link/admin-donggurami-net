@@ -17,6 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import type { ApplicationQuestion } from '@/data/dummyData'
 
 interface ApplicationPreviewModalProps {
@@ -73,19 +74,16 @@ export function ApplicationPreviewModal({
                 )}
 
                 {q.type === 'radio' && q.options && (
-                  <div className="space-y-2 pl-2">
+                  <RadioGroup disabled className="space-y-2 pl-2">
                     {q.options.map((opt, i) => (
                       <div key={i} className="flex items-center gap-2">
-                        <input
-                          type="radio"
-                          name={`question-${q.id}`}
-                          disabled
-                          className="size-4"
-                        />
-                        <span className="text-sm">{opt}</span>
+                        <RadioGroupItem value={opt} id={`question-${q.id}-${i}`} />
+                        <Label htmlFor={`question-${q.id}-${i}`} className="text-sm font-normal">
+                          {opt}
+                        </Label>
                       </div>
                     ))}
-                  </div>
+                  </RadioGroup>
                 )}
 
                 {q.type === 'checkbox' && q.options && (
