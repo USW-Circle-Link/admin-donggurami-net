@@ -146,9 +146,15 @@ Error codes follow a prefix pattern. Use `error-codes.md` for full lookup:
 - **ADMIN**: Admin functions (notices, categories, clubs, floors)
 
 ### Token Handling
-- **Access Token**: JWT stored in memory
+- **Access Token**: JWT persisted in localStorage (recovered on app refresh), synced with in-memory storage
 - **Refresh Token**: JWT in httpOnly cookies
 - **Refresh Endpoint**: `POST /integration/refresh-token`
+- **Client-Side Implementation**:
+  - Zustand store persists `isAuthenticated` and `accessToken`
+  - apiClient initializes token from localStorage on app start
+  - Automatic token validation on app startup via `AuthInitializer` component
+  - Protected routes redirect unauthenticated users to `/login`
+  - Valid token → auto-redirect to dashboard; Invalid/expired → auto-redirect to login
 
 ## Working with Specific Features
 
