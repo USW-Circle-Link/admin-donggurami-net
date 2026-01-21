@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClient } from '@/shared/lib/queryClient'
 import { ThemeProvider } from '@/components/theme-provider'
+import { Toaster } from '@/components/ui/sonner'
 import './index.css'
 
 import { AdminLayout } from '@/components/layout/AdminLayout'
@@ -55,6 +56,7 @@ createRoot(document.getElementById('root')!).render(
         </Routes>
         </AuthInitializer>
       </BrowserRouter>
+      <Toaster />
     </ThemeProvider>
   </QueryClientProvider>
 )
