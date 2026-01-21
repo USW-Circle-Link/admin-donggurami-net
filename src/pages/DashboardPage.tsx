@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback, useEffect } from 'react'
 import { useNavigate } from 'react-router'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { FileDownloadIcon, Delete01Icon, Edit01Icon, ArrowUp01Icon, ArrowDown01Icon, Search01Icon } from '@hugeicons/core-free-icons'
@@ -6,6 +6,7 @@ import type { MemberRole } from '@/features/club-leader/domain/clubLeaderSchemas
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Skeleton } from '@/components/ui/skeleton'
 import {
   Table,
   TableBody,
@@ -27,9 +28,10 @@ import {
 } from '@/components/ui/alert-dialog'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
-import { dummyClubSummary, dummyClubMembers } from '@/data/dummyData'
+import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext, type CarouselApi } from '@/components/ui/carousel'
 import { useDebounce } from '@/shared/hooks/useDebounce'
-import { useDeleteClubMembers } from '@/features/club-leader/hooks/useClubLeader'
+import { useAuthStore } from '@/features/auth/store/authStore'
+import { useClubSummary, useClubMembers, useDeleteClubMembers } from '@/features/club-leader/hooks/useClubLeader'
 
 type SortField = 'userName' | 'studentNumber' | 'major' | 'userHp' | 'role'
 type SortDirection = 'asc' | 'desc'
@@ -58,12 +60,20 @@ const getRoleOrder = (role?: MemberRole) => {
 
 export function DashboardPage() {
   const navigate = useNavigate()
-  const club = dummyClubSummary
-  const [members, setMembers] = useState(dummyClubMembers)
+  const { clubUUID } = useAuthStore()
+
+  const { data: clubData, isLoading: clubLoading, error: clubError } = useClubSummary(clubUUID || '')
+  const { data: membersData, isLoading: membersLoading, error: membersError } = useClubMembers(clubUUID || '')
+
+  const club = clubData?.data
+  const members = useMemo(() => membersData?.data || [], [membersData?.data])
+
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [sortField, setSortField] = useState<SortField | null>(null)
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
   const [searchQuery, setSearchQuery] = useState('')
+  const [carouselApi, setCarouselApi] = useState<CarouselApi>()
+  const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0)
   const debouncedSearch = useDebounce(searchQuery, 300)
   const { mutate: deleteMembers, isPending: isDeleting } = useDeleteClubMembers()
 
@@ -106,6 +116,22 @@ export function DashboardPage() {
     alert('명단을 엑셀로 내보냅니다.')
   }
 
+  // Track carousel position for photo counter and indicators
+  const onCarouselSelect = useCallback(() => {
+    if (!carouselApi) return
+    setCurrentPhotoIndex(carouselApi.selectedScrollSnap())
+  }, [carouselApi])
+
+  // Listen to carousel selection changes
+  useEffect(() => {
+    if (!carouselApi) return
+    onCarouselSelect()
+    carouselApi.on('select', onCarouselSelect)
+    return () => {
+      carouselApi.off('select', onCarouselSelect)
+    }
+  }, [carouselApi, onCarouselSelect])
+
   const toggleSelectAll = () => {
     const currentIds = filteredMembers.map((m) => m.clubMemberUUID)
     const allSelected = currentIds.every((id) => selectedIds.includes(id))
@@ -123,7 +149,7 @@ export function DashboardPage() {
   }
 
   const handleDeleteSelected = () => {
-    if (selectedIds.length === 0) return
+    if (selectedIds.length === 0 || !club) return
 
     deleteMembers(
       {
@@ -132,7 +158,6 @@ export function DashboardPage() {
       },
       {
         onSuccess: () => {
-          setMembers((prev) => prev.filter((m) => !selectedIds.includes(m.clubMemberUUID)))
           setSelectedIds([])
           alert('선택한 회원이 삭제되었습니다.')
         },
@@ -140,6 +165,78 @@ export function DashboardPage() {
           alert('회원 삭제에 실패했습니다.')
         },
       }
+    )
+  }
+
+  if (clubLoading || membersLoading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold">대시보드</h1>
+          <p className="text-muted-foreground">동아리 현황을 한눈에 확인하세요</p>
+        </div>
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-6 w-1/3" />
+            <Skeleton className="h-4 w-1/2 mt-2" />
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="space-y-2">
+                  <Skeleton className="h-4 w-20" />
+                  <Skeleton className="h-6 w-32" />
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-6 w-1/4" />
+            <Skeleton className="h-4 w-1/3 mt-2" />
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {[...Array(5)].map((_, i) => (
+                <Skeleton key={i} className="h-12 w-full" />
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  if (clubError || membersError) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold">대시보드</h1>
+          <p className="text-muted-foreground">동아리 현황을 한눈에 확인하세요</p>
+        </div>
+        <Card className="border-destructive bg-destructive/10">
+          <CardContent className="pt-6">
+            <p className="text-destructive">데이터를 불러오는 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.</p>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  if (!club) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold">대시보드</h1>
+          <p className="text-muted-foreground">동아리 현황을 한눈에 확인하세요</p>
+        </div>
+        <Card>
+          <CardContent className="pt-6">
+            <p>동아리 정보를 찾을 수 없습니다.</p>
+          </CardContent>
+        </Card>
+      </div>
     )
   }
 
@@ -153,19 +250,31 @@ export function DashboardPage() {
       {/* 동아리 기본 정보 */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                {club.clubName}
-                <Badge variant={club.recruitmentStatus === 'OPEN' ? 'default' : 'secondary'}>
-                  {club.recruitmentStatus === 'OPEN' ? '모집중' : '모집마감'}
-                </Badge>
-              </CardTitle>
-              <CardDescription>{club.clubCategories.join(', ')}</CardDescription>
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-4 flex-1 min-w-0">
+              {club.mainPhoto && (
+                <img
+                  src={club.mainPhoto}
+                  alt={`${club.clubName} 로고`}
+                  className="h-16 w-16 object-cover rounded-lg border flex-shrink-0"
+                  onError={(e) => {
+                    e.currentTarget.src = '/v2/circle_default_image.png'
+                  }}
+                />
+              )}
+              <div className="min-w-0 flex-1">
+                <CardTitle className="flex items-center gap-2 flex-wrap">
+                  {club.clubName}
+                  <Badge variant={club.recruitmentStatus === 'OPEN' ? 'default' : 'secondary'}>
+                    {club.recruitmentStatus === 'OPEN' ? '모집중' : '모집마감'}
+                  </Badge>
+                </CardTitle>
+                <CardDescription>{club.clubCategories.join(', ')}</CardDescription>
+              </div>
             </div>
-            <Button variant="outline" size="sm" onClick={() => navigate('/club/basic-info')}>
-              <HugeiconsIcon icon={Edit01Icon} className="mr-2 size-4" />
-              기본 정보 수정
+            <Button variant="outline" size="sm" onClick={() => navigate('/club/basic-info')} className="flex-shrink-0">
+              <HugeiconsIcon icon={Edit01Icon} className="size-4 md:mr-2" />
+              <span className="hidden md:inline">기본 정보 수정</span>
             </Button>
           </div>
         </CardHeader>
@@ -197,10 +306,66 @@ export function DashboardPage() {
             ))}
           </div>
 
-          {club.clubIntro && (
+          {/* 동아리 소개 사진 캐러셀 */}
+          {club.introPhotos && club.introPhotos.length > 0 && (
             <div className="mt-4">
-              <p className="text-sm text-muted-foreground">동아리 소개</p>
-              <p className="mt-1 text-sm">{club.clubIntro}</p>
+              <p className="text-sm text-muted-foreground mb-3">동아리 소개 사진</p>
+              <Carousel
+                setApi={setCarouselApi}
+                className="relative group"
+              >
+                <CarouselContent className="!ml-0">
+                  {club.introPhotos.map((photo, index) => (
+                    <CarouselItem key={index} className="pl-0">
+                      <div className="relative w-full bg-muted rounded-lg overflow-hidden">
+                        <img
+                          src={photo}
+                          alt={`동아리 소개 사진 ${index + 1}`}
+                          className="w-full h-80 object-cover"
+                          onError={(e) => {
+                            e.currentTarget.src = '/v2/circle_default_image.png'
+                          }}
+                        />
+                      </div>
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+
+                {/* 이전/다음 버튼 */}
+                {club.introPhotos.length > 1 && (
+                  <>
+                    <CarouselPrevious
+                      className="left-2 opacity-0 group-hover:opacity-100 transition-opacity bg-black/50 hover:bg-black/70 text-white border-0"
+                    />
+                    <CarouselNext
+                      className="right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-black/50 hover:bg-black/70 text-white border-0"
+                    />
+                  </>
+                )}
+
+                {/* 사진 개수 표시 */}
+                <div className="absolute bottom-2 right-2 bg-black/50 text-white px-2 py-1 rounded text-xs z-10">
+                  {currentPhotoIndex + 1} / {club.introPhotos.length}
+                </div>
+              </Carousel>
+
+              {/* 도트 인디케이터 */}
+              {club.introPhotos.length > 1 && (
+                <div className="flex justify-center gap-2 mt-3">
+                  {club.introPhotos.map((_, index) => (
+                    <button
+                      key={index}
+                      onClick={() => {
+                        carouselApi?.scrollTo(index)
+                      }}
+                      className={`w-2 h-2 rounded-full transition-colors ${
+                        index === currentPhotoIndex ? 'bg-foreground' : 'bg-muted-foreground'
+                      }`}
+                      aria-label={`Go to slide ${index + 1}`}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </CardContent>
