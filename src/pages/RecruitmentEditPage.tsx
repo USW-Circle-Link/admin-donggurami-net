@@ -13,6 +13,7 @@ import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Spinner } from '@/components/ui/spinner'
 import { toast } from 'sonner'
+import { useQueryClient } from '@tanstack/react-query'
 import {
   Select,
   SelectContent,
@@ -22,9 +23,9 @@ import {
 } from '@/components/ui/select'
 import { ApplicationPreviewModal } from './components/ApplicationPreviewModal'
 import { useAuthStore } from '@/features/auth/store/authStore'
-import { useClubDetail, useToggleRecruitment, useUpdateClubInfo } from '@/features/club-leader/hooks/useClubLeader'
+import { useClubDetail, useToggleRecruitment, useUpdateClubInfo, clubLeaderKeys } from '@/features/club-leader/hooks/useClubLeader'
 import { useCreateForm } from '@/features/form-management'
-import { useClubForm } from '@/features/club'
+import { useClubForm, clubKeys } from '@/features/club'
 import type { CreateFormRequest, QuestionType as ApiQuestionType } from '@/features/form-management/domain/formSchemas'
 import { useNavigate } from 'react-router'
 
@@ -188,6 +189,7 @@ const QUESTION_PRESETS: QuestionPreset[] = [
 
 export function RecruitmentEditPage() {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const { clubUUID } = useAuthStore()
   const { data: clubInfoData, isLoading, error } = useClubDetail(clubUUID || '')
   const clubInfo = clubInfoData?.data
@@ -431,7 +433,12 @@ export function RecruitmentEditPage() {
       })
 
       toast.success('모집 정보가 성공적으로 저장되었습니다.')
-      // Reset form
+
+      // Invalidate queries to refetch data
+      queryClient.invalidateQueries({ queryKey: clubLeaderKeys.detail(clubUUID) })
+      queryClient.invalidateQueries({ queryKey: clubKeys.form(clubUUID) })
+
+      // Reset form questions to trigger reload from server
       setQuestions([])
     } catch (error) {
       console.error('Failed to save recruitment info:', error)
