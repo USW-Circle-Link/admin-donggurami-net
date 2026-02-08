@@ -70,7 +70,7 @@ describe('API Client - Token Refresh Interceptor', () => {
     })
 
     it('should retry original request with new token after refresh', async () => {
-      let capturedTokens: string[] = []
+      const capturedTokens: string[] = []
 
       server.use(
         http.post(`${API_BASE}/auth/refresh`, () => {
@@ -150,8 +150,6 @@ describe('API Client - Token Refresh Interceptor', () => {
 
   describe('Token Refresh Failure', () => {
     it('should logout and clear auth when refresh endpoint returns 401', async () => {
-      let apiCallCount = 0
-
       server.use(
         // Refresh endpoint returns 401
         http.post(`${API_BASE}/auth/refresh`, () => {
@@ -162,7 +160,6 @@ describe('API Client - Token Refresh Interceptor', () => {
         }),
 
         http.get(`${API_BASE}/protected-resource`, () => {
-          apiCallCount++
           return HttpResponse.json({ message: 'Expired' }, { status: 401 })
         })
       )
@@ -321,7 +318,7 @@ describe('API Client - Token Refresh Interceptor', () => {
 
     it('should retry multiple independent requests with their own refresh', async () => {
       let refreshCallCount = 0
-      let requestCounters: Record<string, number> = {}
+      const requestCounters: Record<string, number> = {}
 
       server.use(
         http.post(`${API_BASE}/auth/refresh`, () => {

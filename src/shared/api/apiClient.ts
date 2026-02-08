@@ -58,7 +58,25 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error)
 )
 
-// Response interceptor - handle token refresh
+// Refresh mutex - prevents concurrent refresh token requests
+let isRefreshing = false
+let failedQueue: Array<{
+  resolve: (token: string) => void
+  reject: (error: unknown) => void
+}> = []
+
+const processQueue = (error: unknown, token: string | null = null) => {
+  failedQueue.forEach((p) => {
+    if (error) {
+      p.reject(error)
+    } else {
+      p.resolve(token!)
+    }
+  })
+  failedQueue = []
+}
+
+// Response interceptor - handle token refresh with mutex
 apiClient.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
@@ -71,7 +89,18 @@ apiClient.interceptors.response.use(
       originalRequest &&
       !originalRequest._retry
     ) {
+      // If already refreshing, queue this request
+      if (isRefreshing) {
+        return new Promise<string>((resolve, reject) => {
+          failedQueue.push({ resolve, reject })
+        }).then((token) => {
+          originalRequest.headers.Authorization = `Bearer ${token}`
+          return apiClient(originalRequest)
+        })
+      }
+
       originalRequest._retry = true
+      isRefreshing = true
 
       try {
         // Attempt token refresh
@@ -83,13 +112,16 @@ apiClient.interceptors.response.use(
 
         const newAccessToken = response.data.data.accessToken
         setAccessToken(newAccessToken)
+        processQueue(null, newAccessToken)
 
         originalRequest.headers.Authorization = `Bearer ${newAccessToken}`
         return apiClient(originalRequest)
       } catch (refreshError) {
+        processQueue(refreshError, null)
         clearAccessToken()
-        // Trigger logout/redirect logic here
         return Promise.reject(refreshError)
+      } finally {
+        isRefreshing = false
       }
     }
 
