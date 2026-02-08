@@ -11,7 +11,7 @@ import {
 describe('Admin Validation Schemas', () => {
   describe('departmentSchema', () => {
     it('should validate valid departments', () => {
-      const departments = ['학술', '체육', '문화예술', '종교', '사회봉사']
+      const departments = ['학술', '종교', '예술', '체육', '공연', '봉사']
       departments.forEach((dept) => {
         const result = departmentSchema.safeParse(dept)
         expect(result.success).toBe(true)

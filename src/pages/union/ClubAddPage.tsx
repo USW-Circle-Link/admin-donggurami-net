@@ -14,19 +14,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { createClubRequestSchema, type Department } from '@/features/admin/domain/adminSchemas'
-import {
-  useCheckLeaderAccount,
-  useCheckClubName,
-  useCreateClub,
-} from '@/features/admin/hooks/useAdmin'
+import { clubCreateRequestSchema, type Department } from '@/features/club/domain/clubSchemas'
+import { useCheckDuplication, useCreateClub } from '@/features/club/hooks/useClubs'
 
 const DEPARTMENTS: { value: Department; label: string }[] = [
   { value: '학술', label: '학술' },
-  { value: '체육', label: '체육' },
-  { value: '문화예술', label: '문화예술' },
   { value: '종교', label: '종교' },
-  { value: '사회봉사', label: '사회봉사' },
+  { value: '예술', label: '예술' },
+  { value: '체육', label: '체육' },
+  { value: '공연', label: '공연' },
+  { value: '봉사', label: '봉사' },
 ]
 
 interface FormData {
@@ -64,8 +61,7 @@ export function ClubAddPage() {
     clubName: 'idle',
   })
 
-  const { mutate: checkLeaderAccount, isPending: isCheckingAccount } = useCheckLeaderAccount()
-  const { mutate: checkClubName, isPending: isCheckingName } = useCheckClubName()
+  const { mutate: checkDuplication, isPending: isCheckingDuplication } = useCheckDuplication()
   const { mutate: createClub, isPending: isCreating } = useCreateClub()
 
   const handleChange = (field: keyof FormData, value: string) => {
@@ -93,15 +89,18 @@ export function ClubAddPage() {
       return
     }
     setValidation((prev) => ({ ...prev, leaderAccount: 'checking' }))
-    checkLeaderAccount(formData.leaderAccount, {
-      onSuccess: () => {
-        setValidation((prev) => ({ ...prev, leaderAccount: 'valid' }))
-      },
-      onError: () => {
-        setValidation((prev) => ({ ...prev, leaderAccount: 'invalid' }))
-        setErrors((prev) => ({ ...prev, leaderAccount: '이미 사용중인 아이디입니다.' }))
-      },
-    })
+    checkDuplication(
+      { type: 'leader', val: formData.leaderAccount },
+      {
+        onSuccess: () => {
+          setValidation((prev) => ({ ...prev, leaderAccount: 'valid' }))
+        },
+        onError: () => {
+          setValidation((prev) => ({ ...prev, leaderAccount: 'invalid' }))
+          setErrors((prev) => ({ ...prev, leaderAccount: '이미 사용중인 아이디입니다.' }))
+        },
+      }
+    )
   }
 
   const handleCheckClubName = () => {
@@ -110,20 +109,23 @@ export function ClubAddPage() {
       return
     }
     setValidation((prev) => ({ ...prev, clubName: 'checking' }))
-    checkClubName(formData.clubName, {
-      onSuccess: () => {
-        setValidation((prev) => ({ ...prev, clubName: 'valid' }))
-      },
-      onError: () => {
-        setValidation((prev) => ({ ...prev, clubName: 'invalid' }))
-        setErrors((prev) => ({ ...prev, clubName: '이미 사용중인 동아리명입니다.' }))
-      },
-    })
+    checkDuplication(
+      { type: 'name', val: formData.clubName },
+      {
+        onSuccess: () => {
+          setValidation((prev) => ({ ...prev, clubName: 'valid' }))
+        },
+        onError: () => {
+          setValidation((prev) => ({ ...prev, clubName: 'invalid' }))
+          setErrors((prev) => ({ ...prev, clubName: '이미 사용중인 동아리명입니다.' }))
+        },
+      }
+    )
   }
 
   const handleSubmit = () => {
     // Validate form data using Zod schema
-    const result = createClubRequestSchema.safeParse({
+    const result = clubCreateRequestSchema.safeParse({
       ...formData,
       department: formData.department || undefined,
     })
@@ -210,7 +212,7 @@ export function ClubAddPage() {
                   type="button"
                   variant="outline"
                   onClick={handleCheckLeaderAccount}
-                  disabled={isCheckingAccount || isCreating}
+                  disabled={isCheckingDuplication || isCreating}
                 >
                   중복 확인
                 </Button>
@@ -309,7 +311,7 @@ export function ClubAddPage() {
                   type="button"
                   variant="outline"
                   onClick={handleCheckClubName}
-                  disabled={isCheckingName || isCreating}
+                  disabled={isCheckingDuplication || isCreating}
                 >
                   중복 확인
                 </Button>

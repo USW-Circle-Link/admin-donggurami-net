@@ -6,7 +6,7 @@ import path from 'path'
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: '/v2/',
+  base: '/',
   plugins: [
     react(),
     VitePWA({
@@ -19,8 +19,8 @@ export default defineConfig({
         theme_color: '#FFC01D',
         background_color: '#ffffff',
         display: 'standalone',
-        scope: '/v2/',
-        start_url: '/v2/',
+        scope: '/',
+        start_url: '/',
         orientation: 'portrait-primary',
         icons: [
           {

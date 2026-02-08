@@ -22,22 +22,59 @@ function createErrorResponse(
 export const handlers = [
   // ===== Auth Handlers =====
 
-  // Club Leader Login
-  http.post(`${API_BASE}/club-leader/login`, async ({ request }) => {
+  // Unified Login
+  http.post(`${API_BASE}/auth/login`, async ({ request }) => {
     const body = (await request.json()) as {
-      leaderAccount: string
-      leaderPw: string
-      loginType?: string
+      account: string
+      password: string
+      fcmToken?: string
+      clientId?: string
     }
 
-    if (body.leaderAccount && body.leaderPw) {
+    if (!body.account || !body.password) {
+      return HttpResponse.json(
+        createErrorResponse('UserException', 'USR-211', '아이디 혹은 비밀번호가 일치하지 않습니다', 401),
+        { status: 401 }
+      )
+    }
+
+    // Admin login (account starts with 'admin')
+    if (body.account === 'admin123' && body.password === 'Admin123!') {
       return HttpResponse.json({
-        message: '동아리 회장 로그인 성공',
+        message: '로그인 성공',
         data: {
-          accessToken: 'mock_access_token',
-          refreshToken: 'mock_refresh_token',
+          accessToken: 'mock_admin_token',
+          refreshToken: 'mock_admin_refresh_token',
+          role: 'ADMIN',
+          clubuuid: null,
+          isAgreedTerms: true,
+        },
+      })
+    }
+
+    // Leader login
+    if (body.account === 'leader123' && body.password === 'Leader123!') {
+      return HttpResponse.json({
+        message: '로그인 성공',
+        data: {
+          accessToken: 'mock_leader_token',
+          refreshToken: 'mock_leader_refresh_token',
           role: 'LEADER',
-          clubUUID: '550e8400-e29b-41d4-a716-446655440000',
+          clubuuid: '550e8400-e29b-41d4-a716-446655440000',
+          isAgreedTerms: true,
+        },
+      })
+    }
+
+    // User login
+    if (body.account === 'user123' && body.password === 'User123!') {
+      return HttpResponse.json({
+        message: '로그인 성공',
+        data: {
+          accessToken: 'mock_user_token',
+          refreshToken: 'mock_user_refresh_token',
+          role: 'USER',
+          clubuuid: null,
           isAgreedTerms: true,
         },
       })
@@ -49,32 +86,17 @@ export const handlers = [
     )
   }),
 
-  // Admin Login
-  http.post(`${API_BASE}/admin/login`, async ({ request }) => {
-    const body = (await request.json()) as {
-      adminAccount: string
-      adminPw: string
-      clientId?: string
-    }
-
-    if (body.adminAccount && body.adminPw) {
-      return HttpResponse.json({
-        message: '운영팀 로그인 성공',
-        data: {
-          accessToken: 'admin_access_token',
-          refreshToken: 'admin_refresh_token',
-          role: 'ADMIN',
-        },
-      })
-    }
-
-    return HttpResponse.json(
-      createErrorResponse('UserException', 'USR-211', '아이디 혹은 비밀번호가 일치하지 않습니다', 401),
-      { status: 401 }
-    )
+  // Refresh Token (new endpoint)
+  http.post(`${API_BASE}/auth/refresh`, () => {
+    return HttpResponse.json({
+      message: '새로운 엑세스 토큰이 발급됐습니다.',
+      data: {
+        accessToken: 'new_access_token',
+      },
+    })
   }),
 
-  // Refresh Token
+  // Refresh Token (old endpoint)
   http.post(`${API_BASE}/integration/refresh-token`, () => {
     return HttpResponse.json({
       message: '새로운 엑세스 토큰과 리프레시 토큰이 발급됐습니다. 로그인됐습니다.',
@@ -82,6 +104,14 @@ export const handlers = [
         accessToken: 'new_access_token',
         refreshToken: 'new_refresh_token',
       },
+    })
+  }),
+
+  // Logout (new endpoint)
+  http.post(`${API_BASE}/auth/logout`, () => {
+    return HttpResponse.json({
+      message: '로그아웃 성공',
+      data: null,
     })
   }),
 
@@ -95,7 +125,53 @@ export const handlers = [
 
   // ===== Application Handlers =====
 
-  // Check can apply
+  // Check eligibility
+  http.get(`${API_BASE}/clubs/:clubUUID/applications/eligibility`, () => {
+    return HttpResponse.json({
+      message: '지원 가능 여부 확인 성공',
+      data: true,
+    })
+  }),
+
+  // Submit application
+  http.post(`${API_BASE}/clubs/:clubUUID/applications`, () => {
+    return HttpResponse.json({
+      message: '지원서 제출 성공',
+      data: null,
+    })
+  }),
+
+  // Get application detail
+  http.get(`${API_BASE}/clubs/:clubUUID/applications/:aplictUUID`, () => {
+    return HttpResponse.json({
+      message: '지원서 상세 조회 성공',
+      data: {
+        aplictUUID: 'test-aplict-uuid',
+        applicantName: '홍길동',
+        studentNumber: '20210001',
+        department: '컴퓨터공학과',
+        submittedAt: '2024-01-15T10:30:00',
+        status: 'WAIT',
+        isRead: false,
+        qnaList: [
+          {
+            questionId: 1,
+            question: '지원 동기',
+            type: 'TEXT',
+            answer: '열정적으로 활동하고 싶습니다',
+          },
+          {
+            questionId: 2,
+            question: '희망 분야',
+            type: 'TEXT',
+            answer: null,
+          },
+        ],
+      },
+    })
+  }),
+
+  // Check can apply (old endpoint)
   http.get(`${API_BASE}/apply/can-apply/:clubUUID`, () => {
     return HttpResponse.json({
       message: '지원 가능 여부 확인 성공',
@@ -103,7 +179,7 @@ export const handlers = [
     })
   }),
 
-  // Get Google Form URL
+  // Get Google Form URL (old endpoint)
   http.get(`${API_BASE}/apply/:clubUUID`, () => {
     return HttpResponse.json({
       message: '구글 폼 URL 조회 성공',
@@ -111,7 +187,7 @@ export const handlers = [
     })
   }),
 
-  // Submit application
+  // Submit application (old endpoint)
   http.post(`${API_BASE}/apply/:clubUUID`, () => {
     return HttpResponse.json({
       message: '지원서 제출 성공',
@@ -122,7 +198,7 @@ export const handlers = [
   // ===== Club Leader Handlers =====
 
   // Get club intro
-  http.get(`${API_BASE}/club-leader/:clubUUID/intro`, ({ params }) => {
+  http.get(`${API_BASE}/clubs/:clubUUID/leader/intro`, ({ params }) => {
     return HttpResponse.json({
       message: '동아리 소개 조회 성공',
       data: {
@@ -137,7 +213,7 @@ export const handlers = [
   }),
 
   // Update club intro
-  http.put(`${API_BASE}/club-leader/:clubUUID/intro`, () => {
+  http.put(`${API_BASE}/clubs/:clubUUID/leader/intro`, () => {
     return HttpResponse.json({
       message: '동아리 소개 수정 성공',
       data: null,
@@ -145,7 +221,7 @@ export const handlers = [
   }),
 
   // Get club info
-  http.get(`${API_BASE}/club-leader/:clubUUID/info`, () => {
+  http.get(`${API_BASE}/clubs/:clubUUID/info`, () => {
     return HttpResponse.json({
       message: '동아리 정보 조회 성공',
       data: {
@@ -162,7 +238,7 @@ export const handlers = [
   }),
 
   // Update club info
-  http.put(`${API_BASE}/club-leader/:clubUUID/info`, () => {
+  http.put(`${API_BASE}/clubs/:clubUUID/info`, () => {
     return HttpResponse.json({
       message: '동아리 정보 수정 성공',
       data: null,
@@ -170,7 +246,7 @@ export const handlers = [
   }),
 
   // Get club summary
-  http.get(`${API_BASE}/club-leader/:clubUUID/summary`, () => {
+  http.get(`${API_BASE}/clubs/:clubUUID/leader/summary`, () => {
     return HttpResponse.json({
       message: '동아리 요약 조회 성공',
       data: {
@@ -189,7 +265,7 @@ export const handlers = [
   }),
 
   // Get leader categories
-  http.get(`${API_BASE}/club-leader/category`, () => {
+  http.get(`${API_BASE}/categories`, () => {
     return HttpResponse.json({
       message: '카테고리 조회 성공',
       data: [
@@ -200,7 +276,7 @@ export const handlers = [
   }),
 
   // Toggle recruitment
-  http.patch(`${API_BASE}/club-leader/:clubUUID/recruitment`, () => {
+  http.patch(`${API_BASE}/clubs/:clubUUID/recruit-status`, () => {
     return HttpResponse.json({
       message: '모집 상태 변경 성공',
       data: null,
@@ -208,7 +284,7 @@ export const handlers = [
   }),
 
   // Get club members
-  http.get(`${API_BASE}/club-leader/:clubUUID/members`, () => {
+  http.get(`${API_BASE}/clubs/:clubUUID/members`, () => {
     return HttpResponse.json({
       message: '회원 목록 조회 성공',
       data: [
@@ -224,7 +300,7 @@ export const handlers = [
   }),
 
   // Delete club members
-  http.delete(`${API_BASE}/club-leader/:clubUUID/members`, () => {
+  http.delete(`${API_BASE}/clubs/:clubUUID/members`, () => {
     return HttpResponse.json({
       message: '회원 삭제 성공',
       data: null,
@@ -232,7 +308,7 @@ export const handlers = [
   }),
 
   // Get applicants
-  http.get(`${API_BASE}/club-leader/:clubUUID/applicants`, () => {
+  http.get(`${API_BASE}/clubs/:clubUUID/applicants`, () => {
     return HttpResponse.json({
       message: '지원자 목록 조회 성공',
       data: [
@@ -242,30 +318,30 @@ export const handlers = [
           studentNumber: '20241234',
           major: '소프트웨어학과',
           userHp: '01011112222',
-          aplictStatus: 'WAIT',
+          status: 'WAIT',
         },
       ],
     })
   }),
 
   // Process applicants
-  http.post(`${API_BASE}/club-leader/:clubUUID/applicants/notifications`, () => {
+  http.post(`${API_BASE}/clubs/:clubUUID/applicants/notifications`, () => {
     return HttpResponse.json({
       message: '지원자 처리 성공',
       data: null,
     })
   }),
 
-  // Get sign up requests
-  http.get(`${API_BASE}/club-leader/:clubUUID/members/sign-up`, () => {
+  // Update application status
+  http.patch(`${API_BASE}/clubs/:clubUUID/leader/applications/:applicationUUID/status`, () => {
     return HttpResponse.json({
-      message: '가입 요청 조회 성공',
-      data: [],
+      message: '지원자 상태 변경 성공',
+      data: null,
     })
   }),
 
   // Agree terms
-  http.patch(`${API_BASE}/club-leader/terms/agreement`, () => {
+  http.patch(`${API_BASE}/clubs/terms/agreement`, () => {
     return HttpResponse.json({
       message: '약관 동의 성공',
       data: null,
@@ -273,103 +349,6 @@ export const handlers = [
   }),
 
   // ===== Admin Handlers =====
-  // NOTE: More specific routes must come before parameterized routes
-
-  // Check leader account (must be before /admin/clubs/:clubUUID)
-  http.get(`${API_BASE}/admin/clubs/leader/check`, () => {
-    return HttpResponse.json({
-      message: '아이디 사용 가능',
-      data: null,
-    })
-  }),
-
-  // Check club name (must be before /admin/clubs/:clubUUID)
-  http.get(`${API_BASE}/admin/clubs/name/check`, () => {
-    return HttpResponse.json({
-      message: '이름 사용 가능',
-      data: null,
-    })
-  }),
-
-  // Get admin categories (must be before /admin/clubs/:clubUUID)
-  http.get(`${API_BASE}/admin/clubs/category`, () => {
-    return HttpResponse.json({
-      message: '카테고리 조회 성공',
-      data: [
-        { clubCategoryUUID: 'cat-1', clubCategoryName: 'IT' },
-        { clubCategoryUUID: 'cat-2', clubCategoryName: '학술' },
-      ],
-    })
-  }),
-
-  // Create category
-  http.post(`${API_BASE}/admin/clubs/category`, () => {
-    return HttpResponse.json({
-      message: '카테고리 생성 성공',
-      data: { clubCategoryUUID: 'new-cat', clubCategoryName: '새 카테고리' },
-    })
-  }),
-
-  // Delete category
-  http.delete(`${API_BASE}/admin/clubs/category/:clubCategoryUUID`, () => {
-    return HttpResponse.json({
-      message: '카테고리 삭제 성공',
-      data: { clubCategoryUUID: 'cat-1', clubCategoryName: 'IT' },
-    })
-  }),
-
-  // Get admin clubs
-  http.get(`${API_BASE}/admin/clubs`, () => {
-    return HttpResponse.json({
-      message: '동아리 목록 조회 성공',
-      data: {
-        content: [
-          {
-            clubUUID: 'club-1',
-            clubName: '테스트 동아리',
-            leaderName: '홍길동',
-            department: '학술',
-            leaderHp: '01012345678',
-          },
-        ],
-        totalPages: 1,
-        totalElements: 1,
-        currentPage: 0,
-      },
-    })
-  }),
-
-  // Get admin club detail (parameterized route - must be after specific routes)
-  http.get(`${API_BASE}/admin/clubs/:clubUUID`, () => {
-    return HttpResponse.json({
-      message: '동아리 상세 조회 성공',
-      data: {
-        clubUUID: 'club-1',
-        clubName: '테스트 동아리',
-        leaderName: '홍길동',
-        leaderAccount: 'leader1',
-        leaderHp: '01012345678',
-        clubRoomNumber: '101호',
-        clubCategories: [{ categoryUUID: 'cat-1', categoryName: 'IT' }],
-      },
-    })
-  }),
-
-  // Create club
-  http.post(`${API_BASE}/admin/clubs`, () => {
-    return HttpResponse.json({
-      message: '동아리 생성 성공',
-      data: 'new-club-uuid',
-    })
-  }),
-
-  // Delete club
-  http.delete(`${API_BASE}/admin/clubs/:clubUUID`, () => {
-    return HttpResponse.json({
-      message: '동아리 삭제 성공',
-      data: null,
-    })
-  }),
 
   // Get floor photo
   http.get(`${API_BASE}/admin/floor/photo/:floor`, ({ params }) => {
@@ -384,6 +363,19 @@ export const handlers = [
     return HttpResponse.json({
       message: '층 사진 업로드 성공',
       data: { floor: params.floor, presignedUrl: 'https://example.com/photo.jpg' },
+    })
+  }),
+
+  // Get floor maps (floor-maps endpoint)
+  http.get(`${API_BASE}/floor-maps`, ({ request }) => {
+    const url = new URL(request.url)
+    const floor = url.searchParams.get('floor') || 'B1'
+    return HttpResponse.json({
+      message: '층 사진 조회 성공',
+      data: {
+        floor,
+        presignedUrl: 'https://example.com/floor-map.jpg',
+      },
     })
   }),
 
@@ -410,14 +402,6 @@ export const handlers = [
     return HttpResponse.json({
       message: '인증 코드 전송 성공',
       data: 'auth-token-uuid',
-    })
-  }),
-
-  // Verify auth code
-  http.post(`${API_BASE}/users/auth/verify-token`, () => {
-    return HttpResponse.json({
-      message: '인증 코드 검증 성공',
-      data: null,
     })
   }),
 
@@ -506,7 +490,7 @@ export const handlers = [
   // ===== MyPage Handlers =====
 
   // Get my clubs
-  http.get(`${API_BASE}/mypages/my-clubs`, () => {
+  http.get(`${API_BASE}/users/me/clubs`, () => {
     return HttpResponse.json({
       message: '소속 동아리 조회 성공',
       data: [
@@ -520,7 +504,7 @@ export const handlers = [
   }),
 
   // Get applied clubs
-  http.get(`${API_BASE}/mypages/aplict-clubs`, () => {
+  http.get(`${API_BASE}/users/me/applications`, () => {
     return HttpResponse.json({
       message: '지원 동아리 조회 성공',
       data: [],
@@ -528,7 +512,7 @@ export const handlers = [
   }),
 
   // Get floor photo (mypage)
-  http.get(`${API_BASE}/mypages/clubs/:floor/photo`, () => {
+  http.get(`${API_BASE}/users/clubs/:floor/photo`, () => {
     return HttpResponse.json({
       message: '층 사진 조회 성공',
       data: { photoUrl: null },
@@ -559,7 +543,7 @@ export const handlers = [
   // ===== Profile Handlers =====
 
   // Get my profile
-  http.get(`${API_BASE}/profiles/me`, () => {
+  http.get(`${API_BASE}/users/me`, () => {
     return HttpResponse.json({
       message: '프로필 조회 성공',
       data: {
@@ -573,7 +557,7 @@ export const handlers = [
   }),
 
   // Change profile
-  http.patch(`${API_BASE}/profiles/change`, () => {
+  http.patch(`${API_BASE}/users/me`, () => {
     return HttpResponse.json({
       message: '프로필 수정 성공',
       data: {
@@ -587,7 +571,7 @@ export const handlers = [
   }),
 
   // Check profile duplication
-  http.post(`${API_BASE}/profiles/duplication-check`, () => {
+  http.post(`${API_BASE}/users/profile/duplication-check`, () => {
     return HttpResponse.json({
       message: '중복 확인 성공',
       data: {
@@ -601,10 +585,52 @@ export const handlers = [
     })
   }),
 
+  // ===== Category Handlers =====
+
+  // Get categories
+  http.get(`${API_BASE}/categories`, () => {
+    return HttpResponse.json({
+      message: '카테고리 리스트 조회 성공',
+      data: [
+        {
+          clubCategoryUUID: '550e8400-e29b-41d4-a716-446655440000',
+          clubCategoryName: '학술',
+        },
+        {
+          clubCategoryUUID: '550e8400-e29b-41d4-a716-446655440001',
+          clubCategoryName: '체육',
+        },
+      ],
+    })
+  }),
+
+  // Create category
+  http.post(`${API_BASE}/categories`, async ({ request }) => {
+    const body = (await request.json()) as { clubCategoryName: string }
+    return HttpResponse.json({
+      message: '카테고리 추가 성공',
+      data: {
+        clubCategoryUUID: '550e8400-e29b-41d4-a716-446655440002',
+        clubCategoryName: body.clubCategoryName,
+      },
+    })
+  }),
+
+  // Delete category
+  http.delete(`${API_BASE}/categories/:clubCategoryUUID`, ({ params }) => {
+    return HttpResponse.json({
+      message: '카테고리 삭제 성공',
+      data: {
+        clubCategoryUUID: params.clubCategoryUUID,
+        clubCategoryName: '학술',
+      },
+    })
+  }),
+
   // ===== Form Management Handlers =====
 
   // Create form
-  http.post(`${API_BASE}/api/clubs/:clubId/forms`, () => {
+  http.post(`${API_BASE}/clubs/:clubId/forms`, () => {
     return HttpResponse.json({
       message: '지원서 폼 생성 성공',
       data: {
@@ -614,7 +640,7 @@ export const handlers = [
   }),
 
   // Update form status
-  http.patch(`${API_BASE}/api/clubs/:clubId/forms/:formId/status`, () => {
+  http.patch(`${API_BASE}/clubs/:clubId/forms/:formId/status`, () => {
     return HttpResponse.json({
       message: '지원서 상태 변경 성공',
       data: null,
@@ -622,7 +648,7 @@ export const handlers = [
   }),
 
   // Submit application
-  http.post(`${API_BASE}/api/clubs/:clubId/forms/:formId/applications`, () => {
+  http.post(`${API_BASE}/clubs/:clubId/forms/:formId/applications`, () => {
     return HttpResponse.json({
       message: '지원서 제출 성공',
       data: {
@@ -632,32 +658,33 @@ export const handlers = [
   }),
 
   // Get application detail
-  http.get(`${API_BASE}/api/clubs/:clubId/applications/:applicationId`, () => {
+  http.get(`${API_BASE}/clubs/:clubId/applications/:applicationId`, () => {
     return HttpResponse.json({
       message: '지원서 상세 조회 성공',
       data: {
-        applicationId: 15,
-        applicant: {
-          name: '홍길동',
-          studentId: '20231234',
-          department: '컴퓨터공학과',
-          phone: '010-1234-5678',
-        },
-        status: 'SUBMITTED',
-        isRead: true,
-        submittedAt: '2026-03-02T14:00:00',
+        applicationId: 'app-uuid-123',
+        formId: 'form-uuid-456',
+        applicantId: 'user-uuid-789',
+        applicantName: '홍길동',
+        applicantEmail: 'hong@example.com',
+        status: 'WAIT',
+        submittedAt: '2024-01-15T10:00:00Z',
         answers: [
           {
-            questionId: 101,
-            question: '학년을 선택해주세요.',
-            type: 'RADIO',
-            answer: '1학년',
+            answerId: 'answer-uuid-1',
+            questionId: 'question-uuid-1',
+            optionId: null,
+            answerText: '저는 이 동아리에 관심이 많아 지원하게 되었습니다',
           },
+        ],
+        questions: [
           {
-            questionId: 102,
-            question: '지원 동기',
-            type: 'LONG_TEXT',
-            answer: '코딩이 너무 재미있어서...',
+            questionId: 'question-uuid-1',
+            sequence: 1,
+            type: 'SHORT_TEXT',
+            content: '지원 동기를 작성해주세요',
+            required: true,
+            options: [],
           },
         ],
       },

@@ -1,9 +1,11 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useMemo } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { FileDownloadIcon, Search01Icon, Delete01Icon, ArrowUp01Icon, ArrowDown01Icon } from '@hugeicons/core-free-icons'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import {
   Table,
@@ -14,7 +16,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,44 +27,43 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import { useAdminClubs } from '@/features/admin/hooks/useAdmin'
-import { apiClient } from '@/shared/api/apiClient'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { useMergedClubList } from '@/features/admin'
+import { mergedClubKeys } from '@/features/admin/hooks/useMergedClubList'
+import { useDeleteClub } from '@/features/club'
+import type { MergedClubItem } from '@/features/admin'
 import { toast } from 'sonner'
 
 type SortField = 'clubName' | 'leaderName' | 'numberOfClubMembers' | 'department'
 type SortDirection = 'asc' | 'desc'
 
 export function UnionDashboardPage() {
-  const { data: clubsData, isLoading, error } = useAdminClubs()
-  const clubs = clubsData?.data?.content || []
+  const queryClient = useQueryClient()
+  const { data: mergedData, isLoading, error } = useMergedClubList()
+  const clubs = mergedData?.data || []
+  const recruitingCount = clubs.filter((club) => club.isRecruiting).length
   const [searchTerm, setSearchTerm] = useState('')
-  const [recruitingCount, setRecruitingCount] = useState(0)
   const [sortField, setSortField] = useState<SortField>('clubName')
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
-  const [isDeleting, setIsDeleting] = useState(false)
+  const [adminPasswordDialog, setAdminPasswordDialog] = useState<string | null>(null)
+  const [adminPassword, setAdminPassword] = useState('')
 
-  // Fetch recruiting clubs count
-  useEffect(() => {
-    const fetchRecruitingCount = async () => {
-      try {
-        const response = await apiClient.get('/clubs/open')
-        setRecruitingCount(response.data?.data?.content?.length || 0)
-      } catch {
-        setRecruitingCount(0)
-      }
-    }
-
-    fetchRecruitingCount()
-  }, [])
+  const deleteClubMutation = useDeleteClub()
 
   const filteredClubs = useMemo(
     () =>
-      clubs.filter(
-        (club) =>
-          club.clubName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          club.leaderName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          club.department?.toLowerCase().includes(searchTerm.toLowerCase())
+      clubs.filter((club: MergedClubItem) =>
+        club.clubName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        club.leaderName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        club.department?.toLowerCase().includes(searchTerm.toLowerCase())
       ),
     [clubs, searchTerm]
   )
@@ -91,21 +92,46 @@ export function UnionDashboardPage() {
     }
   }
 
-  const handleDeleteClub = async (clubUUID: string) => {
-    setIsDeleting(true)
+  const handleDeleteClub = async () => {
+    const clubUUID = deleteConfirm
+    if (!clubUUID) return
+
+    setDeleteConfirm(null)
+    setAdminPasswordDialog(clubUUID)
+  }
+
+  const handleConfirmDelete = async () => {
+    const clubUUID = adminPasswordDialog
+    if (!clubUUID || !adminPassword.trim()) {
+      toast.error('관리자 비밀번호를 입력해주세요.')
+      return
+    }
+
     try {
-      await apiClient.delete(`/admin/clubs/${clubUUID}`, {
-        data: { adminPw: 'hpsEetcTf7ymgy6' },
-      })
-      toast.success('동아리가 삭제되었습니다.')
-      setDeleteConfirm(null)
-      // Refetch clubs
-      window.location.reload()
+      await deleteClubMutation.mutateAsync(
+        { clubUUID, adminPw: adminPassword },
+        {
+          onSuccess: () => {
+            toast.success('동아리가 삭제되었습니다.')
+            setAdminPasswordDialog(null)
+            setAdminPassword('')
+            // Invalidate and refetch club list
+            queryClient.invalidateQueries({ queryKey: mergedClubKeys.list() })
+          },
+          onError: (error) => {
+            console.error('Delete club error:', error)
+            toast.error('동아리 삭제에 실패했습니다. 관리자 비밀번호를 확인해주세요.')
+          },
+        }
+      )
     } catch {
       toast.error('동아리 삭제에 실패했습니다.')
-    } finally {
-      setIsDeleting(false)
     }
+  }
+
+  const handlePasswordDialogClose = () => {
+    setAdminPasswordDialog(null)
+    setAdminPassword('')
   }
 
   const handleDownloadExcel = () => {
@@ -214,7 +240,7 @@ export function UnionDashboardPage() {
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>전체 회원수</CardDescription>
-            <CardTitle className="text-3xl">{clubs.reduce((sum, club) => sum + (club.numberOfClubMembers || 0), 0)}</CardTitle>
+            <CardTitle className="text-3xl">{clubs.reduce((sum: number, club) => sum + (club.numberOfClubMembers || 0), 0)}</CardTitle>
           </CardHeader>
         </Card>
       </div>
@@ -316,8 +342,13 @@ export function UnionDashboardPage() {
                     <TableRow key={club.clubUUID}>
                       <TableCell>
                         <Avatar className="h-8 w-8">
-                          <AvatarImage src={club.mainPhoto || undefined} alt={club.clubName} />
-                          <AvatarFallback>{club.clubName[0]}</AvatarFallback>
+                          <AvatarImage
+                            src={(club.mainPhoto && club.mainPhoto !== '') ? club.mainPhoto : '/circle_default_image.png'}
+                            alt={club.clubName}
+                          />
+                          <AvatarFallback>
+                            <img src="/circle_default_image.png" alt="Default Image" className="h-8 w-8 rounded-full" />
+                          </AvatarFallback>
                         </Avatar>
                       </TableCell>
                       <TableCell className="font-medium">{club.clubName}</TableCell>
@@ -362,15 +393,61 @@ export function UnionDashboardPage() {
               <AlertDialogFooter>
                 <AlertDialogCancel>취소</AlertDialogCancel>
                 <AlertDialogAction
-                  onClick={() => deleteConfirm && handleDeleteClub(deleteConfirm)}
-                  disabled={isDeleting}
+                  onClick={handleDeleteClub}
                   className="bg-destructive hover:bg-destructive/90"
                 >
-                  {isDeleting ? '삭제 중...' : '삭제'}
+                  계속
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
+
+          <Dialog open={adminPasswordDialog !== null} onOpenChange={handlePasswordDialogClose}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>관리자 비밀번호 확인</DialogTitle>
+                <DialogDescription>
+                  동아리를 삭제하기 위해 관리자 비밀번호를 입력해주세요.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="adminPassword">관리자 비밀번호</Label>
+                  <Input
+                    id="adminPassword"
+                    type="password"
+                    placeholder="관리자 비밀번호를 입력하세요"
+                    value={adminPassword}
+                    onChange={(e) => setAdminPassword(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault()
+                        handleConfirmDelete()
+                      }
+                    }}
+                    autoFocus
+                    disabled={deleteClubMutation.isPending}
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={handlePasswordDialogClose}
+                  disabled={deleteClubMutation.isPending}
+                >
+                  취소
+                </Button>
+                <Button
+                  onClick={handleConfirmDelete}
+                  disabled={deleteClubMutation.isPending || !adminPassword.trim()}
+                  variant="destructive"
+                >
+                  {deleteClubMutation.isPending ? '삭제 중...' : '삭제'}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </CardContent>
       </Card>
     </div>

@@ -1,35 +1,38 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { checkCanApply, getGoogleFormUrl, submitApplication } from '../api/applicationApi'
+import { checkEligibility, submitApplication, getApplicationDetail } from '../api/applicationApi'
 import { mypageKeys } from '@features/mypage/hooks/useMypage'
+import type { SubmitApplicationRequest } from '../domain/applicationSchemas'
 
 export const applicationKeys = {
   all: ['application'] as const,
-  canApply: (clubUUID: string) => [...applicationKeys.all, 'canApply', clubUUID] as const,
-  googleFormUrl: (clubUUID: string) => [...applicationKeys.all, 'googleFormUrl', clubUUID] as const,
+  eligibility: (clubUUID: string) => [...applicationKeys.all, 'eligibility', clubUUID] as const,
+  detail: (clubUUID: string, aplictUUID: string) =>
+    [...applicationKeys.all, 'detail', clubUUID, aplictUUID] as const,
 }
 
-export function useCanApply(clubUUID: string) {
+export function useEligibility(clubUUID: string) {
   return useQuery({
-    queryKey: applicationKeys.canApply(clubUUID),
-    queryFn: () => checkCanApply(clubUUID),
+    queryKey: applicationKeys.eligibility(clubUUID),
+    queryFn: () => checkEligibility(clubUUID),
     enabled: !!clubUUID,
   })
 }
 
-export function useGoogleFormUrl(clubUUID: string) {
+export function useApplicationDetail(clubUUID: string, aplictUUID: string) {
   return useQuery({
-    queryKey: applicationKeys.googleFormUrl(clubUUID),
-    queryFn: () => getGoogleFormUrl(clubUUID),
-    enabled: !!clubUUID,
+    queryKey: applicationKeys.detail(clubUUID, aplictUUID),
+    queryFn: () => getApplicationDetail(clubUUID, aplictUUID),
+    enabled: !!clubUUID && !!aplictUUID,
   })
 }
 
 export function useSubmitApplication() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (clubUUID: string) => submitApplication(clubUUID),
-    onSuccess: (_, clubUUID) => {
-      queryClient.invalidateQueries({ queryKey: applicationKeys.canApply(clubUUID) })
+    mutationFn: ({ clubUUID, data }: { clubUUID: string; data: SubmitApplicationRequest }) =>
+      submitApplication(clubUUID, data),
+    onSuccess: (_, { clubUUID }) => {
+      queryClient.invalidateQueries({ queryKey: applicationKeys.eligibility(clubUUID) })
       queryClient.invalidateQueries({ queryKey: mypageKeys.appliedClubs() })
     },
   })

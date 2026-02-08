@@ -2,33 +2,92 @@ import { describe, it, expect } from 'vitest'
 import { http, HttpResponse } from 'msw'
 import { server } from '@test/mocks/server'
 import {
-  changePassword,
-  findAccount,
-  sendAuthCode,
-  verifyAuthCode,
-  resetPassword,
-  checkEmailDuplicate,
-  checkAccountDuplicate,
-  temporaryRegister,
-  confirmEmailVerification,
-  signup,
-  userLogin,
-  sendExitCode,
-  exitUser,
+  getMyProfile,
+  updateMyProfile,
+  changeMyPassword,
+  withdrawUser,
+  getMyClubs,
+  getMyApplications,
 } from '../userApi'
 
 const API_BASE = 'https://api.donggurami.net'
 
 describe('User API', () => {
-  describe('changePassword', () => {
+  describe('getMyProfile', () => {
+    it('should get my profile successfully', async () => {
+      server.use(
+        http.get(`${API_BASE}/users/me`, () => {
+          return HttpResponse.json({
+            message: '프로필 조회 성공',
+            data: {
+              userName: '테스트사용자',
+              studentNumber: '20231234',
+              userHp: '01012345678',
+              major: '컴퓨터공학과',
+            },
+          })
+        })
+      )
+
+      const result = await getMyProfile()
+
+      expect(result.message).toBe('프로필 조회 성공')
+      expect(result.data.userName).toBe('테스트사용자')
+      expect(result.data.studentNumber).toBe('20231234')
+      expect(result.data.userHp).toBe('01012345678')
+      expect(result.data.major).toBe('컴퓨터공학과')
+    })
+  })
+
+  describe('updateMyProfile', () => {
+    it('should update profile successfully', async () => {
+      server.use(
+        http.patch(`${API_BASE}/users/me`, () => {
+          return HttpResponse.json({
+            message: '프로필 수정 성공',
+            data: {
+              userName: '수정된이름',
+              studentNumber: '20231234',
+              userHp: '01087654321',
+              major: '전자공학과',
+            },
+          })
+        })
+      )
+
+      const request = {
+        userPw: 'currentpassword',
+        userName: '수정된이름',
+        studentNumber: '20231234',
+        userHp: '01087654321',
+        major: '전자공학과',
+      }
+
+      const result = await updateMyProfile(request)
+
+      expect(result.message).toBe('프로필 수정 성공')
+      expect(result.data.userName).toBe('수정된이름')
+    })
+  })
+
+  describe('changeMyPassword', () => {
     it('should change password successfully', async () => {
+      server.use(
+        http.patch(`${API_BASE}/users/me/password`, () => {
+          return HttpResponse.json({
+            message: '비밀번호 변경 성공',
+            data: null,
+          })
+        })
+      )
+
       const request = {
         userPw: 'oldpass123',
         newPw: 'Newpass1!',
         confirmNewPw: 'Newpass1!',
       }
 
-      const result = await changePassword(request)
+      const result = await changeMyPassword(request)
 
       expect(result.message).toBe('비밀번호 변경 성공')
       expect(result.data).toBeNull()
@@ -36,7 +95,7 @@ describe('User API', () => {
 
     it('should throw error on wrong current password', async () => {
       server.use(
-        http.patch(`${API_BASE}/users/userpw`, () => {
+        http.patch(`${API_BASE}/users/me/password`, () => {
           return HttpResponse.json(
             {
               exception: 'PasswordException',
@@ -48,138 +107,95 @@ describe('User API', () => {
             },
             { status: 401 }
           )
+        }),
+        // Add refresh handler to prevent unhandled request error
+        http.post(`${API_BASE}/auth/refresh`, () => {
+          return HttpResponse.json(
+            { message: 'Unauthorized', status: 401 },
+            { status: 401 }
+          )
         })
       )
 
       await expect(
-        changePassword({ userPw: 'wrong', newPw: 'Newpass1!', confirmNewPw: 'Newpass1!' })
+        changeMyPassword({ userPw: 'wrong', newPw: 'Newpass1!', confirmNewPw: 'Newpass1!' })
       ).rejects.toThrow()
     })
   })
 
-  describe('findAccount', () => {
-    it('should find account by email', async () => {
-      const result = await findAccount('test@example.com')
+  describe('withdrawUser', () => {
+    it('should withdraw user successfully', async () => {
+      server.use(
+        http.delete(`${API_BASE}/users/me`, () => {
+          return HttpResponse.json({
+            message: '회원 탈퇴 성공',
+            data: null,
+          })
+        })
+      )
 
-      expect(result.message).toBe('아이디 찾기 성공')
-    })
-  })
-
-  describe('sendAuthCode', () => {
-    it('should send auth code', async () => {
-      const request = { userAccount: 'testuser', email: 'test@example.com' }
-
-      const result = await sendAuthCode(request)
-
-      expect(result.message).toBe('인증 코드 전송 성공')
-    })
-  })
-
-  describe('verifyAuthCode', () => {
-    it('should verify auth code', async () => {
       const request = { authCode: '123456' }
 
-      const result = await verifyAuthCode(request)
-
-      expect(result.message).toBe('인증 코드 검증 성공')
-    })
-  })
-
-  describe('resetPassword', () => {
-    it('should reset password', async () => {
-      const request = {
-        password: 'Newpass1!',
-        confirmPassword: 'Newpass1!',
-      }
-
-      const result = await resetPassword(request)
-
-      expect(result.message).toBe('비밀번호 재설정 성공')
-    })
-  })
-
-  describe('checkEmailDuplicate', () => {
-    it('should return success when email is available', async () => {
-      const result = await checkEmailDuplicate('new@example.com')
-
-      expect(result.message).toBe('이메일 사용 가능')
-    })
-  })
-
-  describe('checkAccountDuplicate', () => {
-    it('should return success when account is available', async () => {
-      const result = await checkAccountDuplicate('newaccount')
-
-      expect(result.message).toBe('아이디 사용 가능')
-    })
-  })
-
-  describe('temporaryRegister', () => {
-    it('should register temporarily', async () => {
-      const request = { email: 'test@example.com' }
-
-      const result = await temporaryRegister(request)
-
-      expect(result.message).toBe('임시 회원가입 성공')
-    })
-  })
-
-  describe('confirmEmailVerification', () => {
-    it('should confirm email verification', async () => {
-      const result = await confirmEmailVerification('test@example.com')
-
-      expect(result.message).toBe('이메일 인증 확인 성공')
-      expect(result.data.signupUUID).toBe('signup-uuid')
-    })
-  })
-
-  describe('signup', () => {
-    it('should complete signup', async () => {
-      const request = {
-        account: 'testuser123',
-        password: 'Password1!',
-        confirmPassword: 'Password1!',
-        userName: '테스트사용자',
-        telephone: '01012345678',
-        studentNumber: '20231234',
-        major: '컴퓨터공학과',
-      }
-
-      const result = await signup(request)
-
-      expect(result.message).toBe('회원가입 성공')
-    })
-  })
-
-  describe('userLogin', () => {
-    it('should login user', async () => {
-      const request = {
-        account: 'testuser',
-        password: 'password123',
-      }
-
-      const result = await userLogin(request)
-
-      expect(result.message).toBe('로그인 성공')
-      expect(result.data.accessToken).toBe('user_access_token')
-    })
-  })
-
-  describe('sendExitCode', () => {
-    it('should send exit code', async () => {
-      const result = await sendExitCode()
-
-      expect(result.message).toBe('탈퇴 인증 코드 전송 성공')
-    })
-  })
-
-  describe('exitUser', () => {
-    it('should exit user', async () => {
-      const request = { authCode: '123456' }
-
-      const result = await exitUser(request)
+      const result = await withdrawUser(request)
 
       expect(result.message).toBe('회원 탈퇴 성공')
+      expect(result.data).toBeNull()
+    })
+  })
+
+  describe('getMyClubs', () => {
+    it('should get my clubs successfully', async () => {
+      server.use(
+        http.get(`${API_BASE}/users/me/clubs`, () => {
+          return HttpResponse.json({
+            message: '내 동아리 목록 조회 성공',
+            data: [
+              {
+                clubUUID: '550e8400-e29b-41d4-a716-446655440000',
+                mainPhotoPath: null,
+                clubName: '테스트 동아리',
+                leaderName: '홍길동',
+                leaderHp: '01012345678',
+                clubInsta: null,
+                clubRoomNumber: 'B101',
+              },
+            ],
+          })
+        })
+      )
+
+      const result = await getMyClubs()
+
+      expect(result.message).toBe('내 동아리 목록 조회 성공')
+      expect(result.data).toHaveLength(1)
+      expect(result.data[0].clubName).toBe('테스트 동아리')
+      expect(result.data[0].leaderName).toBe('홍길동')
+    })
+  })
+
+  describe('getMyApplications', () => {
+    it('should get my applications successfully', async () => {
+      server.use(
+        http.get(`${API_BASE}/users/me/applications`, () => {
+          return HttpResponse.json({
+            message: '내 지원서 목록 조회 성공',
+            data: [
+              {
+                clubUUID: '550e8400-e29b-41d4-a716-446655440000',
+                mainPhotoPath: null,
+                clubName: '테스트 동아리',
+                aplictStatus: 'WAIT',
+              },
+            ],
+          })
+        })
+      )
+
+      const result = await getMyApplications()
+
+      expect(result.message).toBe('내 지원서 목록 조회 성공')
+      expect(result.data).toHaveLength(1)
+      expect(result.data[0].aplictStatus).toBe('WAIT')
     })
   })
 })

@@ -17,12 +17,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import { useAdminCategories, useCreateCategory, useDeleteCategory } from '@/features/admin/hooks/useAdmin'
-import type { AdminCategory } from '@/features/admin/domain/adminSchemas'
+import { useCategories, useCreateCategory, useDeleteCategory } from '@/features/category'
+import type { Category } from '@/features/category/domain/categorySchemas'
 
 export function CategoryEditPage() {
-  const { data: categoriesData, isLoading, error } = useAdminCategories()
-  const categories: AdminCategory[] = categoriesData?.data || []
+  const { data: categoriesData, isLoading, error } = useCategories()
+  const categories: Category[] = categoriesData?.data || []
   const { mutate: createCategory } = useCreateCategory()
   const { mutate: deleteCategory } = useDeleteCategory()
 
@@ -30,7 +30,7 @@ export function CategoryEditPage() {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editingName, setEditingName] = useState('')
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-  const [categoryToDelete, setCategoryToDelete] = useState<AdminCategory | null>(null)
+  const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null)
 
   const handleAddCategory = () => {
     if (!newCategoryName.trim()) return
@@ -50,7 +50,7 @@ export function CategoryEditPage() {
   }
 
   const handleRemoveCategory = (clubCategoryUUID: string) => {
-    const category = categories.find((cat: AdminCategory) => cat.clubCategoryUUID === clubCategoryUUID)
+    const category = categories.find((cat: Category) => cat.clubCategoryUUID === clubCategoryUUID)
     if (!category) return
 
     setCategoryToDelete(category)
@@ -74,7 +74,7 @@ export function CategoryEditPage() {
     })
   }
 
-  const handleStartEdit = (category: AdminCategory) => {
+  const handleStartEdit = (category: Category) => {
     setEditingId(category.clubCategoryUUID)
     setEditingName(category.clubCategoryName)
   }
@@ -88,7 +88,7 @@ export function CategoryEditPage() {
     if (!editingName.trim()) return
 
     const exists = categories.some(
-      (cat: AdminCategory) => cat.clubCategoryUUID !== clubCategoryUUID && cat.clubCategoryName.toLowerCase() === editingName.trim().toLowerCase()
+      (cat: Category) => cat.clubCategoryUUID !== clubCategoryUUID && cat.clubCategoryName.toLowerCase() === editingName.trim().toLowerCase()
     )
 
     if (exists) {
@@ -188,7 +188,7 @@ export function CategoryEditPage() {
         <CardContent>
           {categories.length > 0 ? (
             <div className="space-y-2">
-              {categories.map((category: AdminCategory) => (
+              {categories.map((category: Category) => (
                 <div
                   key={category.clubCategoryUUID}
                   className="flex items-center justify-between rounded-lg border p-4"

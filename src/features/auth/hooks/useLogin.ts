@@ -1,56 +1,28 @@
 import { useMutation } from '@tanstack/react-query'
-import { loginClubLeader, loginAdmin } from '../api/authApi'
+import { loginUnified } from '../api/authApi'
 import { useAuthStore } from '../store/authStore'
 import { setAccessToken } from '@shared/api/apiClient'
-import { clubLeaderLoginSchema, clubLeaderLoginApiSchema, adminLoginSchema } from '../domain/authSchemas'
-import type {
-  ClubLeaderLoginInput,
-  AdminLoginInput,
-} from '../domain/authSchemas'
+import { loginUnifiedSchema } from '../domain/authSchemas'
+import type { LoginUnifiedInput } from '../domain/authSchemas'
 
-export function useClubLeaderLogin() {
+export function useLogin() {
   const setAuth = useAuthStore((state) => state.setAuth)
 
   return useMutation({
-    mutationFn: async (credentials: ClubLeaderLoginInput) => {
-      // Validate input and add loginType
-      const validatedInput = clubLeaderLoginSchema.parse(credentials)
-      const apiInput = clubLeaderLoginApiSchema.parse({ ...validatedInput, loginType: 'LEADER' })
-      return loginClubLeader(apiInput)
+    mutationFn: async (credentials: LoginUnifiedInput) => {
+      const validatedInput = loginUnifiedSchema.parse(credentials)
+      return loginUnified(validatedInput)
     },
     onSuccess: (response) => {
-      const { accessToken, role, clubUUID, isAgreedTerms } = response.data
+      const { accessToken, role, clubuuid, isAgreedTerms } = response.data
 
-      // Set token in API client
       setAccessToken(accessToken)
 
-      // Update Zustand store
       setAuth({
         accessToken,
         role,
-        clubUUID,
+        clubUUID: clubuuid,
         isAgreedTerms,
-      })
-    },
-  })
-}
-
-export function useAdminLogin() {
-  const setAuth = useAuthStore((state) => state.setAuth)
-
-  return useMutation({
-    mutationFn: async (credentials: AdminLoginInput) => {
-      const validatedInput = adminLoginSchema.parse(credentials)
-      return loginAdmin(validatedInput)
-    },
-    onSuccess: (response) => {
-      const { accessToken, role } = response.data
-
-      setAccessToken(accessToken)
-      // Admin has no clubUUID or isAgreedTerms
-      setAuth({
-        accessToken,
-        role,
       })
     },
   })

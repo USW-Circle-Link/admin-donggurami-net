@@ -1,4 +1,4 @@
-import type { ClubSummaryResponse, ClubMember, Applicant, ApplicantStatus } from '@features/club-leader/domain/clubLeaderSchemas'
+import type { ClubSummaryResponse, ClubMember, Applicant } from '@features/club-leader/domain/clubLeaderSchemas'
 import type { NoticeListItem } from '@features/notice/domain/noticeSchemas'
 
 // Club Summary (대시보드에 표시될 동아리 기본 정보)
@@ -28,7 +28,6 @@ export const dummyClubMembers: ClubMember[] = [
     studentNumber: '20210001',
     userHp: '01012345678',
     memberType: 'REGULARMEMBER',
-    role: 'LEADER',
   },
   {
     clubMemberUUID: '550e8400-e29b-41d4-a716-446655440002',
@@ -37,7 +36,6 @@ export const dummyClubMembers: ClubMember[] = [
     studentNumber: '20220002',
     userHp: '01098765432',
     memberType: 'REGULARMEMBER',
-    role: 'VICE_LEADER',
   },
   {
     clubMemberUUID: '550e8400-e29b-41d4-a716-446655440003',
@@ -46,7 +44,6 @@ export const dummyClubMembers: ClubMember[] = [
     studentNumber: '20230003',
     userHp: '01011112222',
     memberType: 'REGULARMEMBER',
-    role: 'MEMBER',
   },
   {
     clubMemberUUID: '550e8400-e29b-41d4-a716-446655440004',
@@ -55,7 +52,6 @@ export const dummyClubMembers: ClubMember[] = [
     studentNumber: '20240004',
     userHp: '01033334444',
     memberType: 'NONMEMBER',
-    role: 'MEMBER',
   },
   {
     clubMemberUUID: '550e8400-e29b-41d4-a716-446655440005',
@@ -64,13 +60,11 @@ export const dummyClubMembers: ClubMember[] = [
     studentNumber: '20210005',
     userHp: '01055556666',
     memberType: 'REGULARMEMBER',
-    role: 'MEMBER',
   },
 ]
 
-// Applicants (지원자) with status
+// Applicants (지원자) with answers
 export interface ApplicantWithStatus extends Applicant {
-  aplictStatus: ApplicantStatus
   answers: { question: string; answer: string }[]
 }
 
@@ -81,7 +75,7 @@ export const dummyApplicants: ApplicantWithStatus[] = [
     major: '컴퓨터공학과',
     studentNumber: '20240010',
     userHp: '01077778888',
-    aplictStatus: 'WAIT',
+    status: 'WAIT',
     answers: [
       { question: '지원 동기를 알려주세요.', answer: '프로그래밍에 관심이 많아서 실무 경험을 쌓고 싶습니다.' },
       { question: '참여 가능한 시간대가 언제인가요?', answer: '평일 오후 6시 이후, 주말 전일 가능합니다.' },
@@ -94,7 +88,7 @@ export const dummyApplicants: ApplicantWithStatus[] = [
     major: '경영학과',
     studentNumber: '20230011',
     userHp: '01099990000',
-    aplictStatus: 'WAIT',
+    status: 'WAIT',
     answers: [
       { question: '지원 동기를 알려주세요.', answer: '비전공자이지만 개발을 배워보고 싶습니다.' },
       { question: '참여 가능한 시간대가 언제인가요?', answer: '화목 오후만 가능합니다.' },
@@ -107,7 +101,7 @@ export const dummyApplicants: ApplicantWithStatus[] = [
     major: '소프트웨어학과',
     studentNumber: '20240012',
     userHp: '01011223344',
-    aplictStatus: 'PASS',
+    status: 'PASS',
     answers: [
       { question: '지원 동기를 알려주세요.', answer: '학교 수업만으로는 부족해서 동아리에서 실습하고 싶습니다.' },
       { question: '참여 가능한 시간대가 언제인가요?', answer: '언제든 가능합니다.' },
@@ -120,7 +114,7 @@ export const dummyApplicants: ApplicantWithStatus[] = [
     major: '전자공학과',
     studentNumber: '20220013',
     userHp: '01055667788',
-    aplictStatus: 'FAIL',
+    status: 'FAIL',
     answers: [
       { question: '지원 동기를 알려주세요.', answer: '임베디드 시스템 개발에 관심이 있습니다.' },
       { question: '참여 가능한 시간대가 언제인가요?', answer: '월수금 저녁 가능합니다.' },
@@ -133,7 +127,7 @@ export const dummyApplicants: ApplicantWithStatus[] = [
     major: '수학과',
     studentNumber: '20230014',
     userHp: '01099887766',
-    aplictStatus: 'WAIT',
+    status: 'WAIT',
     answers: [
       { question: '지원 동기를 알려주세요.', answer: '데이터 분석과 머신러닝에 관심이 있어서 지원했습니다.' },
       { question: '참여 가능한 시간대가 언제인가요?', answer: '주말에만 가능합니다.' },
@@ -228,7 +222,7 @@ export interface ClubListItem {
   clubRoomNumber: string
   memberCount: number
   categories: string[]
-  recruitmentStatus: 'OPEN' | 'CLOSED'
+  recruitmentStatus: 'OPEN' | 'CLOSE'
 }
 
 export const dummyClubList: ClubListItem[] = [
@@ -260,7 +254,7 @@ export const dummyClubList: ClubListItem[] = [
     clubRoomNumber: '303호',
     memberCount: 40,
     categories: ['봉사'],
-    recruitmentStatus: 'CLOSED',
+    recruitmentStatus: 'CLOSE',
   },
   {
     clubUUID: '550e8400-e29b-41d4-a716-446655440103',
@@ -280,7 +274,7 @@ export const dummyClubList: ClubListItem[] = [
     clubRoomNumber: '202호',
     memberCount: 20,
     categories: ['문화/예술', '사진'],
-    recruitmentStatus: 'CLOSED',
+    recruitmentStatus: 'CLOSE',
   },
   {
     clubUUID: '550e8400-e29b-41d4-a716-446655440105',

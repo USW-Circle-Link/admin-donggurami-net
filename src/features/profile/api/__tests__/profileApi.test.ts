@@ -18,7 +18,7 @@ describe('Profile API', () => {
 
     it('should throw error when not authenticated', async () => {
       server.use(
-        http.get(`${API_BASE}/profiles/me`, () => {
+        http.get(`${API_BASE}/users/me`, () => {
           return HttpResponse.json(
             {
               exception: 'AuthException',
@@ -54,7 +54,7 @@ describe('Profile API', () => {
 
     it('should throw error on invalid data', async () => {
       server.use(
-        http.patch(`${API_BASE}/profiles/change`, () => {
+        http.patch(`${API_BASE}/users/me`, () => {
           return HttpResponse.json(
             {
               exception: 'ValidationException',
@@ -97,7 +97,7 @@ describe('Profile API', () => {
 
     it('should return duplicate when profile exists', async () => {
       server.use(
-        http.post(`${API_BASE}/profiles/duplication-check`, () => {
+        http.post(`${API_BASE}/users/profile/duplication-check`, () => {
           return HttpResponse.json({
             message: '중복 확인 성공',
             data: {

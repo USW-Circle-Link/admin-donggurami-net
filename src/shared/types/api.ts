@@ -21,7 +21,7 @@ export type LoginType = 'LEADER' | 'ADMIN'
 export type UserRole = 'USER' | 'LEADER' | 'ADMIN'
 
 // Recruitment status
-export type RecruitmentStatus = 'OPEN' | 'CLOSED'
+export type RecruitmentStatus = 'OPEN' | 'CLOSE'
 
 // Applicant status
 export type ApplicantStatus = 'WAIT' | 'PASS' | 'FAIL'
@@ -33,4 +33,4 @@ export type MemberType = 'REGULARMEMBER' | 'NONMEMBER'
 export type FloorType = 'B1' | 'F1' | 'F2'
 
 // Department type
-export type Department = '학술' | '체육' | '문화예술' | '종교' | '사회봉사'
+export type Department = '학술' | '종교' | '예술' | '체육' | '공연' | '봉사'

@@ -52,7 +52,7 @@ export function AppSidebar() {
     navigate('/login')
   }
 
-  const isClubActive = location.pathname.startsWith('/club')
+  const isClubActive = location.pathname.startsWith('/club') && location.pathname !== '/club/dashboard'
   const isApplicantsActive = location.pathname.startsWith('/applicants')
 
   // 동아리 회장 정보
@@ -106,9 +106,9 @@ export function AppSidebar() {
               {/* 대시보드 */}
               <SidebarMenuItem>
                 <SidebarMenuButton
-                  onClick={() => handleNavigation('/dashboard')}
+                  onClick={() => handleNavigation('/club/dashboard')}
                   tooltip="대시보드"
-                  isActive={location.pathname === '/dashboard'}
+                  isActive={location.pathname === '/club/dashboard'}
                 >
                   <HugeiconsIcon icon={Home01Icon} />
                   <span>대시보드</span>
@@ -196,8 +196,13 @@ export function AppSidebar() {
         <div className="group-data-[collapsible=icon]:hidden border-t pt-3">
           <div className="flex items-center gap-3 px-2 py-2">
             <Avatar className="h-9 w-9">
-              <AvatarImage src={leaderInfo.mainPhoto || '/v2/circle_default_image.png'} alt={leaderInfo.clubName} onError={(e: any) => { e.currentTarget.src = '/v2/circle_default_image.png' }} />
-              <AvatarFallback>{leaderInfo.clubName.charAt(0)}</AvatarFallback>
+              <AvatarImage
+                src={(leaderInfo.mainPhoto && leaderInfo.mainPhoto !== '') ? leaderInfo.mainPhoto : '/circle_default_image.png'}
+                alt={leaderInfo.clubName}
+              />
+              <AvatarFallback>
+                <img src="/circle_default_image.png" alt="Default Image" className="h-9 w-9 rounded-full" />
+              </AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium truncate">{leaderInfo.name}</p>
@@ -234,8 +239,13 @@ export function AppSidebar() {
         {/* 접힌 상태: 동아리 아이콘 */}
         <div className="hidden group-data-[collapsible=icon]:flex flex-col items-center gap-2 py-2">
           <Avatar className="h-8 w-8">
-            <AvatarImage src={leaderInfo.mainPhoto || '/v2/circle_default_image.png'} alt={leaderInfo.clubName} onError={(e: any) => { e.currentTarget.src = '/v2/circle_default_image.png' }} />
-            <AvatarFallback>{leaderInfo.clubName.charAt(0)}</AvatarFallback>
+            <AvatarImage
+              src={(leaderInfo.mainPhoto && leaderInfo.mainPhoto !== '') ? leaderInfo.mainPhoto : '/circle_default_image.png'}
+              alt={leaderInfo.clubName}
+            />
+            <AvatarFallback>
+              <img src="/circle_default_image.png" alt="Default Image" className="h-8 w-8 rounded-full" />
+            </AvatarFallback>
           </Avatar>
           <div className="flex justify-center">
             <ModeToggle />

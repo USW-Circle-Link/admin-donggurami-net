@@ -42,7 +42,7 @@ describe('useLogout', () => {
 
   it('should clear auth state even on logout error', async () => {
     server.use(
-      http.post(`${API_BASE}/integration/logout`, () => {
+      http.post(`${API_BASE}/auth/logout`, () => {
         return HttpResponse.json({ message: 'Server error' }, { status: 500 })
       })
     )

@@ -1,90 +1,109 @@
-import { useMutation } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
 import * as api from '../api/userApi'
 import type {
-  ChangePasswordRequest,
-  SendAuthCodeRequest,
-  VerifyAuthCodeRequest,
-  ResetPasswordRequest,
-  TemporaryRegisterRequest,
-  SignupRequest,
-  UserLoginRequest,
-  ExitAuthCodeRequest,
+  UpdateMyProfileRequest,
+  ChangeMyPasswordRequest,
+  WithdrawUserRequest,
 } from '../domain/userSchemas'
 
-export function useChangePassword() {
-  return useMutation({
-    mutationFn: (request: ChangePasswordRequest) => api.changePassword(request),
+/**
+ * Query key factory for user data
+ */
+export const userKeys = {
+  all: ['user'] as const,
+  profile: () => [...userKeys.all, 'profile'] as const,
+  clubs: () => [...userKeys.all, 'clubs'] as const,
+  applications: () => [...userKeys.all, 'applications'] as const,
+}
+
+/**
+ * Get my profile
+ */
+export function useMyProfile() {
+  return useQuery({
+    queryKey: userKeys.profile(),
+    queryFn: () => api.getMyProfile(),
+    staleTime: 1000 * 60 * 5, // 5 minutes
   })
 }
 
-export function useFindAccount() {
+/**
+ * Update my profile
+ */
+export function useUpdateMyProfile() {
+  const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (email: string) => api.findAccount(email),
+    mutationFn: (request: UpdateMyProfileRequest) => api.updateMyProfile(request),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: userKeys.profile() })
+      toast.success('프로필이 수정되었습니다.')
+    },
+    onError: (error: unknown) => {
+      const message = (error as { response?: { data?: { message?: string } }; message?: string })?.response?.data?.message
+        || (error as { message?: string })?.message
+        || '프로필 수정에 실패했습니다.'
+      toast.error(message)
+    },
   })
 }
 
-export function useSendAuthCode() {
+/**
+ * Change my password
+ */
+export function useChangeMyPassword() {
   return useMutation({
-    mutationFn: (request: SendAuthCodeRequest) => api.sendAuthCode(request),
+    mutationFn: (request: ChangeMyPasswordRequest) => api.changeMyPassword(request),
+    onSuccess: () => {
+      toast.success('비밀번호가 변경되었습니다.')
+    },
+    onError: (error: unknown) => {
+      const message = (error as { response?: { data?: { message?: string } }; message?: string })?.response?.data?.message
+        || (error as { message?: string })?.message
+        || '비밀번호 변경에 실패했습니다.'
+      toast.error(message)
+    },
   })
 }
 
-export function useVerifyAuthCode() {
+/**
+ * Withdraw user (회원 탈퇴)
+ */
+export function useWithdrawUser() {
+  const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (request: VerifyAuthCodeRequest) => api.verifyAuthCode(request),
+    mutationFn: (request: WithdrawUserRequest) => api.withdrawUser(request),
+    onSuccess: () => {
+      queryClient.clear()
+      toast.success('회원 탈퇴가 완료되었습니다.')
+    },
+    onError: (error: unknown) => {
+      const message = (error as { response?: { data?: { message?: string } }; message?: string })?.response?.data?.message
+        || (error as { message?: string })?.message
+        || '회원 탈퇴에 실패했습니다.'
+      toast.error(message)
+    },
   })
 }
 
-export function useResetPassword() {
-  return useMutation({
-    mutationFn: (request: ResetPasswordRequest) => api.resetPassword(request),
+/**
+ * Get my clubs
+ */
+export function useMyClubs() {
+  return useQuery({
+    queryKey: userKeys.clubs(),
+    queryFn: () => api.getMyClubs(),
+    staleTime: 1000 * 60 * 5, // 5 minutes
   })
 }
 
-export function useCheckEmailDuplicate() {
-  return useMutation({
-    mutationFn: (email: string) => api.checkEmailDuplicate(email),
-  })
-}
-
-export function useCheckAccountDuplicate() {
-  return useMutation({
-    mutationFn: (account: string) => api.checkAccountDuplicate(account),
-  })
-}
-
-export function useTemporaryRegister() {
-  return useMutation({
-    mutationFn: (request: TemporaryRegisterRequest) => api.temporaryRegister(request),
-  })
-}
-
-export function useConfirmEmailVerification() {
-  return useMutation({
-    mutationFn: (email: string) => api.confirmEmailVerification(email),
-  })
-}
-
-export function useSignup() {
-  return useMutation({
-    mutationFn: (request: SignupRequest) => api.signup(request),
-  })
-}
-
-export function useUserLogin() {
-  return useMutation({
-    mutationFn: (request: UserLoginRequest) => api.userLogin(request),
-  })
-}
-
-export function useSendExitCode() {
-  return useMutation({
-    mutationFn: api.sendExitCode,
-  })
-}
-
-export function useExitUser() {
-  return useMutation({
-    mutationFn: (request: ExitAuthCodeRequest) => api.exitUser(request),
+/**
+ * Get my applications
+ */
+export function useMyApplications() {
+  return useQuery({
+    queryKey: userKeys.applications(),
+    queryFn: () => api.getMyApplications(),
+    staleTime: 1000 * 60 * 5, // 5 minutes
   })
 }

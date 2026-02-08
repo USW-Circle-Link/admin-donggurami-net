@@ -7,23 +7,95 @@ import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Skeleton } from '@/components/ui/skeleton'
-import { toast } from 'sonner'
-import { dummyApplicants } from '@/data/dummyData'
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion'
 import { useAuthStore } from '@/features/auth/store/authStore'
-import { useFailedApplicants, useProcessFailedApplicants } from '@/features/club-leader/hooks/useClubLeader'
-import type { ApplicantStatus } from '@features/club-leader/domain/clubLeaderSchemas'
+import {
+  useApplicants,
+  useProcessApplicants,
+  useSendApplicantNotifications,
+} from '@/features/club-leader/hooks/useClubLeader'
+import { useApplicationDetail } from '@/features/application/hooks/useApplication'
+import type { ApplicantStatus, Applicant } from '@features/club-leader/domain/clubLeaderSchemas'
+
+function ApplicantDetailContent({
+  clubUUID,
+  applicant,
+}: {
+  clubUUID: string
+  applicant: Applicant
+}) {
+  const { data, isLoading, error } = useApplicationDetail(clubUUID, applicant.aplictUUID)
+
+  if (isLoading) {
+    return (
+      <div className="space-y-2 py-2">
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-16 w-full" />
+      </div>
+    )
+  }
+
+  if (error || !data) {
+    return (
+      <div className="py-2 text-sm text-muted-foreground">
+        지원서를 불러오는데 실패했습니다.
+      </div>
+    )
+  }
+
+  const detail = data.data
+
+  return (
+    <div className="space-y-3 py-2">
+      <div className="grid gap-2 md:grid-cols-2 text-sm">
+        <div>
+          <span className="text-muted-foreground">연락처: </span>
+          {applicant.userHp.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3')}
+        </div>
+        <div>
+          <span className="text-muted-foreground">학과: </span>
+          {detail.department}
+        </div>
+      </div>
+      <Separator />
+      <div className="space-y-2">
+        {detail.qnaList.slice(0, 2).map((item, index) => (
+          <div key={item.questionId} className="space-y-1">
+            <p className="text-xs font-medium text-muted-foreground">
+              Q{index + 1}. {item.question}
+            </p>
+            <p className="text-sm bg-muted/50 rounded p-2 line-clamp-2">
+              {item.answer || '(답변 없음)'}
+            </p>
+          </div>
+        ))}
+        {detail.qnaList.length > 2 && (
+          <p className="text-xs text-muted-foreground">
+            외 {detail.qnaList.length - 2}개 질문...
+          </p>
+        )}
+      </div>
+    </div>
+  )
+}
 
 export function FinalizePage() {
   const { clubUUID } = useAuthStore()
-  const { isLoading, error } = useFailedApplicants(clubUUID || '')
-  const { mutate: processFailedApplicants } = useProcessFailedApplicants()
+  const { data: applicantsData, isLoading, error } = useApplicants(clubUUID || '')
+  const processApplicants = useProcessApplicants()
+  const sendNotifications = useSendApplicantNotifications()
 
-  const failedApplicants = dummyApplicants.filter((a) => a.aplictStatus !== 'WAIT')
   const [selectedPass, setSelectedPass] = useState<Set<string>>(new Set())
   const [selectedFail, setSelectedFail] = useState<Set<string>>(new Set())
 
-  const passedApplicants = failedApplicants.filter((a) => a.aplictStatus === 'PASS')
-  const failedApplicantsList = failedApplicants.filter((a) => a.aplictStatus === 'FAIL')
+  const applicants = applicantsData?.data || []
+  const passedApplicants = applicants.filter((a) => a.status === 'PASS')
+  const failedApplicants = applicants.filter((a) => a.status === 'FAIL')
 
   const handleToggleSelect = (uuid: string, status: ApplicantStatus) => {
     if (status === 'PASS') {
@@ -54,21 +126,14 @@ export function FinalizePage() {
 
     const updates = Array.from(selectedPass).map((uuid) => ({
       aplictUUID: uuid,
-      aplictStatus: 'FAIL' as ApplicantStatus,
+      status: 'FAIL' as ApplicantStatus,
     }))
 
-    processFailedApplicants(
-      {
-        clubUUID,
-        updates,
-      },
+    processApplicants.mutate(
+      { clubUUID, updates },
       {
         onSuccess: () => {
           setSelectedPass(new Set())
-          toast.success(`${updates.length}명이 불합격으로 변경되었습니다.`)
-        },
-        onError: () => {
-          toast.error('불합격으로 변경에 실패했습니다.')
         },
       }
     )
@@ -79,32 +144,39 @@ export function FinalizePage() {
 
     const updates = Array.from(selectedFail).map((uuid) => ({
       aplictUUID: uuid,
-      aplictStatus: 'PASS' as ApplicantStatus,
+      status: 'PASS' as ApplicantStatus,
     }))
 
-    processFailedApplicants(
-      {
-        clubUUID,
-        updates,
-      },
+    processApplicants.mutate(
+      { clubUUID, updates },
       {
         onSuccess: () => {
           setSelectedFail(new Set())
-          toast.success(`${updates.length}명이 합격으로 변경되었습니다.`)
-        },
-        onError: () => {
-          toast.error('합격으로 변경에 실패했습니다.')
         },
       }
     )
   }
 
   const handleSendPassNotification = () => {
-    toast.success(`${passedApplicants.length}명에게 합격 알림을 보냅니다.`)
+    if (!clubUUID || passedApplicants.length === 0) return
+
+    const aplictUUIDs = passedApplicants.map((a) => ({ aplictUUID: a.aplictUUID }))
+    sendNotifications.mutate({ clubUUID, aplictUUIDs })
   }
 
   const handleSendFailNotification = () => {
-    toast.success(`${failedApplicantsList.length}명에게 불합격 알림을 보냅니다.`)
+    if (!clubUUID || failedApplicants.length === 0) return
+
+    const aplictUUIDs = failedApplicants.map((a) => ({ aplictUUID: a.aplictUUID }))
+    sendNotifications.mutate({ clubUUID, aplictUUIDs })
+  }
+
+  if (!clubUUID) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <p className="text-muted-foreground">동아리 정보를 불러올 수 없습니다.</p>
+      </div>
+    )
   }
 
   if (isLoading) {
@@ -147,6 +219,56 @@ export function FinalizePage() {
     )
   }
 
+  const renderApplicantList = (
+    list: Applicant[],
+    selectedSet: Set<string>,
+    status: ApplicantStatus,
+    emptyMessage: string
+  ) => {
+    if (list.length === 0) {
+      return <p className="text-center text-muted-foreground py-8">{emptyMessage}</p>
+    }
+
+    return (
+      <Accordion className="space-y-2">
+        {list.map((applicant) => (
+          <AccordionItem
+            key={applicant.aplictUUID}
+            value={applicant.aplictUUID}
+            className={`border rounded-lg px-3 cursor-pointer transition-colors ${
+              selectedSet.has(applicant.aplictUUID)
+                ? status === 'PASS'
+                  ? 'bg-green-50 border-green-300 dark:bg-green-950'
+                  : 'bg-red-50 border-red-300 dark:bg-red-950'
+                : ''
+            }`}
+          >
+            <div className="flex items-center gap-2 py-3">
+              <Checkbox
+                checked={selectedSet.has(applicant.aplictUUID)}
+                onCheckedChange={() => handleToggleSelect(applicant.aplictUUID, status)}
+                onClick={(e) => e.stopPropagation()}
+              />
+              <AccordionTrigger className="hover:no-underline flex-1 py-0">
+                <div className="flex flex-1 items-center justify-between text-left">
+                  <div>
+                    <p className="font-medium">{applicant.userName}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {applicant.studentNumber} | {applicant.major}
+                    </p>
+                  </div>
+                </div>
+              </AccordionTrigger>
+            </div>
+            <AccordionContent>
+              <ApplicantDetailContent clubUUID={clubUUID} applicant={applicant} />
+            </AccordionContent>
+          </AccordionItem>
+        ))}
+      </Accordion>
+    )
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -163,14 +285,14 @@ export function FinalizePage() {
               <div>
                 <CardTitle className="flex items-center gap-2">
                   합격자
-                  <Badge variant="success">{passedApplicants.length}명</Badge>
+                  <Badge className="bg-green-500">{passedApplicants.length}명</Badge>
                 </CardTitle>
                 <CardDescription>합격 처리된 지원자 목록</CardDescription>
               </div>
               <Button
                 variant="outline"
                 size="sm"
-                disabled={selectedPass.size === 0}
+                disabled={selectedPass.size === 0 || processApplicants.isPending}
                 onClick={handleMoveToFail}
               >
                 불합격으로 이동
@@ -179,41 +301,15 @@ export function FinalizePage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2 max-h-96 overflow-y-auto">
-              {passedApplicants.length === 0 ? (
-                <p className="text-center text-muted-foreground py-8">합격자가 없습니다</p>
-              ) : (
-                passedApplicants.map((applicant) => (
-                  <div
-                    key={applicant.aplictUUID}
-                    className={`flex items-center justify-between rounded-lg border p-3 cursor-pointer transition-colors ${
-                      selectedPass.has(applicant.aplictUUID)
-                        ? 'bg-green-50 border-green-300 dark:bg-green-950'
-                        : 'hover:bg-muted/50'
-                    }`}
-                    onClick={() => handleToggleSelect(applicant.aplictUUID, 'PASS')}
-                  >
-                    <div>
-                      <p className="font-medium">{applicant.userName}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {applicant.studentNumber} | {applicant.major}
-                      </p>
-                    </div>
-                    <Checkbox
-                      checked={selectedPass.has(applicant.aplictUUID)}
-                      onCheckedChange={() => {}}
-                    />
-                  </div>
-                ))
-              )}
+            <div className="max-h-96 overflow-y-auto">
+              {renderApplicantList(passedApplicants, selectedPass, 'PASS', '합격자가 없습니다')}
             </div>
 
             <Separator className="my-4" />
 
             <Button
-              variant="success"
-              className="w-full"
-              disabled={passedApplicants.length === 0}
+              className="w-full bg-green-600 hover:bg-green-700"
+              disabled={passedApplicants.length === 0 || sendNotifications.isPending}
               onClick={handleSendPassNotification}
             >
               <HugeiconsIcon icon={Notification01Icon} className="mr-2" />
@@ -228,49 +324,24 @@ export function FinalizePage() {
               <div>
                 <CardTitle className="flex items-center gap-2">
                   불합격자
-                  <Badge variant="destructive">{failedApplicantsList.length}명</Badge>
+                  <Badge variant="destructive">{failedApplicants.length}명</Badge>
                 </CardTitle>
                 <CardDescription>불합격 처리된 지원자 목록</CardDescription>
               </div>
               <Button
                 variant="outline"
                 size="sm"
-                disabled={selectedFail.size === 0}
+                disabled={selectedFail.size === 0 || processApplicants.isPending}
                 onClick={handleMoveToPass}
               >
-                합격으로 이동
                 <HugeiconsIcon icon={ArrowLeft01Icon} className="mr-1" />
+                합격으로 이동
               </Button>
             </div>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2 max-h-96 overflow-y-auto">
-              {failedApplicantsList.length === 0 ? (
-                <p className="text-center text-muted-foreground py-8">불합격자가 없습니다</p>
-              ) : (
-                failedApplicantsList.map((applicant) => (
-                  <div
-                    key={applicant.aplictUUID}
-                    className={`flex items-center justify-between rounded-lg border p-3 cursor-pointer transition-colors ${
-                      selectedFail.has(applicant.aplictUUID)
-                        ? 'bg-red-50 border-red-300 dark:bg-red-950'
-                        : 'hover:bg-muted/50'
-                    }`}
-                    onClick={() => handleToggleSelect(applicant.aplictUUID, 'FAIL')}
-                  >
-                    <div>
-                      <p className="font-medium">{applicant.userName}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {applicant.studentNumber} | {applicant.major}
-                      </p>
-                    </div>
-                    <Checkbox
-                      checked={selectedFail.has(applicant.aplictUUID)}
-                      onCheckedChange={() => {}}
-                    />
-                  </div>
-                ))
-              )}
+            <div className="max-h-96 overflow-y-auto">
+              {renderApplicantList(failedApplicants, selectedFail, 'FAIL', '불합격자가 없습니다')}
             </div>
 
             <Separator className="my-4" />
@@ -278,11 +349,11 @@ export function FinalizePage() {
             <Button
               variant="destructive"
               className="w-full"
-              disabled={failedApplicantsList.length === 0}
+              disabled={failedApplicants.length === 0 || sendNotifications.isPending}
               onClick={handleSendFailNotification}
             >
               <HugeiconsIcon icon={Notification01Icon} className="mr-2" />
-              불합격 알림 보내기 ({failedApplicantsList.length}명)
+              불합격 알림 보내기 ({failedApplicants.length}명)
             </Button>
           </CardContent>
         </Card>
@@ -291,7 +362,7 @@ export function FinalizePage() {
       <Card>
         <CardContent className="py-4">
           <p className="text-sm text-muted-foreground text-center">
-            카드를 클릭하여 선택한 후, 이동 버튼을 눌러 합격/불합격 상태를 변경할 수 있습니다.
+            체크박스로 선택한 후 이동 버튼을 눌러 합격/불합격 상태를 변경할 수 있습니다.
             <br />
             알림 보내기 버튼을 누르면 해당 목록의 모든 지원자에게 결과 알림이 발송됩니다.
           </p>

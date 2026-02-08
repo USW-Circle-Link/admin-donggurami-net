@@ -6,8 +6,8 @@ import {
   Megaphone01Icon,
   Logout01Icon,
   SidebarLeft01Icon,
-  Building03Icon,
 } from '@hugeicons/core-free-icons'
+import { Map } from 'lucide-react'
 import {
   Sidebar,
   SidebarContent,
@@ -115,14 +115,6 @@ export function UnionSidebar() {
                   </SidebarMenuSubItem>
                   <SidebarMenuSubItem>
                     <SidebarMenuSubButton
-                      onClick={() => handleNavigation('/union/clubs/rooms')}
-                      isActive={location.pathname === '/union/clubs/rooms'}
-                    >
-                      <span>동아리방 정보 수정</span>
-                    </SidebarMenuSubButton>
-                  </SidebarMenuSubItem>
-                  <SidebarMenuSubItem>
-                    <SidebarMenuSubButton
                       onClick={() => handleNavigation('/union/clubs/categories')}
                       isActive={location.pathname === '/union/clubs/categories'}
                     >
@@ -143,6 +135,18 @@ export function UnionSidebar() {
                   <span>공지사항</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+
+              {/* 층별 안내도 */}
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  onClick={() => handleNavigation('/union/floor-maps')}
+                  tooltip="층별 안내도"
+                  isActive={location.pathname.startsWith('/union/floor-maps')}
+                >
+                  <Map className="mr-2 h-4 w-4" />
+                  <span>층별 안내도</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -154,7 +158,7 @@ export function UnionSidebar() {
           <div className="flex items-center gap-3 px-2 py-2">
             <Avatar className="h-9 w-9">
               <AvatarFallback>
-                <HugeiconsIcon icon={Building03Icon} className="size-5" />
+                <img src="/circle_default_image.png" alt="Default Image" className="h-9 w-9 rounded-full" />
               </AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
@@ -190,9 +194,7 @@ export function UnionSidebar() {
         {/* 접힌 상태 */}
         <div className="hidden group-data-[collapsible=icon]:flex flex-col items-center gap-2 py-2">
           <Avatar className="h-8 w-8">
-            <AvatarFallback>
-              <HugeiconsIcon icon={Building03Icon} className="size-4" />
-            </AvatarFallback>
+            <img src="/circle_default_image.png" alt="Default Image" className="h-8 w-8 rounded-full" />
           </Avatar>
           <div className="flex justify-center">
             <ModeToggle />

@@ -2,9 +2,8 @@ import { z } from 'zod'
 
 // ===== Common Enums =====
 export const memberTypeSchema = z.enum(['REGULARMEMBER', 'NONMEMBER'])
-export const memberRoleSchema = z.enum(['LEADER', 'VICE_LEADER', 'MEMBER'])
 export const applicantStatusSchema = z.enum(['WAIT', 'PASS', 'FAIL'])
-export const recruitmentStatusSchema = z.enum(['OPEN', 'CLOSED'])
+export const recruitmentStatusSchema = z.enum(['OPEN', 'CLOSE'])
 
 // ===== Club Intro =====
 export const clubIntroResponseSchema = z.object({
@@ -90,57 +89,10 @@ export const clubMemberSchema = z.object({
   studentNumber: z.string(),
   userHp: z.string(),
   memberType: memberTypeSchema,
-  role: memberRoleSchema.optional(),
 })
 
 export const clubMemberDeleteRequestSchema = z.object({
   clubMemberUUID: z.string().uuid(),
-})
-
-export const clubMemberAddFromExcelSchema = z.object({
-  userName: z.string()
-    .min(2, '이름은 2자 이상이어야 합니다.')
-    .max(30, '이름은 30자 이하여야 합니다.')
-    .regex(/^[가-힣a-zA-Z]+$/, '이름은 한글 또는 영문만 가능합니다.'),
-  major: z.string().min(1).max(20, '학과는 20자 이하여야 합니다.'),
-  studentNumber: z.string().regex(/^\d{8}$/, '학번은 8자리 숫자여야 합니다.'),
-  userHp: z.string().regex(/^01[0-9]{9}$/, '전화번호 형식이 올바르지 않습니다.'),
-})
-
-export const nonMemberUpdateRequestSchema = z.object({
-  userName: z.string()
-    .min(2, '이름은 2자 이상이어야 합니다.')
-    .max(30, '이름은 30자 이하여야 합니다.')
-    .regex(/^[가-힣a-zA-Z]+$/, '이름은 한글 또는 영문만 가능합니다.'),
-  studentNumber: z.string().regex(/^\d{8}$/, '학번은 8자리 숫자여야 합니다.'),
-  userHp: z.string().regex(/^01[0-9]{9}$/, '전화번호 형식이 올바르지 않습니다.'),
-  major: z.string().min(1).max(20, '학과는 20자 이하여야 합니다.'),
-})
-
-// ===== Sign Up Requests =====
-export const signUpRequestItemSchema = z.object({
-  clubMemberAccountStatusUUID: z.string().uuid(),
-  profileTempName: z.string(),
-  profileTempStudentNumber: z.string(),
-  profileTempMajor: z.string(),
-  profileTempHp: z.string(),
-})
-
-export const signUpAcceptRequestSchema = z.object({
-  signUpProfileRequest: z.object({
-    uuid: z.string().uuid(),
-    userName: z.string(),
-    studentNumber: z.string(),
-    userHp: z.string(),
-    major: z.string(),
-  }).nullable(),
-  clubNonMemberProfileRequest: z.object({
-    uuid: z.string().uuid(),
-    userName: z.string(),
-    studentNumber: z.string(),
-    userHp: z.string(),
-    major: z.string(),
-  }).nullable(),
 })
 
 // ===== Applicants =====
@@ -150,11 +102,33 @@ export const applicantSchema = z.object({
   major: z.string(),
   studentNumber: z.string(),
   userHp: z.string(),
+  status: applicantStatusSchema,
+})
+
+export const qnaItemSchema = z.object({
+  questionId: z.number(),
+  question: z.string(),
+  type: z.string(),
+  answer: z.string(),
+})
+
+export const applicationDetailResponseSchema = z.object({
+  aplictUUID: z.string().uuid(),
+  applicantName: z.string(),
+  studentNumber: z.string(),
+  department: z.string(),
+  submittedAt: z.string(),
+  status: applicantStatusSchema,
+  isRead: z.boolean(),
+  qnaList: z.array(qnaItemSchema),
+})
+
+export const applicationStatusUpdateRequestSchema = z.object({
+  status: applicantStatusSchema,
 })
 
 export const applicantStatusUpdateSchema = z.object({
   aplictUUID: z.string().uuid(),
-  aplictStatus: applicantStatusSchema,
 })
 
 // ===== Others =====
@@ -169,7 +143,6 @@ export const fcmTokenRequestSchema = z.object({
 
 // Type inference
 export type MemberType = z.infer<typeof memberTypeSchema>
-export type MemberRole = z.infer<typeof memberRoleSchema>
 export type ApplicantStatus = z.infer<typeof applicantStatusSchema>
 export type RecruitmentStatus = z.infer<typeof recruitmentStatusSchema>
 export type ClubIntroResponse = z.infer<typeof clubIntroResponseSchema>
@@ -180,11 +153,10 @@ export type LeaderUpdatePwRequest = z.infer<typeof leaderUpdatePwRequestSchema>
 export type ClubSummaryResponse = z.infer<typeof clubSummaryResponseSchema>
 export type ClubMember = z.infer<typeof clubMemberSchema>
 export type ClubMemberDeleteRequest = z.infer<typeof clubMemberDeleteRequestSchema>
-export type ClubMemberAddFromExcel = z.infer<typeof clubMemberAddFromExcelSchema>
-export type NonMemberUpdateRequest = z.infer<typeof nonMemberUpdateRequestSchema>
-export type SignUpRequestItem = z.infer<typeof signUpRequestItemSchema>
-export type SignUpAcceptRequest = z.infer<typeof signUpAcceptRequestSchema>
 export type Applicant = z.infer<typeof applicantSchema>
 export type ApplicantStatusUpdate = z.infer<typeof applicantStatusUpdateSchema>
+export type QnaItem = z.infer<typeof qnaItemSchema>
+export type ApplicationDetailResponse = z.infer<typeof applicationDetailResponseSchema>
+export type ApplicationStatusUpdateRequest = z.infer<typeof applicationStatusUpdateRequestSchema>
 export type CategoryItem = z.infer<typeof categoryItemSchema>
 export type FcmTokenRequest = z.infer<typeof fcmTokenRequestSchema>

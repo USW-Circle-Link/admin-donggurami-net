@@ -133,7 +133,7 @@ export function NoticesPage() {
                         alt={`첨부 이미지 ${index + 1}`}
                         className="rounded-lg border"
                         onError={(e) => {
-                          e.currentTarget.src = '/v2/circle_default_image.png'
+                          e.currentTarget.src = '/circle_default_image.png'
                         }}
                       />
                     ))}
