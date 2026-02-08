@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/select'
 import { ApplicationPreviewModal } from './components/ApplicationPreviewModal'
 import { useAuthStore } from '@/features/auth/store/authStore'
-import { useClubIntro, useToggleRecruitment, useClubSummary, useUpdateClubIntro } from '@/features/club-leader/hooks/useClubLeader'
+import { useClubDetail, useToggleRecruitment, useUpdateClubInfo } from '@/features/club-leader/hooks/useClubLeader'
 import { useCreateForm } from '@/features/form-management'
 import { useClubForm } from '@/features/club'
 import type { CreateFormRequest, QuestionType as ApiQuestionType } from '@/features/form-management/domain/formSchemas'
@@ -189,15 +189,13 @@ const QUESTION_PRESETS: QuestionPreset[] = [
 export function RecruitmentEditPage() {
   const navigate = useNavigate()
   const { clubUUID } = useAuthStore()
-  const { data: clubSummaryData } = useClubSummary(clubUUID || '')
-  const clubSummary = clubSummaryData?.data
-  const { data: clubIntroData, isLoading, error } = useClubIntro(clubUUID || '')
-  const clubIntro = clubIntroData?.data
+  const { data: clubInfoData, isLoading, error } = useClubDetail(clubUUID || '')
+  const clubInfo = clubInfoData?.data
   const { data: clubFormData } = useClubForm(clubUUID || '')
   const clubForm = clubFormData?.data
 
   const { mutate: toggleRecruitment, isPending: isToggling } = useToggleRecruitment()
-  const { mutateAsync: updateClubIntro, isPending: isUpdatingIntro } = useUpdateClubIntro()
+  const { mutateAsync: updateClubInfo, isPending: isUpdatingInfo } = useUpdateClubInfo()
 
   // Transform API form type to UI question type
   const transformApiQuestionTypeToUi = (apiType: string): QuestionType => {
@@ -232,10 +230,10 @@ export function RecruitmentEditPage() {
   }, [clubForm])
 
   const initialFormData = useMemo(() => {
-    if (clubIntro) {
+    if (clubInfo) {
       return {
-        recruitmentStatus: clubIntro.recruitmentStatus || 'CLOSE',
-        recruitmentContent: clubIntro.clubRecruitment || '',
+        recruitmentStatus: clubInfo.recruitmentStatus || 'CLOSE',
+        recruitmentContent: clubInfo.clubRecruitment || '',
         questions: transformFormToUiQuestions,
       }
     }
@@ -244,7 +242,7 @@ export function RecruitmentEditPage() {
       recruitmentContent: '',
       questions: [],
     }
-  }, [clubIntro, transformFormToUiQuestions])
+  }, [clubInfo, transformFormToUiQuestions])
 
   const [isRecruiting, setIsRecruiting] = useState(initialFormData.recruitmentStatus === 'OPEN')
   const [recruitmentContent, setRecruitmentContent] = useState(initialFormData.recruitmentContent)
@@ -256,9 +254,9 @@ export function RecruitmentEditPage() {
   const [previewOpen, setPreviewOpen] = useState(false)
 
   useEffect(() => {
-    if (clubIntro) {
-      setIsRecruiting(clubIntro.recruitmentStatus === 'OPEN')
-      setRecruitmentContent(clubIntro.clubRecruitment || '')
+    if (clubInfo) {
+      setIsRecruiting(clubInfo.recruitmentStatus === 'OPEN')
+      setRecruitmentContent(clubInfo.clubRecruitment || '')
       // Load existing form questions if available
       if (transformFormToUiQuestions.length > 0) {
         setQuestions(transformFormToUiQuestions)
@@ -267,7 +265,7 @@ export function RecruitmentEditPage() {
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [clubUUID, clubIntro, transformFormToUiQuestions])
+  }, [clubUUID, clubInfo, transformFormToUiQuestions])
 
   const handleRecruitmentToggle = (checked: boolean) => {
     setIsRecruiting(checked)
@@ -410,16 +408,16 @@ export function RecruitmentEditPage() {
     }
 
     try {
-      // Step 1: Update club intro (recruitment content)
-      await updateClubIntro({
+      // Update club info with recruitment content
+      await updateClubInfo({
         clubUUID,
-        request: {
+        clubInfoRequest: {
           clubRecruitment: recruitmentContent || '',
           recruitmentStatus: isRecruiting ? 'OPEN' : 'CLOSE',
         },
       })
 
-      // Step 2: Create/update form
+      // Create/update form
       const formRequest: CreateFormRequest = {
         description: recruitmentContent || undefined,
         questions: transformQuestionsToApiFormat(questions),
@@ -477,7 +475,7 @@ export function RecruitmentEditPage() {
     )
   }
 
-  if (error || !clubIntro) {
+  if (error || !clubInfo) {
     return (
       <div className="space-y-6">
         <div>
@@ -682,7 +680,7 @@ export function RecruitmentEditPage() {
             type="button"
             variant="outline"
             onClick={() => setPreviewOpen(true)}
-            disabled={createFormMutation.isPending || isUpdatingIntro}
+            disabled={createFormMutation.isPending || isUpdatingInfo}
           >
             미리보기
           </Button>
@@ -691,16 +689,16 @@ export function RecruitmentEditPage() {
           type="button"
           variant="outline"
           onClick={() => navigate(-1)}
-          disabled={createFormMutation.isPending || isUpdatingIntro}
+          disabled={createFormMutation.isPending || isUpdatingInfo}
         >
           취소
         </Button>
         <Button
           onClick={handleSubmit}
-          disabled={createFormMutation.isPending || isUpdatingIntro || !isRecruiting}
+          disabled={createFormMutation.isPending || isUpdatingInfo || !isRecruiting}
         >
-          {(createFormMutation.isPending || isUpdatingIntro) && <Spinner className="mr-2" />}
-          {(createFormMutation.isPending || isUpdatingIntro) ? '저장 중...' : '저장'}
+          {(createFormMutation.isPending || isUpdatingInfo) && <Spinner className="mr-2" />}
+          {(createFormMutation.isPending || isUpdatingInfo) ? '저장 중...' : '저장'}
         </Button>
       </div>
 
@@ -708,7 +706,7 @@ export function RecruitmentEditPage() {
         open={previewOpen}
         onOpenChange={setPreviewOpen}
         questions={questions}
-        clubName={clubSummary?.clubName || ''}
+        clubName={clubInfo?.clubName || ''}
       />
     </div>
   )

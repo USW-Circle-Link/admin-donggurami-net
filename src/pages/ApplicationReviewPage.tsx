@@ -10,18 +10,20 @@ import {
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useAuthStore } from '@/features/auth/store/authStore'
-import { useApplicants, useProcessApplicants } from '@/features/club-leader/hooks/useClubLeader'
+import { useApplicantsByStatus, useProcessApplicants } from '@/features/club-leader/hooks/useClubLeader'
 import { useApplicationDetail } from '@/features/application/hooks/useApplication'
 import type { ApplicantStatus, Applicant } from '@/features/club-leader/domain/clubLeaderSchemas'
 
 function ApplicantDetailContent({
   clubUUID,
   applicant,
+  sectionStatus,
   onStatusChange,
   isProcessing,
 }: {
   clubUUID: string
   applicant: Applicant
+  sectionStatus: ApplicantStatus
   onStatusChange: (uuid: string, status: ApplicantStatus) => void
   isProcessing: boolean
 }) {
@@ -46,6 +48,7 @@ function ApplicantDetailContent({
   }
 
   const detail = data.data
+  const currentStatus = sectionStatus
 
   return (
     <div className="space-y-4 pb-4">
@@ -89,7 +92,7 @@ function ApplicantDetailContent({
 
       {/* 합격/불합격 버튼 */}
       <div className="flex justify-end gap-2">
-        {applicant.status === 'WAIT' && (
+        {currentStatus === 'WAIT' && (
           <>
             <Button
               variant="outline"
@@ -108,7 +111,7 @@ function ApplicantDetailContent({
             </Button>
           </>
         )}
-        {applicant.status === 'PASS' && (
+        {currentStatus === 'PASS' && (
           <>
             <Button
               variant="outline"
@@ -129,7 +132,7 @@ function ApplicantDetailContent({
             </Button>
           </>
         )}
-        {applicant.status === 'FAIL' && (
+        {currentStatus === 'FAIL' && (
           <>
             <Button
               variant="outline"
@@ -156,7 +159,18 @@ function ApplicantDetailContent({
 
 export function ApplicationReviewPage() {
   const clubUUID = useAuthStore((state) => state.clubUUID)
-  const { data: applicantsData, isLoading, error } = useApplicants(clubUUID || '')
+  // Fetch each status separately since API filters by status parameter
+  const { data: waitingData, isLoading: waitingLoading, error: waitingError } = useApplicantsByStatus(clubUUID || '', 'WAIT')
+  const { data: passedData, isLoading: passedLoading, error: passedError } = useApplicantsByStatus(clubUUID || '', 'PASS')
+  const { data: failedData, isLoading: failedLoading, error: failedError } = useApplicantsByStatus(clubUUID || '', 'FAIL')
+
+  const isLoading = waitingLoading || passedLoading || failedLoading
+  const hasError = waitingError || passedError || failedError
+  const waitingApplicants = waitingData?.data || []
+  const passedApplicants = passedData?.data || []
+  const failedApplicants = failedData?.data || []
+  const allApplicants = [...waitingApplicants, ...passedApplicants, ...failedApplicants]
+
   const processApplicants = useProcessApplicants()
 
   const handleStatusChange = (aplictUUID: string, status: ApplicantStatus) => {
@@ -209,7 +223,7 @@ export function ApplicationReviewPage() {
     )
   }
 
-  if (error) {
+  if (hasError) {
     return (
       <div className="flex items-center justify-center h-64">
         <p className="text-destructive">지원자 목록을 불러오는데 실패했습니다.</p>
@@ -217,13 +231,9 @@ export function ApplicationReviewPage() {
     )
   }
 
-  const applicants = applicantsData?.data || []
-  const waitingApplicants = applicants.filter((a) => a.status === 'WAIT')
-  const passedApplicants = applicants.filter((a) => a.status === 'PASS')
-  const failedApplicants = applicants.filter((a) => a.status === 'FAIL')
-
   const renderApplicantList = (
     list: Applicant[],
+    sectionStatus: ApplicantStatus,
     emptyMessage: string
   ) => {
     if (list.length === 0) {
@@ -247,7 +257,7 @@ export function ApplicationReviewPage() {
                   </p>
                 </div>
                 <div className="mr-2 mt-0.5">
-                  {getStatusBadge(applicant.status)}
+                  {getStatusBadge(applicant.status ?? sectionStatus)}
                 </div>
               </div>
             </AccordionTrigger>
@@ -255,6 +265,7 @@ export function ApplicationReviewPage() {
               <ApplicantDetailContent
                 clubUUID={clubUUID}
                 applicant={applicant}
+                sectionStatus={sectionStatus}
                 onStatusChange={handleStatusChange}
                 isProcessing={processApplicants.isPending}
               />
@@ -270,7 +281,7 @@ export function ApplicationReviewPage() {
       <div>
         <h1 className="text-2xl font-bold">지원서 검토</h1>
         <p className="text-muted-foreground">
-          총 {applicants.length}명 중 {waitingApplicants.length}명 검토 대기
+          총 {allApplicants.length}명 중 {waitingApplicants.length}명 검토 대기
         </p>
       </div>
 
@@ -284,7 +295,7 @@ export function ApplicationReviewPage() {
           <CardDescription>지원서가 검토를 기다리고 있습니다</CardDescription>
         </CardHeader>
         <CardContent>
-          {renderApplicantList(waitingApplicants, '검토 대기 중인 지원서가 없습니다')}
+          {renderApplicantList(waitingApplicants, 'WAIT', '검토 대기 중인 지원서가 없습니다')}
         </CardContent>
       </Card>
 
@@ -298,7 +309,7 @@ export function ApplicationReviewPage() {
           <CardDescription>합격 처리된 지원자입니다</CardDescription>
         </CardHeader>
         <CardContent>
-          {renderApplicantList(passedApplicants, '합격 처리된 지원자가 없습니다')}
+          {renderApplicantList(passedApplicants, 'PASS', '합격 처리된 지원자가 없습니다')}
         </CardContent>
       </Card>
 
@@ -312,7 +323,7 @@ export function ApplicationReviewPage() {
           <CardDescription>불합격 처리된 지원자입니다</CardDescription>
         </CardHeader>
         <CardContent>
-          {renderApplicantList(failedApplicants, '불합격 처리된 지원자가 없습니다')}
+          {renderApplicantList(failedApplicants, 'FAIL', '불합격 처리된 지원자가 없습니다')}
         </CardContent>
       </Card>
     </div>

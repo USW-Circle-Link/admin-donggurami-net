@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/accordion'
 import { useAuthStore } from '@/features/auth/store/authStore'
 import {
-  useApplicants,
+  useApplicantsByStatus,
   useProcessApplicants,
   useSendApplicantNotifications,
 } from '@/features/club-leader/hooks/useClubLeader'
@@ -86,16 +86,20 @@ function ApplicantDetailContent({
 
 export function FinalizePage() {
   const { clubUUID } = useAuthStore()
-  const { data: applicantsData, isLoading, error } = useApplicants(clubUUID || '')
+  // Fetch each status separately since API filters by status parameter
+  const { data: passedData, isLoading: passedLoading, error: passedError } = useApplicantsByStatus(clubUUID || '', 'PASS')
+  const { data: failedData, isLoading: failedLoading, error: failedError } = useApplicantsByStatus(clubUUID || '', 'FAIL')
+
+  const isLoading = passedLoading || failedLoading
+  const hasError = passedError || failedError
+  const passedApplicants = passedData?.data || []
+  const failedApplicants = failedData?.data || []
+
   const processApplicants = useProcessApplicants()
   const sendNotifications = useSendApplicantNotifications()
 
   const [selectedPass, setSelectedPass] = useState<Set<string>>(new Set())
   const [selectedFail, setSelectedFail] = useState<Set<string>>(new Set())
-
-  const applicants = applicantsData?.data || []
-  const passedApplicants = applicants.filter((a) => a.status === 'PASS')
-  const failedApplicants = applicants.filter((a) => a.status === 'FAIL')
 
   const handleToggleSelect = (uuid: string, status: ApplicantStatus) => {
     if (status === 'PASS') {
@@ -203,7 +207,7 @@ export function FinalizePage() {
     )
   }
 
-  if (error) {
+  if (hasError) {
     return (
       <div className="space-y-6">
         <div>
@@ -235,13 +239,12 @@ export function FinalizePage() {
           <AccordionItem
             key={applicant.aplictUUID}
             value={applicant.aplictUUID}
-            className={`border rounded-lg px-3 cursor-pointer transition-colors ${
-              selectedSet.has(applicant.aplictUUID)
-                ? status === 'PASS'
-                  ? 'bg-green-50 border-green-300 dark:bg-green-950'
-                  : 'bg-red-50 border-red-300 dark:bg-red-950'
-                : ''
-            }`}
+            className={`border rounded-lg px-3 cursor-pointer transition-colors ${selectedSet.has(applicant.aplictUUID)
+              ? status === 'PASS'
+                ? 'bg-green-50 border-green-300 dark:bg-green-950'
+                : 'bg-red-50 border-red-300 dark:bg-red-950'
+              : ''
+              }`}
           >
             <div className="flex items-center gap-2 py-3">
               <Checkbox
@@ -249,16 +252,18 @@ export function FinalizePage() {
                 onCheckedChange={() => handleToggleSelect(applicant.aplictUUID, status)}
                 onClick={(e) => e.stopPropagation()}
               />
-              <AccordionTrigger className="hover:no-underline flex-1 py-0">
-                <div className="flex flex-1 items-center justify-between text-left">
-                  <div>
-                    <p className="font-medium">{applicant.userName}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {applicant.studentNumber} | {applicant.major}
-                    </p>
+              <div className="flex-1 min-w-0">
+                <AccordionTrigger className="hover:no-underline py-0">
+                  <div className="flex flex-1 items-center justify-between mr-2 text-left">
+                    <div>
+                      <p className="font-medium">{applicant.userName}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {applicant.studentNumber} | {applicant.major}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              </AccordionTrigger>
+                </AccordionTrigger>
+              </div>
             </div>
             <AccordionContent>
               <ApplicantDetailContent clubUUID={clubUUID} applicant={applicant} />

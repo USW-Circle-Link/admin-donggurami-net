@@ -111,7 +111,7 @@ export function NoticesPage() {
               <div className="space-y-2">
                 <CardTitle className="text-xl">{noticeDetail.noticeTitle}</CardTitle>
                 <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                  <span>{noticeDetail.adminName}</span>
+                  <span>{noticeDetail.authorName}</span>
                   <span>{formatDate(noticeDetail.noticeCreatedAt)}</span>
                 </div>
               </div>
@@ -180,7 +180,7 @@ export function NoticesPage() {
                   >
                     <TableCell className="text-muted-foreground">{notices.length - index}</TableCell>
                     <TableCell className="font-medium">{notice.noticeTitle}</TableCell>
-                    <TableCell>{notice.adminName}</TableCell>
+                    <TableCell>{notice.authorName}</TableCell>
                     <TableCell className="text-muted-foreground">
                       {formatDate(notice.noticeCreatedAt)}
                     </TableCell>

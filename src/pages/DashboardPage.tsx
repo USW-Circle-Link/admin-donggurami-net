@@ -33,7 +33,7 @@ import { Input } from '@/components/ui/input'
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext, type CarouselApi } from '@/components/ui/carousel'
 import { useDebounce } from '@/shared/hooks/useDebounce'
 import { useAuthStore } from '@/features/auth/store/authStore'
-import { useClubSummary, useClubMembers, useDeleteClubMembers } from '@/features/club-leader/hooks/useClubLeader'
+import { useClubDetail, useClubMembers, useDeleteClubMembers } from '@/features/club-leader/hooks/useClubLeader'
 
 type SortField = 'userName' | 'studentNumber' | 'major' | 'userHp' | 'memberType'
 type SortDirection = 'asc' | 'desc'
@@ -64,7 +64,7 @@ export function DashboardPage() {
   const navigate = useNavigate()
   const { clubUUID } = useAuthStore()
 
-  const { data: clubData, isLoading: clubLoading, error: clubError } = useClubSummary(clubUUID || '')
+  const { data: clubData, isLoading: clubLoading, error: clubError } = useClubDetail(clubUUID || '')
   const { data: membersData, isLoading: membersLoading, error: membersError } = useClubMembers(clubUUID || '')
 
   const club = clubData?.data
@@ -82,14 +82,14 @@ export function DashboardPage() {
 
   // Filter out invalid photos (empty strings) and track valid photos
   useEffect(() => {
-    if (!club?.introPhotos) {
+    if (!club?.infoPhotos) {
       setValidPhotos([])
       return
     }
     // Filter out empty strings
-    const nonEmptyPhotos = club.introPhotos.filter((photo) => photo && photo.trim() !== '')
+    const nonEmptyPhotos = club.infoPhotos.filter((photo) => photo && photo.trim() !== '')
     setValidPhotos(nonEmptyPhotos)
-  }, [club?.introPhotos])
+  }, [club?.infoPhotos])
 
   const handleImageError = (index: number) => {
     setValidPhotos((prev) => prev.filter((_, i) => i !== index))
@@ -286,7 +286,7 @@ export function DashboardPage() {
                     {club.recruitmentStatus === 'OPEN' ? '모집중' : '모집마감'}
                   </Badge>
                 </CardTitle>
-                <CardDescription>{club.clubCategories.join(', ')}</CardDescription>
+                {/* <CardDescription>{club.clubCategories.join(', ')}</CardDescription> */}
               </div>
             </div>
             <Button variant="outline" size="sm" onClick={() => navigate('/club/basic-info')} className="flex-shrink-0">
@@ -316,7 +316,7 @@ export function DashboardPage() {
           </div>
 
           <div className="mt-4 flex gap-2">
-            {club.clubHashtag.map((tag, index) => (
+            {club.clubHashtags.map((tag, index) => (
               <Badge key={index} variant="outline">
                 {tag}
               </Badge>
