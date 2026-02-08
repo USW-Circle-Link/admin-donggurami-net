@@ -16,6 +16,10 @@ describe('Club Validation Schemas', () => {
         mainPhotoUrl: 'https://example.com/photo.jpg',
         department: '학술',
         hashtags: ['코딩', '개발'],
+        memberCount: 30,
+        leaderName: '홍길동',
+        leaderHp: '01012345678',
+        recruitmentStatus: 'OPEN',
       }
 
       const result = clubListResponseSchema.safeParse(validData)
@@ -29,6 +33,10 @@ describe('Club Validation Schemas', () => {
         mainPhotoUrl: null,
         department: '학술',
         hashtags: [],
+        memberCount: 30,
+        leaderName: '홍길동',
+        leaderHp: '01012345678',
+        recruitmentStatus: 'OPEN',
       }
 
       const result = clubListResponseSchema.safeParse(validData)
@@ -42,6 +50,10 @@ describe('Club Validation Schemas', () => {
         mainPhotoUrl: 'https://example.com/photo.jpg',
         department: '학술',
         hashtags: ['코딩'],
+        memberCount: 30,
+        leaderName: '홍길동',
+        leaderHp: '01012345678',
+        recruitmentStatus: 'OPEN',
       }
 
       const result = clubListResponseSchema.safeParse(invalidData)
@@ -83,6 +95,10 @@ describe('Club Validation Schemas', () => {
             mainPhotoUrl: 'https://example.com/photo.jpg',
             department: '학술',
             hashtags: ['코딩'],
+            memberCount: 30,
+            leaderName: '홍길동',
+            leaderHp: '01012345678',
+            recruitmentStatus: 'OPEN',
           },
         ],
       }
@@ -108,12 +124,12 @@ describe('Club Validation Schemas', () => {
       const validData = {
         clubUUID: '550e8400-e29b-41d4-a716-446655440000',
         mainPhoto: 'https://example.com/main.jpg',
-        introPhotos: ['https://example.com/photo1.jpg'],
+        infoPhotos: ['https://example.com/photo1.jpg'],
         clubName: '테스트 동아리',
         leaderName: '홍길동',
         leaderHp: '01012345678',
         clubInsta: 'https://instagram.com/test',
-        clubIntro: '동아리 소개글입니다.',
+        clubInfo: '동아리 소개글입니다.',
         recruitmentStatus: 'OPEN',
         googleFormUrl: 'https://forms.google.com/test',
         clubHashtags: ['코딩', '개발'],
@@ -130,12 +146,12 @@ describe('Club Validation Schemas', () => {
       const validData = {
         clubUUID: '550e8400-e29b-41d4-a716-446655440000',
         mainPhoto: null,
-        introPhotos: [],
+        infoPhotos: [],
         clubName: '테스트 동아리',
         leaderName: '홍길동',
         leaderHp: '01012345678',
         clubInsta: null,
-        clubIntro: null,
+        clubInfo: null,
         recruitmentStatus: 'CLOSE',
         googleFormUrl: null,
         clubHashtags: [],
@@ -152,12 +168,12 @@ describe('Club Validation Schemas', () => {
       const invalidData = {
         clubUUID: '550e8400-e29b-41d4-a716-446655440000',
         mainPhoto: null,
-        introPhotos: [],
+        infoPhotos: [],
         clubName: '테스트 동아리',
         leaderName: '홍길동',
         leaderHp: '01012345678',
         clubInsta: null,
-        clubIntro: null,
+        clubInfo: null,
         recruitmentStatus: 'INVALID',
         googleFormUrl: null,
         clubHashtags: [],
