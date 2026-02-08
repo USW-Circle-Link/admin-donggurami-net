@@ -1,4 +1,5 @@
 import { useNavigate, useLocation } from 'react-router'
+import { useLogout } from '@features/auth/hooks/useLogout'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
   Home01Icon,
@@ -40,8 +41,11 @@ export function UnionSidebar() {
     }
   }
 
+  const { mutate: logout } = useLogout()
   const handleLogout = () => {
-    navigate('/login')
+    logout(undefined, {
+      onSettled: () => navigate('/login', { replace: true }),
+    })
   }
 
   const isClubManageActive = location.pathname.startsWith('/union/clubs')
