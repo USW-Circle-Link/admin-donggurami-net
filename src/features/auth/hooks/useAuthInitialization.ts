@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router'
 import { useAuthStore } from '../store/authStore'
 import { clearAccessToken, setAccessToken } from '@shared/api/apiClient'
-import { refreshToken } from '../api/authApi'
+import { refreshTokenUnified } from '../api/authApi'
 
 /**
  * Authentication initialization hook
@@ -46,7 +46,7 @@ export function useAuthInitialization() {
 
         // Validate token by attempting to refresh it
         // This also updates the token if successful
-        const response = await refreshToken()
+        const response = await refreshTokenUnified()
         const newAccessToken = response.data.accessToken
 
         // Update the token in apiClient and store

@@ -76,7 +76,7 @@ apiClient.interceptors.response.use(
       try {
         // Attempt token refresh
         const response = await axios.post(
-          `${BASE_URL}/integration/refresh-token`,
+          `${BASE_URL}/auth/refresh`,
           {},
           { withCredentials: true }
         )

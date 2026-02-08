@@ -23,7 +23,7 @@ describe('MyPage API', () => {
 
     it('should return empty array when no clubs', async () => {
       server.use(
-        http.get(`${API_BASE}/mypages/my-clubs`, () => {
+        http.get(`${API_BASE}/users/me/clubs`, () => {
           return HttpResponse.json({
             message: '소속 동아리 조회 성공',
             data: [],

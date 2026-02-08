@@ -84,6 +84,59 @@ export const userLoginResponseSchema = z.object({
   refreshToken: z.string(),
 })
 
+// ===== User Profile =====
+export const userProfileResponseSchema = z.object({
+  userName: z.string(),
+  studentNumber: z.string(),
+  userHp: z.string(),
+  major: z.string(),
+  fcmToken: z.string().optional(),
+})
+
+export const updateMyProfileRequestSchema = z.object({
+  userPw: z.string().min(1, '현재 비밀번호는 필수입니다.'),
+  userName: z.string()
+    .min(2, '이름은 2자 이상이어야 합니다.')
+    .max(30, '이름은 30자 이하여야 합니다.')
+    .regex(/^[가-힣a-zA-Z]+$/, '이름은 한글 또는 영문만 가능합니다.'),
+  studentNumber: z.string().regex(/^\d{8}$/, '학번은 8자리 숫자여야 합니다.'),
+  userHp: z.string().regex(/^01[0-9]{9}$/, '전화번호 형식이 올바르지 않습니다.'),
+  major: z.string().min(1).max(20, '학과는 20자 이하여야 합니다.'),
+})
+
+export const changeMyPasswordRequestSchema = z.object({
+  userPw: z.string().min(1, '현재 비밀번호는 필수입니다.'),
+  newPw: z.string()
+    .min(8, '비밀번호는 8자 이상이어야 합니다.')
+    .max(20, '비밀번호는 20자 이하여야 합니다.')
+    .regex(/^(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[!@#$%^&*])/, '비밀번호는 영문, 숫자, 특수문자를 포함해야 합니다.'),
+  confirmNewPw: z.string(),
+}).refine((data) => data.newPw === data.confirmNewPw, {
+  message: '비밀번호가 일치하지 않습니다.',
+  path: ['confirmNewPw'],
+})
+
+export const withdrawUserRequestSchema = z.object({
+  authCode: z.string().min(1, '인증 코드는 필수입니다.'),
+})
+
+export const myClubSummarySchema = z.object({
+  clubUUID: z.string().uuid(),
+  mainPhotoPath: z.string().nullable(),
+  clubName: z.string(),
+  leaderName: z.string(),
+  leaderHp: z.string(),
+  clubInsta: z.string().nullable(),
+  clubRoomNumber: z.string().nullable(),
+})
+
+export const myApplicationSummarySchema = z.object({
+  clubUUID: z.string().uuid(),
+  mainPhotoPath: z.string().nullable(),
+  clubName: z.string(),
+  aplictStatus: z.string(),
+})
+
 // ===== User Exit =====
 export const exitAuthCodeRequestSchema = z.object({
   authCode: z.string().min(1, '인증 코드는 필수입니다.'),
@@ -100,3 +153,9 @@ export type SignupRequest = z.infer<typeof signupRequestSchema>
 export type UserLoginRequest = z.infer<typeof userLoginRequestSchema>
 export type UserLoginResponse = z.infer<typeof userLoginResponseSchema>
 export type ExitAuthCodeRequest = z.infer<typeof exitAuthCodeRequestSchema>
+export type UserProfileResponse = z.infer<typeof userProfileResponseSchema>
+export type UpdateMyProfileRequest = z.infer<typeof updateMyProfileRequestSchema>
+export type ChangeMyPasswordRequest = z.infer<typeof changeMyPasswordRequestSchema>
+export type WithdrawUserRequest = z.infer<typeof withdrawUserRequestSchema>
+export type MyClubSummary = z.infer<typeof myClubSummarySchema>
+export type MyApplicationSummary = z.infer<typeof myApplicationSummarySchema>

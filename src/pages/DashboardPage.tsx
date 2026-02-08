@@ -1,8 +1,9 @@
 import { useState, useMemo, useCallback, useEffect } from 'react'
 import { useNavigate } from 'react-router'
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { FileDownloadIcon, Delete01Icon, Edit01Icon, ArrowUp01Icon, ArrowDown01Icon, Search01Icon } from '@hugeicons/core-free-icons'
-import type { MemberRole } from '@/features/club-leader/domain/clubLeaderSchemas'
+import type { ClubMember } from '@/features/club-leader/domain/clubLeaderSchemas'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -34,25 +35,25 @@ import { useDebounce } from '@/shared/hooks/useDebounce'
 import { useAuthStore } from '@/features/auth/store/authStore'
 import { useClubSummary, useClubMembers, useDeleteClubMembers } from '@/features/club-leader/hooks/useClubLeader'
 
-type SortField = 'userName' | 'studentNumber' | 'major' | 'userHp' | 'role'
+type SortField = 'userName' | 'studentNumber' | 'major' | 'userHp' | 'memberType'
 type SortDirection = 'asc' | 'desc'
 
-const getRoleLabel = (role?: MemberRole) => {
-  switch (role) {
-    case 'LEADER':
-      return '회장'
-    case 'VICE_LEADER':
-      return '부회장'
+const getMemberTypeLabel = (memberType?: ClubMember['memberType']) => {
+  switch (memberType) {
+    case 'REGULARMEMBER':
+      return '정회원'
+    case 'NONMEMBER':
+      return '비회원'
     default:
       return '회원'
   }
 }
 
-const getRoleOrder = (role?: MemberRole) => {
-  switch (role) {
-    case 'LEADER':
+const getMemberTypeOrder = (memberType?: ClubMember['memberType']) => {
+  switch (memberType) {
+    case 'REGULARMEMBER':
       return 0
-    case 'VICE_LEADER':
+    case 'NONMEMBER':
       return 1
     default:
       return 2
@@ -75,8 +76,24 @@ export function DashboardPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [carouselApi, setCarouselApi] = useState<CarouselApi>()
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0)
+  const [validPhotos, setValidPhotos] = useState<string[]>([])
   const debouncedSearch = useDebounce(searchQuery, 300)
   const { mutate: deleteMembers, isPending: isDeleting } = useDeleteClubMembers()
+
+  // Filter out invalid photos (empty strings) and track valid photos
+  useEffect(() => {
+    if (!club?.introPhotos) {
+      setValidPhotos([])
+      return
+    }
+    // Filter out empty strings
+    const nonEmptyPhotos = club.introPhotos.filter((photo) => photo && photo.trim() !== '')
+    setValidPhotos(nonEmptyPhotos)
+  }, [club?.introPhotos])
+
+  const handleImageError = (index: number) => {
+    setValidPhotos((prev) => prev.filter((_, i) => i !== index))
+  }
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -102,8 +119,8 @@ export function DashboardPage() {
     if (!sortField) return filteredMembers
     return [...filteredMembers].sort((a, b) => {
       let comparison = 0
-      if (sortField === 'role') {
-        comparison = getRoleOrder(a.role) - getRoleOrder(b.role)
+      if (sortField === 'memberType') {
+        comparison = getMemberTypeOrder(a.memberType) - getMemberTypeOrder(b.memberType)
       } else {
         const aVal = a[sortField] || ''
         const bVal = b[sortField] || ''
@@ -253,16 +270,15 @@ export function DashboardPage() {
         <CardHeader>
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-4 flex-1 min-w-0">
-              {club.mainPhoto && (
-                <img
-                  src={club.mainPhoto}
+              <Avatar className="h-16 w-16 flex-shrink-0">
+                <AvatarImage
+                  src={(club.mainPhoto && club.mainPhoto !== '') ? club.mainPhoto : '/circle_default_image.png'}
                   alt={`${club.clubName} 로고`}
-                  className="h-16 w-16 object-cover rounded-lg border flex-shrink-0"
-                  onError={(e) => {
-                    e.currentTarget.src = '/v2/circle_default_image.png'
-                  }}
                 />
-              )}
+                <AvatarFallback>
+                  <img src="/circle_default_image.png" alt="Default Image" className="h-16 w-16 rounded-full" />
+                </AvatarFallback>
+              </Avatar>
               <div className="min-w-0 flex-1">
                 <CardTitle className="flex items-center gap-2 flex-wrap">
                   {club.clubName}
@@ -308,7 +324,7 @@ export function DashboardPage() {
           </div>
 
           {/* 동아리 소개 사진 캐러셀 */}
-          {club.introPhotos && club.introPhotos.length > 0 && (
+          {validPhotos.length > 0 && (
             <div className="mt-4">
               <p className="text-sm text-muted-foreground mb-3">동아리 소개 사진</p>
               <Carousel
@@ -316,16 +332,14 @@ export function DashboardPage() {
                 className="relative group"
               >
                 <CarouselContent className="!ml-0">
-                  {club.introPhotos.map((photo, index) => (
+                  {validPhotos.map((photo, index) => (
                     <CarouselItem key={index} className="pl-0">
                       <div className="relative w-full bg-muted rounded-lg overflow-hidden">
                         <img
                           src={photo}
                           alt={`동아리 소개 사진 ${index + 1}`}
                           className="w-full h-80 object-cover"
-                          onError={(e) => {
-                            e.currentTarget.src = '/v2/circle_default_image.png'
-                          }}
+                          onError={() => handleImageError(index)}
                         />
                       </div>
                     </CarouselItem>
@@ -333,7 +347,7 @@ export function DashboardPage() {
                 </CarouselContent>
 
                 {/* 이전/다음 버튼 */}
-                {club.introPhotos.length > 1 && (
+                {validPhotos.length > 1 && (
                   <>
                     <CarouselPrevious
                       className="left-2 opacity-0 group-hover:opacity-100 transition-opacity bg-black/50 hover:bg-black/70 text-white border-0"
@@ -346,14 +360,14 @@ export function DashboardPage() {
 
                 {/* 사진 개수 표시 */}
                 <div className="absolute bottom-2 right-2 bg-black/50 text-white px-2 py-1 rounded text-xs z-10">
-                  {currentPhotoIndex + 1} / {club.introPhotos.length}
+                  {currentPhotoIndex + 1} / {validPhotos.length}
                 </div>
               </Carousel>
 
               {/* 도트 인디케이터 */}
-              {club.introPhotos.length > 1 && (
+              {validPhotos.length > 1 && (
                 <div className="flex justify-center gap-2 mt-3">
-                  {club.introPhotos.map((_, index) => (
+                  {validPhotos.map((_, index) => (
                     <Button
                       key={index}
                       variant="ghost"
@@ -361,9 +375,8 @@ export function DashboardPage() {
                       onClick={() => {
                         carouselApi?.scrollTo(index)
                       }}
-                      className={`w-2 h-2 p-0 rounded-full transition-colors ${
-                        index === currentPhotoIndex ? 'bg-foreground hover:bg-foreground' : 'bg-muted-foreground hover:bg-muted-foreground/70'
-                      }`}
+                      className={`w-2 h-2 p-0 rounded-full transition-colors ${index === currentPhotoIndex ? 'bg-foreground hover:bg-foreground' : 'bg-muted-foreground hover:bg-muted-foreground/70'
+                        }`}
                       aria-label={`Go to slide ${index + 1}`}
                     />
                   ))}
@@ -519,11 +532,11 @@ export function DashboardPage() {
                 </TableHead>
                 <TableHead
                   className="cursor-pointer hover:bg-muted/50"
-                  onClick={() => handleSort('role')}
+                  onClick={() => handleSort('memberType')}
                 >
                   <div className="flex items-center gap-1">
-                    역할
-                    {sortField === 'role' && (
+                    회원 유형
+                    {sortField === 'memberType' && (
                       <HugeiconsIcon
                         icon={sortDirection === 'asc' ? ArrowUp01Icon : ArrowDown01Icon}
                         className="size-4"
@@ -561,14 +574,12 @@ export function DashboardPage() {
                     <TableCell>
                       <Badge
                         variant={
-                          member.role === 'LEADER'
+                          member.memberType === 'REGULARMEMBER'
                             ? 'default'
-                            : member.role === 'VICE_LEADER'
-                              ? 'secondary'
-                              : 'outline'
+                            : 'outline'
                         }
                       >
-                        {getRoleLabel(member.role)}
+                        {getMemberTypeLabel(member.memberType)}
                       </Badge>
                     </TableCell>
                   </TableRow>

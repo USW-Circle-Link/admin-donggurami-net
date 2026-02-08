@@ -12,7 +12,7 @@ import {
   getClubMembers,
   deleteClubMembers,
   getApplicants,
-  processApplicants,
+  updateApplicationStatus,
   agreeTerms,
 } from '../clubLeaderApi'
 
@@ -37,7 +37,7 @@ describe('Club Leader API', () => {
 
     it('should throw error on unauthorized', async () => {
       server.use(
-        http.get(`${API_BASE}/club-leader/:clubUUID/intro`, () => {
+        http.get(`${API_BASE}/clubs/:clubUUID/leader/intro`, () => {
           return HttpResponse.json(
             {
               exception: 'AuthException',
@@ -78,7 +78,7 @@ describe('Club Leader API', () => {
       expect(result.message).toBe('동아리 소개 수정 성공')
       expect(result.data).toBeNull()
       expect(putSpy).toHaveBeenCalledWith(
-        `/club-leader/${clubUUID}/intro`,
+        `/clubs/${clubUUID}/leader/intro`,
         expect.any(FormData),
         expect.objectContaining({
           headers: { 'Content-Type': 'multipart/form-data' },
@@ -165,13 +165,11 @@ describe('Club Leader API', () => {
     })
   })
 
-  describe('processApplicants', () => {
-    it('should process applicants', async () => {
-      const updates = [{ aplictUUID: 'applicant-1', aplictStatus: 'PASS' as const }]
+  describe('updateApplicationStatus', () => {
+    it('should update applicant status', async () => {
+      const result = await updateApplicationStatus(clubUUID, 'applicant-1', { status: 'PASS' })
 
-      const result = await processApplicants(clubUUID, updates)
-
-      expect(result.message).toBe('지원자 처리 성공')
+      expect(result.message).toBe('지원자 상태 변경 성공')
       expect(result.data).toBeNull()
     })
   })

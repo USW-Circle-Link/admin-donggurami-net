@@ -43,7 +43,7 @@ describe('useAuthInitialization - Session Timeout Behavior', () => {
 
       // Mock successful token refresh
       server.use(
-        http.post(`${API_BASE}/integration/refresh-token`, () => {
+        http.post(`${API_BASE}/auth/refresh`, () => {
           return HttpResponse.json({
             data: {
               accessToken: 'refreshed_valid_token',
@@ -86,7 +86,7 @@ describe('useAuthInitialization - Session Timeout Behavior', () => {
       let refreshEndpointCalled = false
 
       server.use(
-        http.post(`${API_BASE}/integration/refresh-token`, () => {
+        http.post(`${API_BASE}/auth/refresh`, () => {
           refreshEndpointCalled = true
           return HttpResponse.json({
             data: {
@@ -137,7 +137,7 @@ describe('useAuthInitialization - Session Timeout Behavior', () => {
 
       // Mock 401 Unauthorized response
       server.use(
-        http.post(`${API_BASE}/integration/refresh-token`, () => {
+        http.post(`${API_BASE}/auth/refresh`, () => {
           return HttpResponse.json(
             { message: 'Token expired', code: 'TOK-001' },
             { status: 401 }
@@ -171,7 +171,7 @@ describe('useAuthInitialization - Session Timeout Behavior', () => {
       })
 
       server.use(
-        http.post(`${API_BASE}/integration/refresh-token`, () => {
+        http.post(`${API_BASE}/auth/refresh`, () => {
           return HttpResponse.json(
             { message: 'Invalid token' },
             { status: 401 }
@@ -197,7 +197,7 @@ describe('useAuthInitialization - Session Timeout Behavior', () => {
       })
 
       server.use(
-        http.post(`${API_BASE}/integration/refresh-token`, () => {
+        http.post(`${API_BASE}/auth/refresh`, () => {
           return HttpResponse.json(
             { message: 'Token expired' },
             { status: 401 }
@@ -230,7 +230,7 @@ describe('useAuthInitialization - Session Timeout Behavior', () => {
       })
 
       server.use(
-        http.post(`${API_BASE}/integration/refresh-token`, () => {
+        http.post(`${API_BASE}/auth/refresh`, () => {
           return HttpResponse.json({
             data: {
               accessToken: 'brand_new_token',
@@ -263,7 +263,7 @@ describe('useAuthInitialization - Session Timeout Behavior', () => {
       })
 
       server.use(
-        http.post(`${API_BASE}/integration/refresh-token`, () => {
+        http.post(`${API_BASE}/auth/refresh`, () => {
           return HttpResponse.json({
             data: {
               accessToken: 'new_persisted_token',
@@ -299,7 +299,7 @@ describe('useAuthInitialization - Session Timeout Behavior', () => {
       })
 
       server.use(
-        http.post(`${API_BASE}/integration/refresh-token`, () => {
+        http.post(`${API_BASE}/auth/refresh`, () => {
           return HttpResponse.json({
             data: {
               accessToken: 'refreshed_token',
@@ -333,7 +333,7 @@ describe('useAuthInitialization - Session Timeout Behavior', () => {
       })
 
       server.use(
-        http.post(`${API_BASE}/integration/refresh-token`, () => {
+        http.post(`${API_BASE}/auth/refresh`, () => {
           return HttpResponse.json(
             { message: 'Refresh token expired', code: 'TOK-002' },
             { status: 401 }
@@ -364,7 +364,7 @@ describe('useAuthInitialization - Session Timeout Behavior', () => {
       })
 
       server.use(
-        http.post(`${API_BASE}/integration/refresh-token`, () => {
+        http.post(`${API_BASE}/auth/refresh`, () => {
           return HttpResponse.json(
             { message: 'Forbidden', code: 'TOK-003' },
             { status: 403 }
@@ -396,7 +396,7 @@ describe('useAuthInitialization - Session Timeout Behavior', () => {
       })
 
       server.use(
-        http.post(`${API_BASE}/integration/refresh-token`, () => {
+        http.post(`${API_BASE}/auth/refresh`, () => {
           return HttpResponse.json(
             { message: 'Internal Server Error' },
             { status: 500 }
@@ -428,7 +428,7 @@ describe('useAuthInitialization - Session Timeout Behavior', () => {
       })
 
       server.use(
-        http.post(`${API_BASE}/integration/refresh-token`, () => {
+        http.post(`${API_BASE}/auth/refresh`, () => {
           return HttpResponse.json(
             { message: 'Unauthorized' },
             { status: 401 }
@@ -460,7 +460,7 @@ describe('useAuthInitialization - Session Timeout Behavior', () => {
 
       // Mock network error
       server.use(
-        http.post(`${API_BASE}/integration/refresh-token`, () => {
+        http.post(`${API_BASE}/auth/refresh`, () => {
           return HttpResponse.error()
         })
       )
@@ -490,7 +490,7 @@ describe('useAuthInitialization - Session Timeout Behavior', () => {
 
       // Simulate network timeout
       server.use(
-        http.post(`${API_BASE}/integration/refresh-token`, async () => {
+        http.post(`${API_BASE}/auth/refresh`, async () => {
           await new Promise((resolve) => setTimeout(resolve, 100))
           return HttpResponse.error()
         })
@@ -522,7 +522,7 @@ describe('useAuthInitialization - Session Timeout Behavior', () => {
       })
 
       server.use(
-        http.post(`${API_BASE}/integration/refresh-token`, () => {
+        http.post(`${API_BASE}/auth/refresh`, () => {
           return HttpResponse.error()
         })
       )
@@ -566,7 +566,7 @@ describe('useAuthInitialization - Session Timeout Behavior', () => {
       useAuthStore.setState(persistedState.state)
 
       server.use(
-        http.post(`${API_BASE}/integration/refresh-token`, () => {
+        http.post(`${API_BASE}/auth/refresh`, () => {
           return HttpResponse.json({
             data: {
               accessToken: 'refreshed_after_reload',
@@ -599,7 +599,7 @@ describe('useAuthInitialization - Session Timeout Behavior', () => {
       })
 
       server.use(
-        http.post(`${API_BASE}/integration/refresh-token`, () => {
+        http.post(`${API_BASE}/auth/refresh`, () => {
           return HttpResponse.json({
             data: {
               accessToken: 'synced_token',
@@ -633,7 +633,7 @@ describe('useAuthInitialization - Session Timeout Behavior', () => {
       })
 
       server.use(
-        http.post(`${API_BASE}/integration/refresh-token`, () => {
+        http.post(`${API_BASE}/auth/refresh`, () => {
           return HttpResponse.json({
             data: {
               accessToken: 'session_1_refreshed',
@@ -657,7 +657,7 @@ describe('useAuthInitialization - Session Timeout Behavior', () => {
 
       // Second session (simulating page refresh)
       server.use(
-        http.post(`${API_BASE}/integration/refresh-token`, () => {
+        http.post(`${API_BASE}/auth/refresh`, () => {
           return HttpResponse.json({
             data: {
               accessToken: 'session_2_refreshed',

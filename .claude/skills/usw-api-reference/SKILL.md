@@ -1,34 +1,29 @@
 ---
 name: usw-api-reference
-description: "Complete reference for USW Circle Link Server API (v1). Use this when you need to: (1) Reference API endpoints and their methods (GET, POST, PUT, DELETE, PATCH), (2) Understand request/response structures and data types, (3) Check field constraints, validation rules, and required parameters, (4) Look up HTTP error codes and custom error codes (COM, TOK, USR, CLUB, CLDR, CMEM, APT, FILE, etc.), (5) Verify role-based access control requirements (USER, LEADER, ADMIN), (6) Navigate API structure by feature (Club Leader, Admin, Applicants, Forms, etc.). Base URL: https://api.donggurami.net"
+description: "Complete reference for USW Circle Link Server API (v1). Use this when you need to: (1) Reference API endpoints and their methods (GET, POST, PUT, DELETE, PATCH), (2) Understand request/response structures and data types, (3) Check field constraints, validation rules, and required parameters, (4) Look up HTTP error codes and custom error codes (COM, TOK, USR, CLUB, CLDR, CMEM, APT, FILE, etc.), (5) Verify role-based access control requirements (USER, LEADER, ADMIN), (6) Navigate API structure by feature (Auth, Club Leader, Admin, Applications, Forms, etc.). Base URL: https://api.donggurami.net"
 ---
 
 # USW Circle Link Server API Reference
 
 ## Quick Navigation
 
-The USW API is organized into **16 feature domains**. Use this guide to quickly find what you need.
+The USW API is organized into **13 feature domains**. Use this guide to quickly find what you need.
 
 ### API Domains
 
 | Domain | Purpose | Example Endpoints |
 |--------|---------|------------------|
-| **1. Club Leader** | Manage club intro, info, members, recruitment | `/club-leader/{clubUUID}/intro`, `/club-leader/{clubUUID}/info` |
-| **2. Admin Notice** | Create and manage notices | `POST /notices`, `GET /notices/{noticeUUID}` |
-| **3. Admin Floor Photo** | Manage floor photos (B1, F1, F2) | `PUT /admin/floor/photo/{floor}` |
-| **4. Admin Club** | Manage clubs (admin only) | `POST /admin/clubs`, `DELETE /admin/clubs/{clubUUID}` |
-| **5. Admin Category** | Manage club categories | `POST /admin/clubs/category` |
-| **6. Club Leader Login** | Leader authentication | `POST /club-leader/login` |
-| **7. Admin Login** | Admin authentication | `POST /admin/login` |
-| **8. Application** | Handle club applications | `GET /apply/can-apply/{clubUUID}`, `POST /apply/{clubUUID}` |
-| **9. My Page** | User's personal info | `GET /mypages/my-clubs`, `GET /mypages/aplict-clubs` |
-| **10. My Notice** | User's notices | `GET /my-notices` |
-| **11. Club** | Public club info | `GET /clubs`, `GET /clubs/filter` |
-| **12. Integration Auth** | Login/logout/token refresh | `POST /integration/logout`, `POST /integration/refresh-token` |
-| **13. User** | User management (signup, login, profile) | `POST /users/signup`, `POST /users/login` |
-| **14. Profile** | Profile management | `PATCH /profiles/change`, `GET /profiles/me` |
-| **15. Form Management** | Application forms & submissions | `POST /api/clubs/{clubId}/forms` |
-| **16. Health Check** | Server status | `GET /health-check` |
+| **1. Auth** | Unified authentication (login, signup, password reset, withdrawal) | `POST /auth/login`, `POST /auth/signup`, `POST /auth/withdrawal/code` |
+| **2. Clubs** | Club listing, info, members, management | `GET /clubs`, `GET /clubs/{clubUUID}/info`, `PUT /clubs/{clubUUID}`, `PATCH /clubs/{clubUUID}/recruit-status` |
+| **3. Club Leader** | Leader-specific: intro, summary, application review | `GET /clubs/{clubUUID}/leader/intro`, `GET /clubs/{clubUUID}/leader/summary` |
+| **4. Applications** | Handle club applications (submit, review, status) | `POST /clubs/{clubUUID}/applications`, `GET /clubs/{clubUUID}/applicants` |
+| **5. Notices** | Create and manage notices | `POST /notices`, `GET /notices/{noticeUUID}` |
+| **6. Categories** | Manage club categories | `GET /categories`, `POST /categories`, `DELETE /categories/{uuid}` |
+| **7. Floor Maps** | Manage floor photos (B1, F1, F2) | `GET /floor-maps`, `PUT /floor-maps`, `DELETE /floor-maps/{floor}` |
+| **8. User Profile** | User's personal info, clubs, applications, floor photos | `GET /users/me`, `PATCH /users/me`, `GET /users/me/clubs`, `GET /users/me/applications` |
+| **9. Forms** | Application forms & questions | `POST /clubs/{clubUUID}/forms`, `GET /clubs/forms/{clubUUID}` |
+| **10. Event Verification** | Event code verification | `POST /users/event/verify`, `GET /users/event/status` |
+| **11. Health Check** | Server status | `GET /health-check` |
 
 ## Finding Endpoints
 
@@ -45,11 +40,11 @@ The USW API is organized into **16 feature domains**. Use this guide to quickly 
 - **ADMIN**: Administrator (manage clubs, notices, categories)
 
 ### By Feature
-- **Authentication**: `/club-leader/login`, `/admin/login`, `/users/login`, `/users/signup`
-- **Club Management**: `/admin/clubs/*`, `/club-leader/*`
-- **Recruitment**: `/apply/*`, `/club-leader/*/applicants`
-- **User Profile**: `/profiles/*`, `/users/*`
-- **Public Info**: `/clubs/*` (no auth required)
+- **Authentication**: `/auth/login`, `/auth/signup`, `/auth/refresh`, `/auth/logout`
+- **Club Management**: `/clubs/*`, `/clubs/{clubUUID}/leader/*`
+- **Recruitment**: `/clubs/{clubUUID}/applications`, `/clubs/{clubUUID}/applicants`
+- **User Profile**: `/users/me`, `/users/me/clubs`, `/users/me/applications`, `/users/profile/duplication-check`
+- **Public Info**: `/clubs/*`, `/categories` (no auth required for some)
 
 ## Request/Response Structures
 
@@ -100,14 +95,16 @@ The USW API is organized into **16 feature domains**. Use this guide to quickly 
 
 | Type | Constraint | Example |
 |------|-----------|---------|
+| **Account** | 5~20 chars, alphanumeric | `account` |
 | **Names** | 2~30 chars, Korean/English | `userName` |
-| **Passwords** | 8~20 chars, Eng+Num+Special | `newPw` |
-| **Phone** | 11 digits, format `010XXXXXXXX` | `userHp` |
+| **Passwords** | 8~20 chars, Eng+Num+Special | `password` |
+| **Phone** | 11 digits, format `010XXXXXXXX` | `telephone` |
 | **Student ID** | 8 digits | `studentNumber` |
 | **URLs** | Valid HTTPS URL | `googleFormUrl` |
 | **UUID** | Valid UUID format | `clubUUID` |
 | **Hashtags** | Max 2 items, 1~6 chars each | `clubHashtag` |
 | **Categories** | Max 3 items, 1~20 chars each | `clubCategoryName` |
+| **Club Name** | 1~10 chars, Kor/Eng/Num | `clubName` |
 
 ## Error Code Categories
 
@@ -128,56 +125,92 @@ Error codes follow a prefix pattern. Use `error-codes.md` for full lookup:
 | `CTG` | Category | `CTG-201` (Category Not Found) |
 | `CINT` | Club Intro | `CINT-201` (Intro Not Found) |
 | `EMAIL_TOKEN` | Email | `EMAIL_TOKEN-002` (Token Expired) |
+| `AC` | Auth Code | `AC-101` (Code Mismatch) |
+| `WT` | Withdrawal Token | `WT-102` (Token Not Found) |
 
 ## Access Control
 
 ### Public Endpoints (no auth required)
 - `GET /clubs` - Browse clubs
-- `GET /clubs/categories` - Browse categories
-- `POST /users/signup` - Register
-- `POST /users/login` - Login
-- `POST /admin/login` - Admin login
-- `POST /club-leader/login` - Leader login
-- Email verification, password reset endpoints
+- `GET /clubs/open` - Browse recruiting clubs
+- `GET /categories` - Browse categories
+- `POST /auth/login` - Unified login
+- `POST /auth/signup` - Register
+- `POST /auth/signup/verification-mail` - Send verification email
+- `POST /auth/signup/verify` - Verify email
+- `POST /auth/find-id` - Find account
+- `POST /auth/password/*` - Password reset flow
+- `GET /auth/check-Id` - Check ID duplication
+- `GET /health-check` - Server status
 
 ### Protected by Role
-- **USER**: My page, apply, profile management
-- **LEADER**: Club management (with role verification via clubUUID)
-- **ADMIN**: Admin functions (notices, categories, clubs, floors)
+- **USER**: Profile management, my clubs/applications, event verification
+- **LEADER**: Club intro/summary, application review via `/clubs/{clubUUID}/leader/*`
+- **ADMIN**: Admin functions (notices, categories, clubs CRUD, floor maps)
 
 ### Token Handling
-- **Access Token**: JWT persisted in localStorage (recovered on app refresh), synced with in-memory storage
+- **Access Token**: JWT in Authorization header (`Bearer {token}`)
 - **Refresh Token**: JWT in httpOnly cookies
-- **Refresh Endpoint**: `POST /integration/refresh-token`
+- **Refresh Endpoint**: `POST /auth/refresh`
+- **Unified Login**: `POST /auth/login` returns role-specific response (USER/LEADER/ADMIN)
 - **Client-Side Implementation**:
   - Zustand store persists `isAuthenticated` and `accessToken`
   - apiClient initializes token from localStorage on app start
   - Automatic token validation on app startup via `AuthInitializer` component
   - Protected routes redirect unauthenticated users to `/login`
-  - Valid token → auto-redirect to dashboard; Invalid/expired → auto-redirect to login
 
 ## Working with Specific Features
 
+### Authentication Flow (New Unified Auth)
+- **Login**: `POST /auth/login` (supports USER, LEADER, ADMIN roles)
+- **Signup**: `POST /auth/signup/verification-mail` → `POST /auth/signup/verify` → `POST /auth/signup`
+- **Password Reset**: `POST /auth/password/reset-code` → `POST /auth/password/verify` → `PATCH /auth/password/reset`
+- **Withdrawal**: `POST /auth/withdrawal/code` → `DELETE /users/me` (with authCode)
+- **Token Refresh**: `POST /auth/refresh`
+- **Logout**: `POST /auth/logout`
+
 ### Managing Club Information
-- **Get**: `GET /club-leader/{clubUUID}/info`
-- **Update**: `PUT /club-leader/{clubUUID}/info` (multipart: mainPhoto + clubInfoRequest)
+- **Get Info**: `GET /clubs/{clubUUID}/info`
+- **Update Info**: `PUT /clubs/{clubUUID}` (multipart: mainPhoto + clubInfoRequest + leaderUpdatePwRequest)
+- **Get Intro** (Leader): `GET /clubs/{clubUUID}/leader/intro`
+- **Update Intro** (Leader): `PUT /clubs/{clubUUID}/leader/intro` (multipart: introPhotos + clubIntroRequest)
+- **Get Summary** (Leader): `GET /clubs/{clubUUID}/leader/summary`
+- **Toggle Recruitment**: `PATCH /clubs/{clubUUID}/recruit-status`
 - **Fields**: leaderName, leaderHp, clubInsta, clubRoomNumber, hashtags, categories
 
 ### Handling Applications
-- **Submit**: `POST /apply/{clubUUID}` (user applies to club)
-- **Review**: `GET /club-leader/{clubUUID}/applicants` (leader views)
-- **Update Status**: `POST /club-leader/{clubUUID}/applicants/notifications` (accept/reject)
+- **Check Eligibility**: `GET /clubs/{clubUUID}/applications/eligibility`
+- **Submit**: `POST /clubs/{clubUUID}/applications` (with answers array)
+- **List Applicants**: `GET /clubs/{clubUUID}/applicants?status=WAIT|PASS|FAIL`
+- **Get Detail** (User): `GET /clubs/{clubUUID}/applications/{aplictUUID}`
+- **Get Detail** (Leader): `GET /clubs/{clubUUID}/leader/applications/{applicationUUID}` (marks as read)
+- **Update Status** (Leader): `PATCH /clubs/{clubUUID}/leader/applications/{applicationUUID}/status`
+- **Send Notifications**: `POST /clubs/{clubUUID}/applicants/notifications`
 
 ### File Uploads
 - **Photos**: JPEG/PNG only, max 5 files per request
 - **Excel**: XLS/XLSX for member imports
+- **Floor Maps**: Binary upload via `PUT /floor-maps`
 - **Response**: Includes presigned URLs for uploaded files
 
+### Categories (New Endpoints)
+- **List**: `GET /categories`
+- **Create**: `POST /categories` (admin only)
+- **Delete**: `DELETE /categories/{clubCategoryUUID}` (admin only)
+
+### Floor Maps (New Endpoints)
+- **Get**: `GET /floor-maps?floor=B1|F1|F2`
+- **Upload**: `PUT /floor-maps` (multipart: B1, F1, F2 files)
+- **Delete**: `DELETE /floor-maps/{floorEnum}`
+
 ### Forms Management
-- **Create**: `POST /api/clubs/{clubId}/forms` (all at once: form + questions + options)
-- **Status**: `PATCH /api/clubs/{clubId}/forms/{formId}/status` (DRAFT → PUBLISHED → CLOSED)
-- **Submit**: `POST /api/clubs/{clubId}/forms/{formId}/applications` (user submits)
-- **Review**: `GET /api/clubs/{clubId}/applications/{applicationId}` (leader reviews, auto-marks read)
+- **Create Form**: `POST /clubs/{clubUUID}/forms` (all at once: form + questions + options)
+- **Get Active Form**: `GET /clubs/forms/{clubUUID}`
+- **Submit Application**: `POST /clubs/{clubUUID}/applications` (with answers referencing questionId)
+
+### Event Verification (New)
+- **Verify Code**: `POST /users/event/verify` (with event code)
+- **Check Status**: `GET /users/event/status`
 
 ## Reference Files
 
@@ -201,8 +234,8 @@ grep "| \`ERROR-XXX\`"
 
 **Find all endpoints in a domain:**
 ```bash
-grep -A50 "^### 1\. Club Leader"
-grep -A50 "^### 13\. User"
+grep -A50 "^### 1\. Auth"
+grep -A50 "^### 4\. Applications"
 ```
 
 **Find all 404 errors:**

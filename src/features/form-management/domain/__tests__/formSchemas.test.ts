@@ -41,7 +41,7 @@ describe('Form Management Schemas', () => {
 
     it('should reject invalid form statuses', () => {
       expect(() => formStatusSchema.parse('INVALID')).toThrow()
-    })
+      })
   })
 
   describe('formOptionSchema', () => {
@@ -193,8 +193,8 @@ describe('Form Management Schemas', () => {
   describe('formAnswerSchema', () => {
     it('should parse valid answer with optionId', () => {
       const validAnswer = {
-        questionId: '550e8400-e29b-41d4-a716-446655440000',
-        optionId: '550e8400-e29b-41d4-a716-446655440001',
+        questionId: 101,
+        optionId: 501,
         answerText: null,
       }
       expect(() => formAnswerSchema.parse(validAnswer)).not.toThrow()
@@ -202,7 +202,7 @@ describe('Form Management Schemas', () => {
 
     it('should parse valid answer with answerText', () => {
       const validAnswer = {
-        questionId: '550e8400-e29b-41d4-a716-446655440000',
+        questionId: 102,
         optionId: null,
         answerText: '자유 텍스트 답변',
       }
@@ -230,7 +230,7 @@ describe('Form Management Schemas', () => {
           },
           {
             questionId: 2,
-            optionId: '550e8400-e29b-41d4-a716-446655440000',
+            optionId: 501,
             answerText: null,
           },
         ],

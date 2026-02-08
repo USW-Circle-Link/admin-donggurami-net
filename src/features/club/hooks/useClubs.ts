@@ -1,13 +1,17 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation } from '@tanstack/react-query'
 import {
   getAllClubs,
-  getClubList,
   getClubsByCategory,
   getOpenClubs,
   getOpenClubsByCategory,
   getCategories,
-  getClubIntro,
+  getClubDetail,
+  getClubForm,
+  checkDuplication,
+  createClub,
+  deleteClub,
 } from '../api/clubApi'
+import type { ClubCreateRequest } from '../domain/clubSchemas'
 
 // Query keys
 export const clubKeys = {
@@ -21,6 +25,8 @@ export const clubKeys = {
   categories: () => [...clubKeys.all, 'categories'] as const,
   intros: () => [...clubKeys.all, 'intro'] as const,
   intro: (clubUUID: string) => [...clubKeys.intros(), clubUUID] as const,
+  forms: () => [...clubKeys.all, 'forms'] as const,
+  form: (clubUUID: string) => [...clubKeys.forms(), clubUUID] as const,
 }
 
 // 전체 동아리 조회
@@ -35,7 +41,7 @@ export function useAllClubs() {
 export function useClubList() {
   return useQuery({
     queryKey: clubKeys.simple(),
-    queryFn: getClubList,
+    queryFn: getAllClubs,
   })
 }
 
@@ -43,7 +49,7 @@ export function useClubList() {
 export function useClubsByCategory() {
   return useQuery({
     queryKey: clubKeys.byCategory(),
-    queryFn: getClubsByCategory,
+    queryFn: () => getClubsByCategory(),
   })
 }
 
@@ -59,7 +65,7 @@ export function useOpenClubs() {
 export function useOpenClubsByCategory() {
   return useQuery({
     queryKey: clubKeys.openByCategory(),
-    queryFn: getOpenClubsByCategory,
+    queryFn: () => getOpenClubsByCategory(),
   })
 }
 
@@ -71,11 +77,43 @@ export function useCategories() {
   })
 }
 
-// 동아리 소개 조회
-export function useClubIntro(clubUUID: string) {
+// 동아리 상세 조회
+export function useClubDetail(clubUUID: string) {
   return useQuery({
     queryKey: clubKeys.intro(clubUUID),
-    queryFn: () => getClubIntro(clubUUID),
+    queryFn: () => getClubDetail(clubUUID),
+    enabled: !!clubUUID,
+  })
+}
+
+// 중복 확인 (name: 동아리명, leader: 회장 아이디)
+export function useCheckDuplication() {
+  return useMutation({
+    mutationFn: ({ type, val }: { type: 'name' | 'leader'; val: string }) =>
+      checkDuplication(type, val),
+  })
+}
+
+// 동아리 생성
+export function useCreateClub() {
+  return useMutation({
+    mutationFn: (request: ClubCreateRequest) => createClub(request),
+  })
+}
+
+// 동아리 삭제
+export function useDeleteClub() {
+  return useMutation({
+    mutationFn: ({ clubUUID, adminPw }: { clubUUID: string; adminPw: string }) =>
+      deleteClub(clubUUID, { adminPw }),
+  })
+}
+
+// 동아리 지원서 조회
+export function useClubForm(clubUUID: string) {
+  return useQuery({
+    queryKey: clubKeys.form(clubUUID),
+    queryFn: () => getClubForm(clubUUID),
     enabled: !!clubUUID,
   })
 }

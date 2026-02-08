@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { logout } from '../api/authApi'
+import { logoutUnified } from '../api/authApi'
 import { useAuthStore } from '../store/authStore'
 import { clearAccessToken } from '@shared/api/apiClient'
 
@@ -8,7 +8,7 @@ export function useLogout() {
   const clearAuth = useAuthStore((state) => state.clearAuth)
 
   return useMutation({
-    mutationFn: logout,
+    mutationFn: logoutUnified,
     onSuccess: () => {
       // Clear all auth state
       clearAccessToken()

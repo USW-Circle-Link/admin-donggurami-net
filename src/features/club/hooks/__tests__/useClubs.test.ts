@@ -3,7 +3,7 @@ import { renderHook, waitFor } from '@testing-library/react'
 import { http, HttpResponse } from 'msw'
 import { server } from '@test/mocks/server'
 import { createQueryWrapper } from '@test/utils/testUtils'
-import { useAllClubs, useClubIntro, useCategories } from '../useClubs'
+import { useAllClubs, useClubDetail, useCategories, useDeleteClub } from '../useClubs'
 
 const API_BASE = 'https://api.donggurami.net'
 
@@ -18,9 +18,9 @@ describe('Club Hooks', () => {
               {
                 clubUUID: '550e8400-e29b-41d4-a716-446655440000',
                 clubName: '테스트 동아리',
-                mainPhoto: null,
-                departmentName: '학술',
-                clubHashtags: [],
+                mainPhotoUrl: null,
+                department: '학술',
+                hashtags: [],
               },
             ],
           })
@@ -40,17 +40,17 @@ describe('Club Hooks', () => {
     })
   })
 
-  describe('useClubIntro', () => {
-    it('should fetch club intro by UUID', async () => {
+  describe('useClubDetail', () => {
+    it('should fetch club detail by UUID', async () => {
       const clubUUID = '550e8400-e29b-41d4-a716-446655440000'
 
       server.use(
-        http.get(`${API_BASE}/clubs/intro/${clubUUID}`, () => {
+        http.get(`${API_BASE}/clubs/${clubUUID}`, () => {
           return HttpResponse.json({
-            message: '동아리 소개글 조회 성공',
+            message: '동아리 상세 조회 성공',
             data: {
               clubUUID,
-              mainPhoto: null,
+              mainPhotoUrl: null,
               introPhotos: [],
               clubName: '코딩 동아리',
               leaderName: '홍길동',
@@ -59,7 +59,7 @@ describe('Club Hooks', () => {
               clubIntro: '소개글',
               recruitmentStatus: 'OPEN',
               googleFormUrl: null,
-              clubHashtags: [],
+              hashtags: [],
               clubCategoryNames: [],
               clubRoomNumber: 'B101',
               clubRecruitment: null,
@@ -68,7 +68,7 @@ describe('Club Hooks', () => {
         })
       )
 
-      const { result } = renderHook(() => useClubIntro(clubUUID), {
+      const { result } = renderHook(() => useClubDetail(clubUUID), {
         wrapper: createQueryWrapper(),
       })
 
@@ -81,7 +81,7 @@ describe('Club Hooks', () => {
     })
 
     it('should not fetch when clubUUID is empty', async () => {
-      const { result } = renderHook(() => useClubIntro(''), {
+      const { result } = renderHook(() => useClubDetail(''), {
         wrapper: createQueryWrapper(),
       })
 
@@ -92,7 +92,7 @@ describe('Club Hooks', () => {
   describe('useCategories', () => {
     it('should fetch categories', async () => {
       server.use(
-        http.get(`${API_BASE}/clubs/categories`, () => {
+        http.get(`${API_BASE}/categories`, () => {
           return HttpResponse.json({
             message: '카테고리 조회 완료',
             data: [
@@ -118,6 +118,59 @@ describe('Club Hooks', () => {
       })
 
       expect(result.current.data?.data).toHaveLength(2)
+    })
+  })
+
+  describe('useDeleteClub', () => {
+    it('should delete club successfully', async () => {
+      const clubUUID = '550e8400-e29b-41d4-a716-446655440000'
+
+      server.use(
+        http.delete(`${API_BASE}/clubs/${clubUUID}`, () => {
+          return HttpResponse.json({
+            message: '동아리 삭제 성공',
+            data: 1,
+          })
+        })
+      )
+
+      const { result } = renderHook(() => useDeleteClub(), {
+        wrapper: createQueryWrapper(),
+      })
+
+      await result.current.mutateAsync({ clubUUID, adminPw: 'adminPassword' })
+
+      await waitFor(() => {
+        expect(result.current.isSuccess).toBe(true)
+      })
+    })
+
+    it('should handle deletion error', async () => {
+      const clubUUID = '550e8400-e29b-41d4-a716-446655440000'
+
+      server.use(
+        http.delete(`${API_BASE}/clubs/${clubUUID}`, () => {
+          return HttpResponse.json(
+            {
+              exception: 'ClubException',
+              code: 'CLUB-401',
+              message: '관리자 비밀번호가 일치하지 않습니다.',
+              status: 401,
+              error: 'Unauthorized',
+              additionalData: null,
+            },
+            { status: 401 }
+          )
+        })
+      )
+
+      const { result } = renderHook(() => useDeleteClub(), {
+        wrapper: createQueryWrapper(),
+      })
+
+      await expect(
+        result.current.mutateAsync({ clubUUID, adminPw: 'wrongPassword' })
+      ).rejects.toThrow()
     })
   })
 })

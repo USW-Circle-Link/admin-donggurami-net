@@ -1,132 +1,176 @@
-import { useState, useMemo } from 'react'
-import { HugeiconsIcon } from '@hugeicons/react'
-import { ArrowDown01Icon, ArrowUp01Icon } from '@hugeicons/core-free-icons'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { toast } from 'sonner'
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion'
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
-import { dummyApplicants, type ApplicantWithStatus } from '@/data/dummyData'
 import { useAuthStore } from '@/features/auth/store/authStore'
 import { useApplicants, useProcessApplicants } from '@/features/club-leader/hooks/useClubLeader'
-import type { ApplicantStatus } from '@features/club-leader/domain/clubLeaderSchemas'
+import { useApplicationDetail } from '@/features/application/hooks/useApplication'
+import type { ApplicantStatus, Applicant } from '@/features/club-leader/domain/clubLeaderSchemas'
 
-interface SwipeableApplicantRowProps {
-  applicant: ApplicantWithStatus
+function ApplicantDetailContent({
+  clubUUID,
+  applicant,
+  onStatusChange,
+  isProcessing,
+}: {
+  clubUUID: string
+  applicant: Applicant
   onStatusChange: (uuid: string, status: ApplicantStatus) => void
-  getStatusBadge: (status: ApplicantStatus) => React.ReactNode
-}
+  isProcessing: boolean
+}) {
+  const { data, isLoading, error } = useApplicationDetail(clubUUID, applicant.aplictUUID)
 
-function SwipeableApplicantRow({ applicant, onStatusChange, getStatusBadge }: SwipeableApplicantRowProps) {
+  if (isLoading) {
+    return (
+      <div className="space-y-4 pb-4">
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-20 w-full" />
+        <Skeleton className="h-4 w-3/4" />
+      </div>
+    )
+  }
+
+  if (error || !data) {
+    return (
+      <div className="py-4 text-center text-muted-foreground">
+        지원서를 불러오는데 실패했습니다.
+      </div>
+    )
+  }
+
+  const detail = data.data
+
   return (
-    <AccordionItem
-      value={applicant.aplictUUID}
-      className="border rounded-lg px-4 bg-background"
-    >
-      <AccordionTrigger className="hover:no-underline py-4">
-        <div className="flex flex-1 items-start justify-between mr-2 text-left">
-          <div>
-            <p className="font-medium">{applicant.userName}</p>
-            <p className="text-sm text-muted-foreground">
-              {applicant.studentNumber} | {applicant.major}
+    <div className="space-y-4 pb-4">
+      {/* 기본 정보 */}
+      <div className="grid gap-2 md:grid-cols-2 text-sm">
+        <div>
+          <span className="text-muted-foreground">연락처: </span>
+          {applicant.userHp.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3')}
+        </div>
+        <div>
+          <span className="text-muted-foreground">학번: </span>
+          {applicant.studentNumber}
+        </div>
+        <div>
+          <span className="text-muted-foreground">학과: </span>
+          {detail.department}
+        </div>
+        <div>
+          <span className="text-muted-foreground">제출일: </span>
+          {new Date(detail.submittedAt).toLocaleDateString('ko-KR')}
+        </div>
+      </div>
+
+      <Separator />
+
+      {/* 지원서 답변 */}
+      <div className="space-y-3">
+        {detail.qnaList.map((item, index) => (
+          <div key={item.questionId} className="space-y-1">
+            <p className="text-sm font-medium text-muted-foreground">
+              Q{index + 1}. {item.question}
+            </p>
+            <p className="text-sm bg-muted/50 rounded-lg p-3">
+              {item.answer || '(답변 없음)'}
             </p>
           </div>
-          <div className="mr-2 mt-0.5">
-            {getStatusBadge('WAIT' as ApplicantStatus)}
-          </div>
-        </div>
-      </AccordionTrigger>
-      <AccordionContent>
-        <div className="space-y-4 pb-4">
-          <div className="grid gap-2 md:grid-cols-2 text-sm">
-            <div>
-              <span className="text-muted-foreground">연락처: </span>
-              {applicant.userHp.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3')}
-            </div>
-            <div>
-              <span className="text-muted-foreground">학번: </span>
-              {applicant.studentNumber}
-            </div>
-          </div>
+        ))}
+      </div>
 
-          <Separator />
+      <Separator />
 
-          <div className="flex justify-end gap-2">
+      {/* 합격/불합격 버튼 */}
+      <div className="flex justify-end gap-2">
+        {applicant.status === 'WAIT' && (
+          <>
             <Button
-              variant="destructive"
-              onClick={(e) => {
-                e.stopPropagation()
-                onStatusChange(applicant.aplictUUID, 'FAIL')
-              }}
+              variant="outline"
+              className="text-destructive hover:text-destructive"
+              onClick={() => onStatusChange(applicant.aplictUUID, 'FAIL')}
+              disabled={isProcessing}
             >
               불합격
             </Button>
             <Button
-              variant="success"
-              onClick={(e) => {
-                e.stopPropagation()
-                onStatusChange(applicant.aplictUUID, 'PASS')
-              }}
+              className="bg-green-600 hover:bg-green-700"
+              onClick={() => onStatusChange(applicant.aplictUUID, 'PASS')}
+              disabled={isProcessing}
             >
               합격
             </Button>
-          </div>
-        </div>
-      </AccordionContent>
-    </AccordionItem>
+          </>
+        )}
+        {applicant.status === 'PASS' && (
+          <>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onStatusChange(applicant.aplictUUID, 'WAIT')}
+              disabled={isProcessing}
+            >
+              다시 검토
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-destructive hover:text-destructive"
+              onClick={() => onStatusChange(applicant.aplictUUID, 'FAIL')}
+              disabled={isProcessing}
+            >
+              불합격으로 변경
+            </Button>
+          </>
+        )}
+        {applicant.status === 'FAIL' && (
+          <>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onStatusChange(applicant.aplictUUID, 'WAIT')}
+              disabled={isProcessing}
+            >
+              다시 검토
+            </Button>
+            <Button
+              size="sm"
+              className="bg-green-600 hover:bg-green-700"
+              onClick={() => onStatusChange(applicant.aplictUUID, 'PASS')}
+              disabled={isProcessing}
+            >
+              합격으로 변경
+            </Button>
+          </>
+        )}
+      </div>
+    </div>
   )
 }
 
 export function ApplicationReviewPage() {
-  const { clubUUID } = useAuthStore()
+  const clubUUID = useAuthStore((state) => state.clubUUID)
   const { data: applicantsData, isLoading, error } = useApplicants(clubUUID || '')
-  const { mutate: processApplicants } = useProcessApplicants()
+  const processApplicants = useProcessApplicants()
 
-  const applicants = applicantsData?.data || []
-  const [localApplicants, setLocalApplicants] = useState<ApplicantWithStatus[]>(dummyApplicants)
-
-  const [waitingOpen, setWaitingOpen] = useState(true)
-  const [passedOpen, setPassedOpen] = useState(false)
-  const [failedOpen, setFailedOpen] = useState(false)
-
-  const waitingApplicants = useMemo(() => localApplicants.filter((a) => a.aplictStatus === 'WAIT'), [localApplicants])
-  const passedApplicants = useMemo(() => localApplicants.filter((a) => a.aplictStatus === 'PASS'), [localApplicants])
-  const failedApplicants = useMemo(() => localApplicants.filter((a) => a.aplictStatus === 'FAIL'), [localApplicants])
-
-  const handleStatusChange = (uuid: string, status: ApplicantStatus) => {
+  const handleStatusChange = (aplictUUID: string, status: ApplicantStatus) => {
     if (!clubUUID) return
-
-    processApplicants(
-      {
-        clubUUID,
-        updates: [{ aplictUUID: uuid, aplictStatus: status }],
-      },
-      {
-        onSuccess: () => {
-          setLocalApplicants((prev) =>
-            prev.map((a) => (a.aplictUUID === uuid ? { ...a, aplictStatus: status } : a))
-          )
-          toast.success(`지원자가 ${status === 'PASS' ? '합격' : '불합격'} 처리되었습니다.`)
-        },
-        onError: () => {
-          toast.error('지원자 상태 변경에 실패했습니다.')
-        },
-      }
-    )
+    processApplicants.mutate({
+      clubUUID,
+      updates: [{ aplictUUID, status }],
+    })
   }
 
   const getStatusBadge = (status: ApplicantStatus) => {
     switch (status) {
       case 'PASS':
-        return <Badge variant="success">합격</Badge>
+        return <Badge className="bg-green-500">합격</Badge>
       case 'FAIL':
         return <Badge variant="destructive">불합격</Badge>
       default:
@@ -134,23 +178,30 @@ export function ApplicationReviewPage() {
     }
   }
 
+  if (!clubUUID) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <p className="text-muted-foreground">동아리 정보를 불러올 수 없습니다.</p>
+      </div>
+    )
+  }
+
   if (isLoading) {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-bold">지원서 검토</h1>
-          <p className="text-muted-foreground">지원서를 검토하세요</p>
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-4 w-32 mt-2" />
         </div>
         <Card>
           <CardHeader>
-            <Skeleton className="h-6 w-1/4" />
-            <Skeleton className="h-4 w-1/3 mt-2" />
+            <Skeleton className="h-6 w-32" />
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              {[...Array(3)].map((_, i) => (
-                <Skeleton key={i} className="h-20 w-full" />
-              ))}
+            <div className="space-y-4">
+              <Skeleton className="h-16 w-full" />
+              <Skeleton className="h-16 w-full" />
+              <Skeleton className="h-16 w-full" />
             </div>
           </CardContent>
         </Card>
@@ -160,17 +211,57 @@ export function ApplicationReviewPage() {
 
   if (error) {
     return (
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold">지원서 검토</h1>
-          <p className="text-muted-foreground">지원서를 검토하세요</p>
-        </div>
-        <Card className="border-destructive bg-destructive/10">
-          <CardContent className="pt-6">
-            <p className="text-destructive">지원서를 불러오는 중 오류가 발생했습니다.</p>
-          </CardContent>
-        </Card>
+      <div className="flex items-center justify-center h-64">
+        <p className="text-destructive">지원자 목록을 불러오는데 실패했습니다.</p>
       </div>
+    )
+  }
+
+  const applicants = applicantsData?.data || []
+  const waitingApplicants = applicants.filter((a) => a.status === 'WAIT')
+  const passedApplicants = applicants.filter((a) => a.status === 'PASS')
+  const failedApplicants = applicants.filter((a) => a.status === 'FAIL')
+
+  const renderApplicantList = (
+    list: Applicant[],
+    emptyMessage: string
+  ) => {
+    if (list.length === 0) {
+      return <p className="text-center text-muted-foreground py-8">{emptyMessage}</p>
+    }
+
+    return (
+      <Accordion className="space-y-2">
+        {list.map((applicant) => (
+          <AccordionItem
+            key={applicant.aplictUUID}
+            value={applicant.aplictUUID}
+            className="border rounded-lg px-4 bg-background"
+          >
+            <AccordionTrigger className="hover:no-underline py-4">
+              <div className="flex flex-1 items-start justify-between mr-2 text-left">
+                <div>
+                  <p className="font-medium">{applicant.userName}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {applicant.studentNumber} | {applicant.major}
+                  </p>
+                </div>
+                <div className="mr-2 mt-0.5">
+                  {getStatusBadge(applicant.status)}
+                </div>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent>
+              <ApplicantDetailContent
+                clubUUID={clubUUID}
+                applicant={applicant}
+                onStatusChange={handleStatusChange}
+                isProcessing={processApplicants.isPending}
+              />
+            </AccordionContent>
+          </AccordionItem>
+        ))}
+      </Accordion>
     )
   }
 
@@ -183,224 +274,47 @@ export function ApplicationReviewPage() {
         </p>
       </div>
 
-      <Collapsible open={waitingOpen} onOpenChange={setWaitingOpen}>
-        <Card>
-          <CollapsibleTrigger className="w-full">
-            <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors">
-              <div className="flex items-center justify-between">
-                <div className="text-left">
-                  <CardTitle className="flex items-center gap-2">
-                    검토 대기
-                    <Badge variant="secondary">{waitingApplicants.length}명</Badge>
-                  </CardTitle>
-                  <CardDescription>지원서가 검토를 기다리고 있습니다</CardDescription>
-                </div>
-                <HugeiconsIcon
-                  icon={waitingOpen ? ArrowUp01Icon : ArrowDown01Icon}
-                  className="size-5 text-muted-foreground"
-                />
-              </div>
-            </CardHeader>
-          </CollapsibleTrigger>
-          <CollapsibleContent>
-            <CardContent>
-              {waitingApplicants.length === 0 ? (
-                <p className="text-center text-muted-foreground py-8">검토 대기 중인 지원서가 없습니다</p>
-              ) : (
-                <>
-                  <p className="text-xs text-muted-foreground mb-3 flex items-center gap-2">
-                    <span className="inline-flex items-center gap-1">
-                      <span className="text-green-600">← 합격</span>
-                    </span>
-                    <span className="text-muted-foreground/50">|</span>
-                    <span className="inline-flex items-center gap-1">
-                      <span className="text-red-600">불합격 →</span>
-                    </span>
-                    <span className="text-muted-foreground/50">(스와이프)</span>
-                  </p>
-                  <Accordion className="space-y-2">
-                    {waitingApplicants.map((applicant) => (
-                      <SwipeableApplicantRow
-                        key={applicant.aplictUUID}
-                        applicant={applicant}
-                        onStatusChange={handleStatusChange}
-                        getStatusBadge={getStatusBadge}
-                      />
-                    ))}
-                  </Accordion>
-                </>
-              )}
-            </CardContent>
-          </CollapsibleContent>
-        </Card>
-      </Collapsible>
+      {/* 검토 대기 중인 지원서 */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            검토 대기
+            <Badge variant="secondary">{waitingApplicants.length}명</Badge>
+          </CardTitle>
+          <CardDescription>지원서가 검토를 기다리고 있습니다</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {renderApplicantList(waitingApplicants, '검토 대기 중인 지원서가 없습니다')}
+        </CardContent>
+      </Card>
 
-      <Collapsible open={passedOpen} onOpenChange={setPassedOpen}>
-        <Card>
-          <CollapsibleTrigger className="w-full">
-            <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors">
-              <div className="flex items-center justify-between">
-                <div className="text-left">
-                  <CardTitle className="flex items-center gap-2">
-                    합격
-                    <Badge variant="success">{passedApplicants.length}명</Badge>
-                  </CardTitle>
-                  <CardDescription>합격 처리된 지원자 목록</CardDescription>
-                </div>
-                <HugeiconsIcon
-                  icon={passedOpen ? ArrowUp01Icon : ArrowDown01Icon}
-                  className="size-5 text-muted-foreground"
-                />
-              </div>
-            </CardHeader>
-          </CollapsibleTrigger>
-          <CollapsibleContent>
-            <CardContent>
-              {passedApplicants.length === 0 ? (
-                <p className="text-center text-muted-foreground py-4">합격 처리된 지원자가 없습니다</p>
-              ) : (
-                <Accordion className="space-y-2">
-                  {passedApplicants.map((applicant) => (
-                    <AccordionItem
-                      key={applicant.aplictUUID}
-                      value={applicant.aplictUUID}
-                      className="border rounded-lg px-4"
-                    >
-                      <AccordionTrigger className="hover:no-underline py-4">
-                        <div className="flex flex-1 items-start justify-between mr-2 text-left">
-                          <div>
-                            <p className="font-medium">{applicant.userName}</p>
-                            <p className="text-sm text-muted-foreground">
-                              {applicant.studentNumber} | {applicant.major}
-                            </p>
-                          </div>
-                        </div>
-                      </AccordionTrigger>
-                      <AccordionContent>
-                        <div className="space-y-4 pb-4">
-                          <div className="grid gap-2 md:grid-cols-2 text-sm">
-                            <div>
-                              <span className="text-muted-foreground">연락처: </span>
-                              {applicant.userHp.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3')}
-                            </div>
-                            <div>
-                              <span className="text-muted-foreground">학번: </span>
-                              {applicant.studentNumber}
-                            </div>
-                          </div>
+      {/* 합격 지원서 */}
+      <Card className="border-green-200 bg-green-50/50 dark:border-green-800 dark:bg-green-950/20">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            합격
+            <Badge className="bg-green-500">{passedApplicants.length}명</Badge>
+          </CardTitle>
+          <CardDescription>합격 처리된 지원자입니다</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {renderApplicantList(passedApplicants, '합격 처리된 지원자가 없습니다')}
+        </CardContent>
+      </Card>
 
-                          <Separator />
-
-                          <div className="flex justify-end gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleStatusChange(applicant.aplictUUID, 'WAIT')}
-                            >
-                              다시 검토
-                            </Button>
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => handleStatusChange(applicant.aplictUUID, 'FAIL')}
-                            >
-                              불합격으로 변경
-                            </Button>
-                          </div>
-                        </div>
-                      </AccordionContent>
-                    </AccordionItem>
-                  ))}
-                </Accordion>
-              )}
-            </CardContent>
-          </CollapsibleContent>
-        </Card>
-      </Collapsible>
-
-      <Collapsible open={failedOpen} onOpenChange={setFailedOpen}>
-        <Card>
-          <CollapsibleTrigger className="w-full">
-            <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors">
-              <div className="flex items-center justify-between">
-                <div className="text-left">
-                  <CardTitle className="flex items-center gap-2">
-                    불합격
-                    <Badge variant="destructive">{failedApplicants.length}명</Badge>
-                  </CardTitle>
-                  <CardDescription>불합격 처리된 지원자 목록</CardDescription>
-                </div>
-                <HugeiconsIcon
-                  icon={failedOpen ? ArrowUp01Icon : ArrowDown01Icon}
-                  className="size-5 text-muted-foreground"
-                />
-              </div>
-            </CardHeader>
-          </CollapsibleTrigger>
-          <CollapsibleContent>
-            <CardContent>
-              {failedApplicants.length === 0 ? (
-                <p className="text-center text-muted-foreground py-4">불합격 처리된 지원자가 없습니다</p>
-              ) : (
-                <Accordion className="space-y-2">
-                  {failedApplicants.map((applicant) => (
-                    <AccordionItem
-                      key={applicant.aplictUUID}
-                      value={applicant.aplictUUID}
-                      className="border rounded-lg px-4"
-                    >
-                      <AccordionTrigger className="hover:no-underline py-4">
-                        <div className="flex flex-1 items-start justify-between mr-2 text-left">
-                          <div>
-                            <p className="font-medium">{applicant.userName}</p>
-                            <p className="text-sm text-muted-foreground">
-                              {applicant.studentNumber} | {applicant.major}
-                            </p>
-                          </div>
-                        </div>
-                      </AccordionTrigger>
-                      <AccordionContent>
-                        <div className="space-y-4 pb-4">
-                          <div className="grid gap-2 md:grid-cols-2 text-sm">
-                            <div>
-                              <span className="text-muted-foreground">연락처: </span>
-                              {applicant.userHp.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3')}
-                            </div>
-                            <div>
-                              <span className="text-muted-foreground">학번: </span>
-                              {applicant.studentNumber}
-                            </div>
-                          </div>
-
-                          <Separator />
-
-                          <div className="flex justify-end gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleStatusChange(applicant.aplictUUID, 'WAIT')}
-                            >
-                              다시 검토
-                            </Button>
-                            <Button
-                              variant="default"
-                              size="sm"
-                              className="bg-green-600 hover:bg-green-700"
-                              onClick={() => handleStatusChange(applicant.aplictUUID, 'PASS')}
-                            >
-                              합격으로 변경
-                            </Button>
-                          </div>
-                        </div>
-                      </AccordionContent>
-                    </AccordionItem>
-                  ))}
-                </Accordion>
-              )}
-            </CardContent>
-          </CollapsibleContent>
-        </Card>
-      </Collapsible>
+      {/* 불합격 지원서 */}
+      <Card className="border-red-200 bg-red-50/50 dark:border-red-800 dark:bg-red-950/20">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            불합격
+            <Badge variant="destructive">{failedApplicants.length}명</Badge>
+          </CardTitle>
+          <CardDescription>불합격 처리된 지원자입니다</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {renderApplicantList(failedApplicants, '불합격 처리된 지원자가 없습니다')}
+        </CardContent>
+      </Card>
     </div>
   )
 }

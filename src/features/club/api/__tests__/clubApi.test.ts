@@ -3,12 +3,12 @@ import { http, HttpResponse } from 'msw'
 import { server } from '@test/mocks/server'
 import {
   getAllClubs,
-  getClubList,
   getClubsByCategory,
   getOpenClubs,
   getOpenClubsByCategory,
   getCategories,
-  getClubIntro,
+  getClubDetail,
+  deleteClub,
 } from '../clubApi'
 
 const API_BASE = 'https://api.donggurami.net'
@@ -37,29 +37,6 @@ describe('Club API', () => {
       expect(result.message).toBe('전체 동아리 조회 완료')
       expect(result.data).toHaveLength(1)
       expect(result.data[0].clubName).toBe('코딩 동아리')
-    })
-  })
-
-  describe('getClubList', () => {
-    it('should fetch simple club list successfully', async () => {
-      server.use(
-        http.get(`${API_BASE}/clubs/list`, () => {
-          return HttpResponse.json({
-            message: '동아리 리스트 조회 성공',
-            data: [
-              {
-                clubUUID: '550e8400-e29b-41d4-a716-446655440000',
-                clubName: '코딩 동아리',
-                mainPhoto: 'https://example.com/photo.jpg',
-              },
-            ],
-          })
-        })
-      )
-
-      const result = await getClubList()
-      expect(result.message).toBe('동아리 리스트 조회 성공')
-      expect(result.data).toHaveLength(1)
     })
   })
 
@@ -144,7 +121,7 @@ describe('Club API', () => {
   describe('getCategories', () => {
     it('should fetch categories successfully', async () => {
       server.use(
-        http.get(`${API_BASE}/clubs/categories`, () => {
+        http.get(`${API_BASE}/categories`, () => {
           return HttpResponse.json({
             message: '카테고리 조회 완료',
             data: [
@@ -167,14 +144,14 @@ describe('Club API', () => {
     })
   })
 
-  describe('getClubIntro', () => {
-    it('should fetch club intro successfully', async () => {
+  describe('getClubDetail', () => {
+    it('should fetch club detail successfully', async () => {
       const clubUUID = '550e8400-e29b-41d4-a716-446655440000'
 
       server.use(
-        http.get(`${API_BASE}/clubs/intro/${clubUUID}`, () => {
+        http.get(`${API_BASE}/clubs/${clubUUID}`, () => {
           return HttpResponse.json({
-            message: '동아리 소개글 조회 성공',
+            message: '동아리 상세 조회 성공',
             data: {
               clubUUID,
               mainPhoto: 'https://example.com/photo.jpg',
@@ -195,8 +172,8 @@ describe('Club API', () => {
         })
       )
 
-      const result = await getClubIntro(clubUUID)
-      expect(result.message).toBe('동아리 소개글 조회 성공')
+      const result = await getClubDetail(clubUUID)
+      expect(result.message).toBe('동아리 상세 조회 성공')
       expect(result.data.clubName).toBe('코딩 동아리')
       expect(result.data.recruitmentStatus).toBe('OPEN')
     })
@@ -205,7 +182,7 @@ describe('Club API', () => {
       const clubUUID = '550e8400-e29b-41d4-a716-446655440000'
 
       server.use(
-        http.get(`${API_BASE}/clubs/intro/${clubUUID}`, () => {
+        http.get(`${API_BASE}/clubs/${clubUUID}`, () => {
           return HttpResponse.json(
             {
               exception: 'ClubException',
@@ -220,7 +197,48 @@ describe('Club API', () => {
         })
       )
 
-      await expect(getClubIntro(clubUUID)).rejects.toThrow()
+      await expect(getClubDetail(clubUUID)).rejects.toThrow()
+    })
+  })
+
+  describe('deleteClub', () => {
+    it('should delete club successfully', async () => {
+      const clubUUID = '550e8400-e29b-41d4-a716-446655440000'
+
+      server.use(
+        http.delete(`${API_BASE}/clubs/${clubUUID}`, () => {
+          return HttpResponse.json({
+            message: '동아리 삭제 성공',
+            data: 1,
+          })
+        })
+      )
+
+      const result = await deleteClub(clubUUID, { adminPw: 'adminPassword' })
+      expect(result.message).toBe('동아리 삭제 성공')
+      expect(result.data).toBe(1)
+    })
+
+    it('should throw error for invalid admin password', async () => {
+      const clubUUID = '550e8400-e29b-41d4-a716-446655440000'
+
+      server.use(
+        http.delete(`${API_BASE}/clubs/${clubUUID}`, () => {
+          return HttpResponse.json(
+            {
+              exception: 'ClubException',
+              code: 'CLUB-401',
+              message: '관리자 비밀번호가 일치하지 않습니다.',
+              status: 401,
+              error: 'Unauthorized',
+              additionalData: null,
+            },
+            { status: 401 }
+          )
+        })
+      )
+
+      await expect(deleteClub(clubUUID, { adminPw: 'wrongPassword' })).rejects.toThrow()
     })
   })
 })

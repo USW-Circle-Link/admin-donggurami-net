@@ -24,7 +24,7 @@ describe('API Client - Token Refresh Interceptor', () => {
 
       // Mock refresh endpoint
       server.use(
-        http.post(`${API_BASE}/integration/refresh-token`, () => {
+        http.post(`${API_BASE}/auth/refresh`, () => {
           refreshTokenCalled = true
           return HttpResponse.json({
             data: {
@@ -73,7 +73,7 @@ describe('API Client - Token Refresh Interceptor', () => {
       let capturedTokens: string[] = []
 
       server.use(
-        http.post(`${API_BASE}/integration/refresh-token`, () => {
+        http.post(`${API_BASE}/auth/refresh`, () => {
           return HttpResponse.json({
             data: {
               accessToken: 'refreshed_token',
@@ -116,7 +116,7 @@ describe('API Client - Token Refresh Interceptor', () => {
       let refreshEndpointCalled = false
 
       server.use(
-        http.post(`${API_BASE}/integration/refresh-token`, () => {
+        http.post(`${API_BASE}/auth/refresh`, () => {
           refreshEndpointCalled = true
           return HttpResponse.json({
             data: {
@@ -154,7 +154,7 @@ describe('API Client - Token Refresh Interceptor', () => {
 
       server.use(
         // Refresh endpoint returns 401
-        http.post(`${API_BASE}/integration/refresh-token`, () => {
+        http.post(`${API_BASE}/auth/refresh`, () => {
           return HttpResponse.json(
             { message: 'Refresh token expired', code: 'TOK-002' },
             { status: 401 }
@@ -196,7 +196,7 @@ describe('API Client - Token Refresh Interceptor', () => {
 
     it('should logout when refresh endpoint returns 403', async () => {
       server.use(
-        http.post(`${API_BASE}/integration/refresh-token`, () => {
+        http.post(`${API_BASE}/auth/refresh`, () => {
           return HttpResponse.json(
             { message: 'Forbidden', code: 'TOK-003' },
             { status: 403 }
@@ -223,7 +223,7 @@ describe('API Client - Token Refresh Interceptor', () => {
 
     it('should logout when refresh endpoint returns 500', async () => {
       server.use(
-        http.post(`${API_BASE}/integration/refresh-token`, () => {
+        http.post(`${API_BASE}/auth/refresh`, () => {
           return HttpResponse.json(
             { message: 'Server Error' },
             { status: 500 }
@@ -251,7 +251,7 @@ describe('API Client - Token Refresh Interceptor', () => {
     it('should handle network error during refresh', async () => {
       server.use(
         // Network error on refresh
-        http.post(`${API_BASE}/integration/refresh-token`, () => {
+        http.post(`${API_BASE}/auth/refresh`, () => {
           return HttpResponse.error()
         }),
 
@@ -282,7 +282,7 @@ describe('API Client - Token Refresh Interceptor', () => {
       let apiCallCount = 0
 
       server.use(
-        http.post(`${API_BASE}/integration/refresh-token`, () => {
+        http.post(`${API_BASE}/auth/refresh`, () => {
           refreshCallCount++
           // Refresh succeeds but token is still invalid
           return HttpResponse.json({
@@ -324,7 +324,7 @@ describe('API Client - Token Refresh Interceptor', () => {
       let requestCounters: Record<string, number> = {}
 
       server.use(
-        http.post(`${API_BASE}/integration/refresh-token`, () => {
+        http.post(`${API_BASE}/auth/refresh`, () => {
           refreshCallCount++
           return HttpResponse.json({
             data: {
@@ -375,7 +375,7 @@ describe('API Client - Token Refresh Interceptor', () => {
   describe('Token Synchronization', () => {
     it('should sync new token to both apiClient and authStore', async () => {
       server.use(
-        http.post(`${API_BASE}/integration/refresh-token`, () => {
+        http.post(`${API_BASE}/auth/refresh`, () => {
           return HttpResponse.json({
             data: {
               accessToken: 'synced_token',
@@ -408,7 +408,7 @@ describe('API Client - Token Refresh Interceptor', () => {
 
     it('should clear both apiClient and authStore on refresh failure', async () => {
       server.use(
-        http.post(`${API_BASE}/integration/refresh-token`, () => {
+        http.post(`${API_BASE}/auth/refresh`, () => {
           return HttpResponse.json({}, { status: 401 })
         }),
 
@@ -448,7 +448,7 @@ describe('API Client - Token Refresh Interceptor', () => {
       }
 
       server.use(
-        http.post(`${API_BASE}/integration/refresh-token`, () => {
+        http.post(`${API_BASE}/auth/refresh`, () => {
           refreshCallCount++
           return HttpResponse.json({
             data: {

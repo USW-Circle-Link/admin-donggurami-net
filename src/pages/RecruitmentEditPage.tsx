@@ -11,6 +11,7 @@ import { Switch } from '@/components/ui/switch'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Spinner } from '@/components/ui/spinner'
 import { toast } from 'sonner'
 import {
   Select,
@@ -21,10 +22,11 @@ import {
 } from '@/components/ui/select'
 import { ApplicationPreviewModal } from './components/ApplicationPreviewModal'
 import { useAuthStore } from '@/features/auth/store/authStore'
-import { useClubIntro, useToggleRecruitment, useClubSummary } from '@/features/club-leader/hooks/useClubLeader'
-import { createForm } from '@/features/form-management/api/formApi'
+import { useClubIntro, useToggleRecruitment, useClubSummary, useUpdateClubIntro } from '@/features/club-leader/hooks/useClubLeader'
+import { useCreateForm } from '@/features/form-management'
+import { useClubForm } from '@/features/club'
 import type { CreateFormRequest, QuestionType as ApiQuestionType } from '@/features/form-management/domain/formSchemas'
-import { useMutation } from '@tanstack/react-query'
+import { useNavigate } from 'react-router'
 
 type QuestionType = 'text' | 'radio' | 'checkbox' | 'dropdown'
 
@@ -185,28 +187,64 @@ const QUESTION_PRESETS: QuestionPreset[] = [
 ]
 
 export function RecruitmentEditPage() {
+  const navigate = useNavigate()
   const { clubUUID } = useAuthStore()
   const { data: clubSummaryData } = useClubSummary(clubUUID || '')
   const clubSummary = clubSummaryData?.data
   const { data: clubIntroData, isLoading, error } = useClubIntro(clubUUID || '')
   const clubIntro = clubIntroData?.data
+  const { data: clubFormData } = useClubForm(clubUUID || '')
+  const clubForm = clubFormData?.data
 
   const { mutate: toggleRecruitment, isPending: isToggling } = useToggleRecruitment()
+  const { mutateAsync: updateClubIntro, isPending: isUpdatingIntro } = useUpdateClubIntro()
+
+  // Transform API form type to UI question type
+  const transformApiQuestionTypeToUi = (apiType: string): QuestionType => {
+    switch (apiType) {
+      case 'RADIO':
+        return 'radio'
+      case 'CHECKBOX':
+        return 'checkbox'
+      case 'DROPDOWN':
+        return 'dropdown'
+      case 'SHORT_TEXT':
+      case 'LONG_TEXT':
+        return 'text'
+      default:
+        return 'text'
+    }
+  }
+
+  // Transform API form data to UI questions format
+  const transformFormToUiQuestions = useMemo(() => {
+    if (!clubForm?.questions) return []
+
+    return clubForm.questions.map((q) => ({
+      id: q.questionId,
+      question: q.content,
+      type: transformApiQuestionTypeToUi(q.type),
+      required: q.required,
+      options: q.options?.map((opt) => opt.content),
+      maxLength: q.type === 'SHORT_TEXT' ? 300 : q.type === 'LONG_TEXT' ? 3000 : undefined,
+      order: q.sequence,
+    }))
+  }, [clubForm])
 
   const initialFormData = useMemo(() => {
     if (clubIntro) {
       return {
-        recruitmentStatus: clubIntro.recruitmentStatus || 'CLOSED',
+        recruitmentStatus: clubIntro.recruitmentStatus || 'CLOSE',
         recruitmentContent: clubIntro.clubRecruitment || '',
-        questions: [],
+        questions: transformFormToUiQuestions,
       }
     }
     return {
-      recruitmentStatus: 'CLOSED',
+      recruitmentStatus: 'CLOSE',
       recruitmentContent: '',
       questions: [],
     }
-  }, [clubIntro])
+  }, [clubIntro, transformFormToUiQuestions])
 
   const [isRecruiting, setIsRecruiting] = useState(initialFormData.recruitmentStatus === 'OPEN')
   const [recruitmentContent, setRecruitmentContent] = useState(initialFormData.recruitmentContent)
@@ -216,19 +254,20 @@ export function RecruitmentEditPage() {
   const [newOptions, setNewOptions] = useState('')
   const [newMaxLength, setNewMaxLength] = useState(300)
   const [previewOpen, setPreviewOpen] = useState(false)
-  const [formTitle, setFormTitle] = useState('')
-  const [formDescription, setFormDescription] = useState('')
-  const [startDate, setStartDate] = useState('')
-  const [endDate, setEndDate] = useState('')
 
   useEffect(() => {
     if (clubIntro) {
       setIsRecruiting(clubIntro.recruitmentStatus === 'OPEN')
       setRecruitmentContent(clubIntro.clubRecruitment || '')
-      setQuestions([])
+      // Load existing form questions if available
+      if (transformFormToUiQuestions.length > 0) {
+        setQuestions(transformFormToUiQuestions)
+      } else {
+        setQuestions([])
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [clubUUID])
+  }, [clubUUID, clubIntro, transformFormToUiQuestions])
 
   const handleRecruitmentToggle = (checked: boolean) => {
     setIsRecruiting(checked)
@@ -342,45 +381,64 @@ export function RecruitmentEditPage() {
     }))
   }
 
-  const createFormMutation = useMutation({
-    mutationFn: (request: CreateFormRequest) => {
-      if (!clubUUID) {
-        return Promise.reject(new Error('Club UUID is missing'))
-      }
-      return createForm(clubUUID, request)
-    },
-    onSuccess: () => {
-      toast.success('모집 정보가 저장되었습니다.')
-    },
-    onError: (error) => {
-      console.error('Form creation failed:', error)
-      toast.error('모집 정보 저장에 실패했습니다.')
-    },
-  })
+  const createFormMutation = useCreateForm(clubUUID || '')
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!clubUUID) return
 
-    // Validate required fields
-    if (!formTitle.trim()) {
-      toast.error('양식 제목을 입력해주세요.')
-      return
-    }
-    if (!startDate || !endDate) {
-      toast.error('모집 기간을 설정해주세요.')
+    // Validate questions
+    if (questions.length === 0) {
+      toast.error('최소 1개 이상의 질문을 추가해주세요.')
       return
     }
 
-    const formRequest: CreateFormRequest = {
-      title: formTitle,
-      description: formDescription || recruitmentContent,
-      startDate: new Date(startDate).toISOString(),
-      endDate: new Date(endDate).toISOString(),
-      questions: transformQuestionsToApiFormat(questions),
+    // Validate all questions have content
+    const emptyQuestion = questions.find(q => !q.question.trim())
+    if (emptyQuestion) {
+      toast.error('모든 질문에 내용을 입력해주세요.')
+      return
     }
 
-    createFormMutation.mutate(formRequest)
+    // Validate select-type questions have options
+    const invalidQuestion = questions.find(
+      q => (q.type === 'radio' || q.type === 'checkbox' || q.type === 'dropdown') && (!q.options || q.options.length === 0)
+    )
+    if (invalidQuestion) {
+      toast.error('객관식/체크박스/드롭다운 질문은 선택지가 필요합니다.')
+      return
+    }
+
+    try {
+      // Step 1: Update club intro (recruitment content)
+      await updateClubIntro({
+        clubUUID,
+        request: {
+          clubRecruitment: recruitmentContent || '',
+          recruitmentStatus: isRecruiting ? 'OPEN' : 'CLOSE',
+        },
+      })
+
+      // Step 2: Create/update form
+      const formRequest: CreateFormRequest = {
+        description: recruitmentContent || undefined,
+        questions: transformQuestionsToApiFormat(questions),
+      }
+
+      await new Promise((resolve, reject) => {
+        createFormMutation.mutate(formRequest, {
+          onSuccess: () => resolve(undefined),
+          onError: (error) => reject(error),
+        })
+      })
+
+      toast.success('모집 정보가 성공적으로 저장되었습니다.')
+      // Reset form
+      setQuestions([])
+    } catch (error) {
+      console.error('Failed to save recruitment info:', error)
+      toast.error('모집 정보 저장에 실패했습니다.')
+    }
   }
 
   const getQuestionTypeLabel = (type: QuestionType) => {
@@ -465,6 +523,7 @@ export function RecruitmentEditPage() {
         </CardHeader>
       </Card>
 
+
       {isRecruiting && (
         <>
           <Card>
@@ -475,57 +534,16 @@ export function RecruitmentEditPage() {
             <CardContent>
               <form className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="formTitle">양식 제목</Label>
-                  <Input
-                    id="formTitle"
-                    value={formTitle}
-                    onChange={(e) => setFormTitle(e.target.value)}
-                    placeholder="예: 2024년 1학기 신입 회원 모집"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="formDescription">양식 설명</Label>
-                  <Textarea
-                    id="formDescription"
-                    value={formDescription}
-                    onChange={(e) => setFormDescription(e.target.value)}
-                    placeholder="지원서 양식에 대한 설명을 입력하세요"
-                    rows={3}
-                  />
-                </div>
-                <div className="space-y-2">
                   <Label htmlFor="recruitmentContent">모집 공고 내용</Label>
                   <Textarea
                     id="recruitmentContent"
                     value={recruitmentContent}
                     onChange={(e) => setRecruitmentContent(e.target.value)}
                     placeholder="모집 공고 내용을 입력하세요"
+                    disabled={createFormMutation.isPending}
                     rows={6}
                   />
                   <p className="text-xs text-muted-foreground">최대 3000자까지 입력 가능합니다</p>
-                </div>
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="startDate">모집 시작일</Label>
-                    <Input
-                      id="startDate"
-                      type="datetime-local"
-                      value={startDate}
-                      onChange={(e) => setStartDate(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="endDate">모집 종료일</Label>
-                    <Input
-                      id="endDate"
-                      type="datetime-local"
-                      value={endDate}
-                      onChange={(e) => setEndDate(e.target.value)}
-                      required
-                    />
-                  </div>
                 </div>
               </form>
             </CardContent>
@@ -660,15 +678,29 @@ export function RecruitmentEditPage() {
 
       <div className="flex justify-end gap-2">
         {isRecruiting && (
-          <Button type="button" variant="outline" onClick={() => setPreviewOpen(true)}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setPreviewOpen(true)}
+            disabled={createFormMutation.isPending || isUpdatingIntro}
+          >
             미리보기
           </Button>
         )}
-        <Button type="button" variant="outline">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => navigate(-1)}
+          disabled={createFormMutation.isPending || isUpdatingIntro}
+        >
           취소
         </Button>
-        <Button onClick={handleSubmit} disabled={createFormMutation.isPending}>
-          {createFormMutation.isPending ? '저장 중...' : '저장'}
+        <Button
+          onClick={handleSubmit}
+          disabled={createFormMutation.isPending || isUpdatingIntro || !isRecruiting}
+        >
+          {(createFormMutation.isPending || isUpdatingIntro) && <Spinner className="mr-2" />}
+          {(createFormMutation.isPending || isUpdatingIntro) ? '저장 중...' : '저장'}
         </Button>
       </div>
 

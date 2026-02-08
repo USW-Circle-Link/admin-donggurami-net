@@ -13,9 +13,9 @@ describe('Club Validation Schemas', () => {
       const validData = {
         clubUUID: '550e8400-e29b-41d4-a716-446655440000',
         clubName: '테스트 동아리',
-        mainPhoto: 'https://example.com/photo.jpg',
-        departmentName: '학술',
-        clubHashtags: ['코딩', '개발'],
+        mainPhotoUrl: 'https://example.com/photo.jpg',
+        department: '학술',
+        hashtags: ['코딩', '개발'],
       }
 
       const result = clubListResponseSchema.safeParse(validData)
@@ -26,9 +26,9 @@ describe('Club Validation Schemas', () => {
       const validData = {
         clubUUID: '550e8400-e29b-41d4-a716-446655440000',
         clubName: '테스트 동아리',
-        mainPhoto: null,
-        departmentName: '학술',
-        clubHashtags: [],
+        mainPhotoUrl: null,
+        department: '학술',
+        hashtags: [],
       }
 
       const result = clubListResponseSchema.safeParse(validData)
@@ -39,9 +39,9 @@ describe('Club Validation Schemas', () => {
       const invalidData = {
         clubUUID: 'invalid-uuid',
         clubName: '테스트 동아리',
-        mainPhoto: 'https://example.com/photo.jpg',
-        departmentName: '학술',
-        clubHashtags: ['코딩'],
+        mainPhotoUrl: 'https://example.com/photo.jpg',
+        department: '학술',
+        hashtags: ['코딩'],
       }
 
       const result = clubListResponseSchema.safeParse(invalidData)
@@ -80,9 +80,9 @@ describe('Club Validation Schemas', () => {
           {
             clubUUID: '550e8400-e29b-41d4-a716-446655440001',
             clubName: '코딩 동아리',
-            mainPhoto: 'https://example.com/photo.jpg',
-            departmentName: '학술',
-            clubHashtags: ['코딩'],
+            mainPhotoUrl: 'https://example.com/photo.jpg',
+            department: '학술',
+            hashtags: ['코딩'],
           },
         ],
       }
@@ -126,7 +126,7 @@ describe('Club Validation Schemas', () => {
       expect(result.success).toBe(true)
     })
 
-    it('should validate with CLOSED recruitment status', () => {
+    it('should validate with CLOSE recruitment status', () => {
       const validData = {
         clubUUID: '550e8400-e29b-41d4-a716-446655440000',
         mainPhoto: null,
@@ -136,7 +136,7 @@ describe('Club Validation Schemas', () => {
         leaderHp: '01012345678',
         clubInsta: null,
         clubIntro: null,
-        recruitmentStatus: 'CLOSED',
+        recruitmentStatus: 'CLOSE',
         googleFormUrl: null,
         clubHashtags: [],
         clubCategoryNames: [],
