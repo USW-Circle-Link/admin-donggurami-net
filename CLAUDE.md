@@ -64,8 +64,7 @@ npm run preview  # Preview production build locally
 
 ### API Improvements
 - **Multipart FormData**: All file upload endpoints properly use FormData with JSON Blob serialization
-  - `updateClubIntro`: Always uses FormData with clubIntroRequest + optional introPhotos
-  - `updateClubInfo`: Always uses FormData with clubInfoRequest + optional mainPhoto + optional leaderUpdatePwRequest
+  - `updateClubInfo`: Uses FormData with clubProfileRequest + optional leaderUpdatePwRequest + optional mainPhoto + optional clubInfoRequest + optional infoPhotos (all via `PUT /clubs/{clubUUID}`)
 
 ## Development Guidelines
 
