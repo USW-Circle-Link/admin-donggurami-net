@@ -161,7 +161,7 @@ describe('Club Leader Hooks - Applicants', () => {
 
     it('should show error toast on failure', async () => {
       server.use(
-        http.patch(`${API_BASE}/clubs/${TEST_CLUB_UUID}/leader/applications/nonexistent/status`, () => {
+        http.patch(`${API_BASE}/clubs/${TEST_CLUB_UUID}/applications/nonexistent/status`, () => {
           return HttpResponse.json(
             {
               exception: 'ApplicantException',
@@ -374,7 +374,7 @@ describe('Club Leader Hooks - Applicants', () => {
 
     it('should show error toast on failure', async () => {
       server.use(
-        http.patch(`${API_BASE}/clubs/${TEST_CLUB_UUID}/leader/applications/nonexistent/status`, () => {
+        http.patch(`${API_BASE}/clubs/${TEST_CLUB_UUID}/applications/nonexistent/status`, () => {
           return HttpResponse.json(
             {
               exception: 'ApplicantException',
