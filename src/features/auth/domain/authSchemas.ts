@@ -56,7 +56,7 @@ export const confirmSignupResponseSchema = z.object({
 // Complete Signup Request
 export const completeSignupSchema = z.object({
   account: z.string().min(5).max(20).regex(/^[a-zA-Z0-9]+$/, 'Account must be alphanumeric'),
-  password: z.string().min(8).max(20).regex(/^(?=.*[a-zA-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?]).+$/, 'Password must contain letters, numbers, and special characters'),
+  password: z.string().min(8).max(20).regex(/^(?=.*[a-zA-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-={};':"\\|,.<>/?]).+$/, 'Password must contain letters, numbers, and special characters'),
   confirmPassword: z.string(),
   userName: z.string().min(2).max(30).regex(/^[가-힣a-zA-Z]+$/, 'Name must be Korean or English letters only'),
   telephone: z.string().regex(/^\d{11}$/, 'Phone number must be 11 digits'),
@@ -85,7 +85,7 @@ export const verifyPasswordResetCodeSchema = z.object({
 
 // Reset Password Request
 export const resetPasswordSchema = z.object({
-  password: z.string().min(8).max(20).regex(/^(?=.*[a-zA-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?]).+$/, 'Password must contain letters, numbers, and special characters'),
+  password: z.string().min(8).max(20).regex(/^(?=.*[a-zA-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-={};':"\\|,.<>/?]).+$/, 'Password must contain letters, numbers, and special characters'),
   confirmPassword: z.string(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
