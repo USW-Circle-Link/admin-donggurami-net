@@ -49,7 +49,6 @@ describe('Form Management Schemas', () => {
       const validOption = {
         sequence: 1,
         content: '옵션 1',
-        value: 'option1',
       }
       expect(() => formOptionSchema.parse(validOption)).not.toThrow()
     })
@@ -57,8 +56,7 @@ describe('Form Management Schemas', () => {
     it('should reject option with missing required fields', () => {
       const invalidOption = {
         sequence: 1,
-        content: '옵션 1',
-        // missing value
+        // missing content
       }
       expect(() => formOptionSchema.parse(invalidOption)).toThrow()
     })
@@ -67,7 +65,6 @@ describe('Form Management Schemas', () => {
       const invalidOption = {
         sequence: '1', // should be number
         content: '옵션 1',
-        value: 'option1',
       }
       expect(() => formOptionSchema.parse(invalidOption)).toThrow()
     })
@@ -81,8 +78,8 @@ describe('Form Management Schemas', () => {
         content: '질문 내용',
         required: true,
         options: [
-          { sequence: 1, content: '옵션 1', value: 'option1' },
-          { sequence: 2, content: '옵션 2', value: 'option2' },
+          { sequence: 1, content: '옵션 1' },
+          { sequence: 2, content: '옵션 2' },
         ],
       }
       expect(() => formQuestionSchema.parse(validQuestion)).not.toThrow()
@@ -129,8 +126,8 @@ describe('Form Management Schemas', () => {
             content: '선호하는 활동은?',
             required: true,
             options: [
-              { sequence: 1, content: '프로그래밍', value: 'programming' },
-              { sequence: 2, content: '디자인', value: 'design' },
+              { sequence: 1, content: '프로그래밍' },
+              { sequence: 2, content: '디자인' },
             ],
           },
         ],

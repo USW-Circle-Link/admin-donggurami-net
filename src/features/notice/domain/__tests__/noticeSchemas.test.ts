@@ -14,21 +14,19 @@ describe('Notice Validation Schemas', () => {
         noticeUUID: '550e8400-e29b-41d4-a716-446655440000',
         noticeTitle: '공지사항 제목',
         noticeCreatedAt: '2023-01-01T00:00:00',
-        adminName: '관리자',
-        thumbnailUrl: 'https://example.com/thumb.jpg',
+        authorName: '관리자',
       }
 
       const result = noticeListItemSchema.safeParse(validData)
       expect(result.success).toBe(true)
     })
 
-    it('should accept null thumbnailUrl', () => {
+    it('should accept item without optional fields', () => {
       const validData = {
         noticeUUID: '550e8400-e29b-41d4-a716-446655440000',
         noticeTitle: '공지사항 제목',
         noticeCreatedAt: '2023-01-01T00:00:00',
-        adminName: '관리자',
-        thumbnailUrl: null,
+        authorName: '관리자',
       }
 
       const result = noticeListItemSchema.safeParse(validData)
@@ -44,8 +42,7 @@ describe('Notice Validation Schemas', () => {
             noticeUUID: '550e8400-e29b-41d4-a716-446655440000',
             noticeTitle: '공지사항',
             noticeCreatedAt: '2023-01-01T00:00:00',
-            adminName: '관리자',
-            thumbnailUrl: null,
+            authorName: '관리자',
           },
         ],
         totalPages: 5,
@@ -78,7 +75,7 @@ describe('Notice Validation Schemas', () => {
         noticeContent: '공지사항 내용입니다.',
         noticePhotos: ['https://example.com/photo1.jpg', 'https://example.com/photo2.jpg'],
         noticeCreatedAt: '2023-01-01T00:00:00',
-        adminName: '관리자',
+        authorName: '관리자',
       }
 
       const result = noticeDetailSchema.safeParse(validData)
@@ -92,7 +89,7 @@ describe('Notice Validation Schemas', () => {
         noticeContent: '공지사항 내용입니다.',
         noticePhotos: [],
         noticeCreatedAt: '2023-01-01T00:00:00',
-        adminName: '관리자',
+        authorName: '관리자',
       }
 
       const result = noticeDetailSchema.safeParse(validData)

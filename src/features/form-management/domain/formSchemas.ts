@@ -13,7 +13,6 @@ export const applicantStatusSchema = z.enum(['WAIT', 'PASS', 'FAIL'])
 export const formOptionSchema = z.object({
   sequence: z.number(),
   content: z.string(),
-  value: z.string(),
 })
 
 // ===== Form Question =====
@@ -72,9 +71,7 @@ export const questionDetailSchema = z.object({
   options: z.array(
     z.object({
       optionId: z.number(),
-      sequence: z.number(),
       content: z.string(),
-      value: z.string(),
     })
   ),
 })
