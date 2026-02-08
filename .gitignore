@@ -26,3 +26,13 @@ dist-ssr
 # Python
 __pycache__/
 *.pyc
+
+# Test artifacts
+e2e/
+playwright-report/
+test-results/
+coverage/
+
+# Agent state
+.omc/
+.sisyphus/
