@@ -8,7 +8,7 @@ export const floorTypeSchema = z.enum(['B1', 'F1', 'F2'])
 
 // ===== Admin Club List =====
 
-// Admin club list item (GET /admin/clubs)
+// Admin club list item (GET /clubs)
 export const adminClubListItemSchema = z.object({
   clubUUID: z.string().uuid(),
   clubName: z.string(),
@@ -17,7 +17,7 @@ export const adminClubListItemSchema = z.object({
   leaderHp: z.string(),
 })
 
-// Create club request (POST /admin/clubs)
+// Create club request (POST /clubs)
 export const createClubRequestSchema = z.object({
   leaderAccount: z.string()
     .min(5, '아이디는 5자 이상이어야 합니다.')
@@ -84,3 +84,31 @@ export type AdminCategory = z.infer<typeof adminCategorySchema>
 export type CreateCategoryRequest = z.infer<typeof createCategoryRequestSchema>
 export type FloorPhotoResponse = z.infer<typeof floorPhotoResponseSchema>
 export type MergedClubItem = z.infer<typeof mergedClubItemSchema>
+
+// ===== Admin Clubs Pagination =====
+
+// Paginated admin club list response
+export const adminClubPageListSchema = z.object({
+  content: z.array(adminClubListItemSchema),
+  totalPages: z.number(),
+  totalElements: z.number(),
+  currentPage: z.number(),
+})
+
+// Delete club request (DELETE /clubs/{clubUUID})
+export const deleteClubRequestSchema = z.object({
+  adminPw: z.string().min(1, '관리자 비밀번호는 필수입니다.'),
+})
+
+// ===== Admin Club Validation =====
+
+// Validation response (common pattern)
+export const validationResponseSchema = z.object({
+  message: z.string(),
+  data: z.null(),
+})
+
+// Type inference
+export type AdminClubPageList = z.infer<typeof adminClubPageListSchema>
+export type DeleteClubRequest = z.infer<typeof deleteClubRequestSchema>
+export type ValidationResponse = z.infer<typeof validationResponseSchema>
