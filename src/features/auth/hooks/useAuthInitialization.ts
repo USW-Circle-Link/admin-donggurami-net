@@ -51,6 +51,14 @@ export function useAuthInitialization() {
 
         // Update the token in apiClient and store
         setAccessToken(newAccessToken)
+
+        // Redirect authenticated user to appropriate dashboard
+        const role = useAuthStore.getState().role
+        if (role === 'ADMIN') {
+          navigate('/union/dashboard', { replace: true })
+        } else {
+          navigate('/club/dashboard', { replace: true })
+        }
       } catch {
         // Token is invalid or refresh failed
         // Clear auth state and redirect to login
