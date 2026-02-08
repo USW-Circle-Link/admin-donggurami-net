@@ -348,150 +348,190 @@
 
 ---
 
-### 2. Club Leader (동아리 회장 전용 API)
+### 2. Clubs (동아리 API)
 
-> **NOTE**: 기존 `/club-leader/` 경로가 `/clubs/{clubUUID}/leader/`로 변경됨.
-> 회원/지원자/모집상태 관리는 Clubs API (`/clubs/{clubUUID}/members|applicants|recruit-status`)로 통합됨.
+> **NOTE**: 모든 동아리 관련 API가 `/clubs` 경로로 통합됨.
+> - `GET /clubs/{clubUUID}` 하나로 동아리 상세 정보 (info + profile + photos) 모두 조회
+> - `PUT /clubs/{clubUUID}` 하나로 프로필 + 소개 + 사진 모두 수정 가능
+> - `GET /clubs/{clubUUID}/applications/{applicationUUID}` → `GET /clubs/{clubUUID}/applications/{aplictUUID}`
+> - `GET /clubs` with `condition` query parameter (open/filter/categoryUUIDs/includeAdminInfo)
+> - `POST /clubs` (admin 동아리 생성)
+> - `DELETE /clubs/{clubUUID}` (admin 동아리 삭제)
+> - `GET /clubs/check-duplication` (이름/계정 중복 확인)
 
-#### 2.1 동아리 소개 관리
+#### 2.1 동아리 조회
 
-##### GET `/clubs/{clubUUID}/leader/intro`
-동아리 소개 정보 조회
+##### GET `/clubs`
+동아리 조회
+
+**권한:** 공개 (인증 불필요)
+
+**Query Parameters (`ClubSearchCondition`):**
+
+| Field | Type | Required | Description |
+| :--- | :--- | :--- | :--- |
+| `open` | Boolean | No | 모집 중인 동아리만 조회 |
+| `filter` | String | No | 검색 키워드 |
+| `categoryUUIDs` | List\<UUID\> | No | 카테고리 UUID 필터 |
+| `includeAdminInfo` | Boolean | No | 관리자 정보 포함 여부 |
+
+**Response (200):**
+```json
+{
+  "message": "전체 동아리 조회 완료",
+  "data": [
+    {
+      "clubUUID": "uuid",
+      "clubName": "string",
+      "mainPhotoUrl": "url",
+      "department": "string",
+      "hashtags": ["string"],
+      "leaderName": "string",
+      "leaderHp": "string",
+      "memberCount": 15,
+      "recruitmentStatus": "OPEN"
+    }
+  ]
+}
+```
+
+##### GET `/clubs/{clubUUID}`
+동아리 상세 조회 (AdminClubInfoResponse)
 
 **Potential Errors:**
-*   `CINT-201`: 해당 동아리 소개글이 존재하지 않습니다.
 *   `CLUB-201`: 존재하지 않는 동아리입니다.
 
 **Response (200):**
 ```json
 {
-  "message": "동아리 소개 조회 성공",
+  "message": "동아리 상세 조회 성공",
   "data": {
     "clubUUID": "uuid",
-    "clubIntro": "string",
-    "clubRecruitment": "string",
-    "recruitmentStatus": "OPEN | CLOSE",
-    "googleFormUrl": "string",
-    "introPhotos": ["url1", "url2"]
-  }
-}
-```
-
-##### PUT `/clubs/{clubUUID}/leader/intro`
-동아리 소개 정보 수정
-
-**Request Body (Multipart):**
-```json
-{
-  "clubIntroRequest": {
-    "clubIntro": "string",
-    "recruitmentStatus": "OPEN",
-    "clubRecruitment": "string",
-    "googleFormUrl": "string",
-    "orders": [1, 2],
-    "deletedOrders": [3]
-  },
-  "introPhotos": ["file"]
-}
-```
-
-**Constraints (`clubIntroRequest`):**
-
-| Field | Type | Required | Constraints | Description |
-| :--- | :--- | :--- | :--- | :--- |
-| `clubIntro` | String | No | Max 3000 chars | 동아리 소개글 |
-| `recruitmentStatus` | String | **Yes** | `OPEN`, `CLOSED` | 모집 상태 (Enum) |
-| `clubRecruitment` | String | No | Max 3000 chars | 모집 공고글 |
-| `googleFormUrl` | String | No | Valid HTTPS URL | 구글 폼 링크 |
-| `orders` | List | No | - | 기존 사진 순서 유지 목록 |
-| `deletedOrders` | List | No | - | 삭제할 사진 순서 목록 |
-
-**Potential Errors:**
-*   `CINT-201`: 해당 동아리 소개글이 존재하지 않습니다.
-*   `CINT-303`: 모집 상태가 올바르지 않습니다.
-*   `FILE-308`: 업로드 가능한 갯수를 초과했습니다 (사진).
-*   `FILE-311`: 지원하지 않는 파일 확장자입니다.
-*   `CLP-201`: 범위를 벗어난 사진 순서 값입니다.
-
-**Response (200):**
-```json
-{
-  "message": "동아리 소개 수정 성공",
-  "data": null
-}
-```
-
-#### 2.2 동아리 정보 관리
-
-> **NOTE**: 동아리 정보 조회/수정은 Clubs API로 통합됨.
-> - 조회: `GET /clubs/{clubUUID}/info` (Section 3 참조)
-> - 수정: `PUT /clubs/{clubUUID}` (Section 3 참조)
-
-##### GET `/clubs/{clubUUID}/info`
-동아리 정보 조회 (Clubs API로 통합)
-
-**Potential Errors:**
-*   `CLUB-201`: 존재하지 않는 동아리입니다.
-
-**Response (200):**
-```json
-{
-  "message": "동아리 정보 조회 성공",
-  "data": {
-    "mainPhotoUrl": "url",
+    "mainPhoto": "url",
+    "infoPhotos": ["url"],
     "clubName": "string",
     "leaderName": "string",
     "leaderHp": "string",
     "clubInsta": "string",
+    "clubInfo": "string",
+    "recruitmentStatus": "OPEN | CLOSE",
+    "googleFormUrl": "string",
+    "clubHashtags": ["string"],
+    "clubCategoryNames": ["string"],
     "clubRoomNumber": "string",
-    "clubHashtag": ["string"],
-    "clubCategoryName": ["string"],
-    "department": "학술"
+    "clubRecruitment": "string"
   }
 }
 ```
 
+#### 2.2 동아리 관리
+
+##### POST `/clubs`
+동아리 생성 (Admin)
+
+**Request Body:**
+```json
+{
+  "leaderAccount": "string",
+  "leaderPw": "string",
+  "leaderPwConfirm": "string",
+  "clubName": "string",
+  "department": "학술",
+  "adminPw": "string",
+  "clubRoomNumber": "string"
+}
+```
+
+**Constraints:**
+
+| Field | Type | Required | Constraints | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| `leaderAccount` | String | **Yes** | 5~20 chars, Alphanumeric | 회장 ID |
+| `leaderPw` | String | **Yes** | 8~20 chars, Eng+Num+Special | 회장 PW |
+| `leaderPwConfirm` | String | **Yes** | Match `leaderPw` | PW 확인 |
+| `clubName` | String | **Yes** | 1~10 chars, Kor/Eng/Num | 동아리명 |
+| `department` | String | **Yes** | Enum (학술, 종교, 예술, 체육, 공연, 봉사) | 학부/분과 |
+| `adminPw` | String | **Yes** | - | 관리자 PW 확인 |
+| `clubRoomNumber` | String | **Yes** | Valid Format | 동아리방 호수 |
+
+**Response (200):**
+```json
+{
+  "message": "동아리 생성 성공",
+  "data": "uuid"
+}
+```
+
 ##### PUT `/clubs/{clubUUID}`
-동아리 정보 수정 (Clubs API로 통합)
+동아리 통합 수정 (프로필 + 소개 + 사진)
+
+> **NOTE**: 프로필, 소개 정보, 비밀번호 변경, 사진 업로드를 하나의 엔드포인트에서 처리. 각 part는 선택적으로 포함 가능.
 
 **Request Body (Multipart):**
 ```json
 {
   "mainPhoto": "file",
-  "clubInfoRequest": {
-    "leaderName": "string",
-    "leaderHp": "01012345678",
-    "clubInsta": "string",
-    "clubRoomNumber": "string",
-    "clubHashtag": ["string"],
-    "clubCategoryName": ["string"]
+  "clubProfileRequest": {
+    "leader_name": "string",
+    "leader_hp": "01012345678",
+    "club_insta": "string",
+    "club_room_number": "string",
+    "club_hashtag": ["string"],
+    "club_category_name": ["string"]
   },
   "leaderUpdatePwRequest": {
-    "leaderPw": "string",
-    "newPw": "string",
-    "confirmNewPw": "string"
-  }
+    "leader_pw": "string",
+    "new_pw": "string",
+    "confirm_new_pw": "string"
+  },
+  "clubInfoRequest": {
+    "club_info": "string",
+    "recruitment_status": "OPEN",
+    "club_recruitment": "string",
+    "google_form_url": "string",
+    "orders": [1, 2],
+    "deleted_orders": [3]
+  },
+  "infoPhotos": ["file"]
 }
 ```
 
-**Constraints (`clubInfoRequest`):**
+**Constraints (`clubProfileRequest`):**
 
 | Field | Type | Required | Constraints | Description |
 | :--- | :--- | :--- | :--- | :--- |
-| `leaderName` | String | **Yes** | 2~30 chars, Kor/Eng only | 회장 이름 |
-| `leaderHp` | String | **Yes** | 11 digits, starts with 01 | 회장 전화번호 (하이픈 제외) |
-| `clubInsta` | String | No | Instagram URL regex | 인스타그램 링크 |
-| `clubRoomNumber` | String | **Yes** | Valid Format | 동아리방 호수 |
-| `clubHashtag` | List | No | Max 2 items, each 1~6 chars | 해시태그 목록 |
-| `clubCategoryName` | List | No | Max 3 items, each 1~20 chars | 카테고리 목록 |
+| `leader_name` | String | No | 2~30 chars, Kor/Eng only | 회장 이름 |
+| `leader_hp` | String | No | 11 digits, starts with 01 | 회장 전화번호 (하이픈 제외) |
+| `club_insta` | String | No | Instagram URL regex | 인스타그램 링크 |
+| `club_room_number` | String | No | - | 동아리방 호수 |
+| `club_hashtag` | List | No | - | 해시태그 목록 |
+| `club_category_name` | List | No | 1~20 chars each | 카테고리 목록 |
 
 **Constraints (`leaderUpdatePwRequest`):**
 
 | Field | Type | Required | Constraints | Description |
 | :--- | :--- | :--- | :--- | :--- |
-| `leaderPw` | String | **Yes** | - | 현재 비밀번호 |
-| `newPw` | String | No | 8~20 chars, Eng+Num+Special | 새 비밀번호 |
-| `confirmNewPw` | String | No | Match `newPw` | 새 비밀번호 확인 |
+| `leader_pw` | String | **Yes** | - | 현재 비밀번호 |
+| `new_pw` | String | **Yes** | 8~20 chars, Eng+Num+Special | 새 비밀번호 |
+| `confirm_new_pw` | String | **Yes** | Match `new_pw` | 새 비밀번호 확인 |
+
+**Constraints (`clubInfoRequest`):**
+
+| Field | Type | Required | Constraints | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| `club_info` | String | No | Max 3000 chars | 동아리 소개글 |
+| `recruitment_status` | String | No | `OPEN`, `CLOSE` | 모집 상태 (Enum) |
+| `club_recruitment` | String | No | Max 3000 chars | 모집 공고글 |
+| `google_form_url` | String | No | Valid HTTPS URL | 구글 폼 링크 |
+| `orders` | List\<int\> | No | - | 기존 사진 순서 유지 목록 |
+| `deleted_orders` | List\<int\> | No | - | 삭제할 사진 순서 목록 |
+
+**File Upload Constraints:**
+*   단일 파일 최대 20MB, 전체 최대 50MB
+*   JPEG/PNG만 지원, 최대 5장
+*   `infoPhotos` 업로드 시 `clubInfoRequest`에 `orders` 배열 필수 (없으면 서버가 무시함)
+*   `orders`: 새 사진이 배치될 위치 (1-indexed), `infoPhotos` 파일 순서와 대응
+*   `deleted_orders`: 삭제할 기존 사진 위치 (1-indexed)
 
 **Potential Errors:**
 *   `CLUB-201`: 존재하지 않는 동아리입니다.
@@ -500,6 +540,9 @@
 *   `USR-202`: 두 비밀번호(새 비밀번호)가 일치하지 않습니다.
 *   `USR-217`: 현재 비밀번호와 같은 비밀번호로 변경할 수 없습니다.
 *   `CTG-201`: 존재하지 않는 카테고리입니다.
+*   `CINT-303`: 모집 상태가 올바르지 않습니다.
+*   `FILE-308`: 업로드 가능한 갯수를 초과했습니다 (사진).
+*   `FILE-311`: 지원하지 않는 파일 확장자입니다.
 
 **Response (200):**
 ```json
@@ -509,69 +552,29 @@
 }
 ```
 
-##### GET `/clubs/{clubUUID}/leader/summary`
-동아리 요약 정보 조회
+##### DELETE `/clubs/{clubUUID}`
+동아리 삭제
 
-**Potential Errors:**
-*   `CLUB-201`: 존재하지 않는 동아리입니다.
-
-**Response (200):**
+**Request Body:**
 ```json
 {
-  "message": "동아리 요약 조회 완료",
-  "data": {
-    "clubUUID": "uuid",
-    "clubName": "string",
-    "leaderName": "string",
-    "leaderHp": "string",
-    "clubInsta": "string",
-    "clubRoomNumber": "string",
-    "clubHashtag": ["string"],
-    "clubCategories": ["string"],
-    "clubIntro": "string",
-    "clubRecruitment": "string",
-    "recruitmentStatus": "OPEN",
-    "googleFormUrl": "string",
-    "mainPhoto": "string",
-    "introPhotos": ["string"]
-  }
+  "adminPw": "string"
 }
 ```
 
-##### GET `/categories`
-모든 카테고리 조회 (Categories API로 통합, Section 6 참조)
-
-**Response (200):**
-```json
-{
-  "message": "카테고리 리스트 조회 성공",
-  "data": [
-    {
-      "clubCategoryUUID": "uuid",
-      "clubCategoryName": "string"
-    }
-  ]
-}
-```
-
-##### PATCH `/clubs/{clubUUID}/recruit-status`
-모집 상태 토글 (Clubs API로 통합)
-
 **Potential Errors:**
-*   `CLUB-201`: 존재하지 않는 동아리입니다.
-*   `CINT-201`: 해당 동아리 소개글이 존재하지 않습니다.
+*   `ADM-201`: 해당 계정이 존재하지 않습니다.
+*   `ADM-202`: 관리자 비밀번호가 일치하지 않습니다.
 
 **Response (200):**
 ```json
 {
-  "message": "모집 상태 변경 완료",
-  "data": null
+  "message": "동아리 삭제 성공",
+  "data": 1
 }
 ```
 
 #### 2.3 동아리 회원 관리
-
-> **NOTE**: 회원 관리는 Clubs API로 통합됨 (`/clubs/{clubUUID}/members`).
 
 ##### GET `/clubs/{clubUUID}/members`
 동아리 회원 목록 조회
@@ -632,9 +635,6 @@
 
 #### 2.4 지원자 관리
 
-> **NOTE**: 지원자 목록/알림은 Clubs API로 통합 (`/clubs/{clubUUID}/applicants`).
-> 지원서 상세 조회/상태 변경은 Leader 전용 경로 사용.
-
 ##### GET `/clubs/{clubUUID}/applicants`
 지원자 목록 조회
 
@@ -658,8 +658,8 @@
 }
 ```
 
-##### GET `/clubs/{clubUUID}/leader/applications/{applicationUUID}`
-지원서 상세 조회 (읽음 처리)
+##### GET `/clubs/{clubUUID}/applications/{aplictUUID}`
+지원서 상세 조회
 
 **Response (200):**
 ```json
@@ -672,20 +672,18 @@
     "department": "string",
     "submittedAt": "2026-03-02T14:00:00",
     "status": "WAIT | PASS | FAIL",
-    "isRead": true,
     "qnaList": [
       {
-        "questionId": 101,
-        "question": "학년을 선택해주세요.",
-        "type": "RADIO",
-        "answer": "1학년"
+        "question": "질문 내용",
+        "answer": "답변 내용",
+        "optionId": 123
       }
     ]
   }
 }
 ```
 
-##### PATCH `/clubs/{clubUUID}/leader/applications/{applicationUUID}/status`
+##### PATCH `/clubs/{clubUUID}/applications/{applicationUUID}/status`
 지원서 상태 변경
 
 **Request Body:**
@@ -717,9 +715,18 @@
 [
   {
     "aplictUUID": "uuid"
+  },
+  {
+    "aplictUUID": "uuid"
   }
 ]
 ```
+
+**Constraints:**
+
+| Field | Type | Required | Description |
+| :--- | :--- | :--- | :--- |
+| `aplictUUID` | UUID | **Yes** | 알림을 전송할 지원자 UUID |
 
 **Potential Errors:**
 *   `APT-202`: 유효한 지원자가 존재하지 않습니다.
@@ -732,9 +739,37 @@
 }
 ```
 
-#### 2.5 기타
+#### 2.5 모집 상태
 
-> **NOTE**: 약관/FCM 관련은 Clubs API로 통합됨.
+##### GET `/clubs/{clubUUID}/recruit-status`
+모집 상태 조회
+
+**Response (200):**
+```json
+{
+  "message": "모집 상태 조회 성공",
+  "data": {
+    "recruitmentStatus": "OPEN | CLOSE"
+  }
+}
+```
+
+##### PATCH `/clubs/{clubUUID}/recruit-status`
+모집 상태 토글
+
+**Potential Errors:**
+*   `CLUB-201`: 존재하지 않는 동아리입니다.
+*   `CINT-201`: 해당 동아리 소개글이 존재하지 않습니다.
+
+**Response (200):**
+```json
+{
+  "message": "모집 상태 변경 완료",
+  "data": null
+}
+```
+
+#### 2.6 기타
 
 ##### PATCH `/clubs/terms/agreement`
 약관 동의 완료 업데이트
@@ -765,284 +800,10 @@ FCM 토큰 갱신
 }
 ```
 
----
-
-### 3. Clubs (동아리 API)
-
-#### 3.1 동아리 조회
-
-##### GET `/clubs`
-전체 동아리 조회
-
-**권한:** 공개 (인증 불필요)
-
-**Response (200):**
-```json
-{
-  "message": "전체 동아리 조회 완료",
-  "data": [
-    {
-      "clubUUID": "uuid",
-      "clubName": "string",
-      "mainPhotoUrl": "url",
-      "department": "string",
-      "hashtags": ["string"]
-    }
-  ]
-}
-```
-
-##### GET `/clubs/{clubUUID}`
-동아리 상세 조회
-
-**Response (200):**
-```json
-{
-  "message": "동아리 상세 조회 성공",
-  "data": {
-    "clubUUID": "uuid",
-    "mainPhoto": "url",
-    "introPhotos": ["url"],
-    "clubName": "string",
-    "leaderName": "string",
-    "leaderHp": "string",
-    "clubInsta": "string",
-    "clubIntro": "string",
-    "recruitmentStatus": "OPEN",
-    "googleFormUrl": "string",
-    "clubHashtags": ["string"],
-    "clubCategoryNames": ["string"],
-    "clubRoomNumber": "string",
-    "clubRecruitment": "string"
-  }
-}
-```
-
-##### GET `/clubs/{clubUUID}/info`
-동아리 정보 조회
-
-**Response (200):**
-```json
-{
-  "message": "동아리 정보 조회 성공",
-  "data": {
-    "mainPhotoUrl": "url",
-    "clubName": "string",
-    "leaderName": "string",
-    "leaderHp": "string",
-    "clubInsta": "string",
-    "clubRoomNumber": "string",
-    "clubHashtag": ["string"],
-    "clubCategoryName": ["string"],
-    "department": "학술"
-  }
-}
-```
-
-##### GET `/clubs/open`
-모집 중인 동아리 조회
-
-**권한:** 공개 (인증 불필요)
-
-**Response (200):**
-```json
-{
-  "message": "모집 중인 동아리 조회 완료",
-  "data": [...]
-}
-```
-
-##### GET `/clubs/open/filter`
-카테고리별 모집 중인 동아리 조회
-
-**Query Parameters:**
-- `clubCategoryUUIDs`: 카테고리 UUID 목록 (comma-separated)
-
-**Response (200):**
-```json
-{
-  "message": "카테고리별 모집 중인 동아리 조회 완료",
-  "data": [...]
-}
-```
-
-##### GET `/clubs/filter`
-카테고리별 전체 동아리 조회
-
-**Query Parameters:**
-- `clubCategoryUUIDs`: 카테고리 UUID 목록 (comma-separated)
-
-**Response (200):**
-```json
-{
-  "message": "카테고리별 전체 동아리 조회 완료",
-  "data": [...]
-}
-```
-
-#### 3.2 동아리 관리
-
-##### POST `/clubs`
-동아리 생성 (Admin)
-
-**Request Body:**
-```json
-{
-  "leaderAccount": "string",
-  "leaderPw": "string",
-  "leaderPwConfirm": "string",
-  "clubName": "string",
-  "department": "학술",
-  "adminPw": "string",
-  "clubRoomNumber": "string"
-}
-```
-
-**Constraints:**
-
-| Field | Type | Required | Constraints | Description |
-| :--- | :--- | :--- | :--- | :--- |
-| `leaderAccount` | String | **Yes** | 5~20 chars, Alphanumeric | 회장 ID |
-| `leaderPw` | String | **Yes** | 8~20 chars, Eng+Num+Special | 회장 PW |
-| `leaderPwConfirm` | String | **Yes** | Match `leaderPw` | PW 확인 |
-| `clubName` | String | **Yes** | 1~10 chars, Kor/Eng/Num | 동아리명 |
-| `department` | String | **Yes** | Enum (학술, 종교, 예술, 체육, 공연, 봉사) | 학부/분과 |
-| `adminPw` | String | **Yes** | - | 관리자 PW 확인 |
-| `clubRoomNumber` | String | **Yes** | Valid Format | 동아리방 호수 |
-
-**Response (200):**
-```json
-{
-  "message": "동아리 생성 성공",
-  "data": "uuid"
-}
-```
-
-##### PUT `/clubs/{clubUUID}`
-동아리 정보 수정
-
-**Request Body (Multipart):**
-- `mainPhoto`: file (optional)
-- `clubInfoRequest`: JSON object
-- `leaderUpdatePwRequest`: JSON object (optional)
-
-**Response (200):**
-```json
-{
-  "message": "동아리 정보 수정 성공",
-  "data": null
-}
-```
-
-##### DELETE `/clubs/{clubUUID}`
-동아리 삭제
-
-**Request Body:**
-```json
-{
-  "adminPw": "string"
-}
-```
-
-**Response (200):**
-```json
-{
-  "message": "동아리 삭제 성공",
-  "data": 1
-}
-```
-
-#### 3.3 동아리 회원/모집
-
-##### GET `/clubs/{clubUUID}/members`
-동아리 회원 목록 조회
-
-**Query Parameters:**
-- `sort`: 정렬 기준 (optional)
-
-**Response (200):**
-```json
-{
-  "message": "동아리 회원 목록 조회 완료",
-  "data": [...]
-}
-```
-
-##### DELETE `/clubs/{clubUUID}/members`
-동아리 회원 삭제
-
-**Request Body:**
-```json
-[
-  { "clubMemberUUID": "uuid" }
-]
-```
-
-**Response (200):**
-```json
-{
-  "message": "동아리 회원 삭제 완료",
-  "data": null
-}
-```
-
-##### GET `/clubs/{clubUUID}/recruit-status`
-모집 상태 조회
-
-**Response (200):**
-```json
-{
-  "message": "모집 상태 조회 성공",
-  "data": {
-    "recruitmentStatus": "OPEN | CLOSE"
-  }
-}
-```
-
-##### PATCH `/clubs/{clubUUID}/recruit-status`
-모집 상태 토글
-
-**Response (200):**
-```json
-{
-  "message": "모집 상태 변경 완료",
-  "data": null
-}
-```
-
-#### 3.4 기타
-
-##### PATCH `/clubs/terms/agreement`
-약관 동의
-
-**Response (200):**
-```json
-{
-  "message": "약관 동의 완료",
-  "data": null
-}
-```
-
-##### PATCH `/clubs/fcmtoken`
-FCM 토큰 갱신
-
-**Request Body:**
-```json
-{
-  "fcmToken": "string"
-}
-```
-
-**Response (200):**
-```json
-{
-  "message": "fcm token 갱신 완료",
-  "data": null
-}
-```
-
 ##### GET `/clubs/check-duplication`
 중복 확인
+
+> **NOTE**: 기존 `GET /admin/clubs/name/check`과 `GET /admin/clubs/leader/check`이 이 단일 엔드포인트로 통합됨.
 
 **Query Parameters:**
 - `type`: 확인 유형 (name, leader)
@@ -1056,34 +817,9 @@ FCM 토큰 갱신
 }
 ```
 
-##### GET `/clubs/forms/{clubUUID}`
-동아리 지원서 폼 조회
-
-**Response (200):**
-```json
-{
-  "message": "지원서 폼 조회 성공",
-  "data": {
-    "formId": "uuid",
-    "questions": [
-      {
-        "questionId": 101,
-        "sequence": 1,
-        "type": "RADIO",
-        "content": "학년을 선택해주세요.",
-        "required": true,
-        "options": [
-          { "optionId": 501, "sequence": 1, "content": "1학년", "value": "GRADE_1" }
-        ]
-      }
-    ]
-  }
-}
-```
-
 ---
 
-### 4. Applications (지원 API)
+### 3. Club Application (지원 API)
 
 ##### GET `/clubs/{clubUUID}/applications/eligibility`
 지원 가능 여부 확인
@@ -1142,7 +878,7 @@ FCM 토큰 갱신
 ```
 
 ##### GET `/clubs/{clubUUID}/applications/{aplictUUID}`
-지원서 상세 조회
+지원서 상세 조회 (사용자용)
 
 **Response (200):**
 ```json
@@ -1160,37 +896,115 @@ FCM 토큰 갱신
 }
 ```
 
-##### GET `/clubs/{clubUUID}/applicants`
-지원자 목록 조회
+---
 
-**Query Parameters:**
-- `status`: 지원 상태 필터 (`WAIT`, `PASS`, `FAIL`) (optional)
+### 4. Forms (지원서 폼 관리)
 
-**Response (200):**
-```json
-{
-  "message": "지원자 목록 조회 성공",
-  "data": [...]
-}
-```
+#### 4.1 질문 유형 (Question Types)
 
-##### POST `/clubs/{clubUUID}/applicants/notifications`
-지원 결과 알림
+| TYPE | 설명 |
+| :--- | :--- |
+| `RADIO` | 단일 선택 (라디오) |
+| `CHECKBOX` | 다중 선택 |
+| `DROPDOWN` | 단일 선택 (드롭다운) |
+| `SHORT_TEXT` | 단답형 |
+| `LONG_TEXT` | 서술형 |
+
+#### 4.2 폼 관리 API
+
+##### POST `/clubs/{clubUUID}/forms`
+지원서 폼 생성 (통합)
+
+**권한:** 회장 (LEADER)
+
+**설명:** 지원서 기본 정보, 질문, 옵션을 일괄 생성. 기본 상태는 DRAFT
 
 **Request Body:**
 ```json
-[
-  { "aplictUUID": "uuid" }
-]
+{
+  "description": "열정 있는 개발자를 찾습니다!",
+  "questions": [
+    {
+      "sequence": 1,
+      "type": "RADIO",
+      "content": "학년을 선택해주세요.",
+      "required": true,
+      "options": [
+        {"sequence": 1, "content": "1학년"},
+        {"sequence": 2, "content": "2학년"}
+      ]
+    },
+    {
+      "sequence": 2,
+      "type": "CHECKBOX",
+      "content": "관심 분야 (다중 선택)",
+      "required": false,
+      "options": [
+        {"sequence": 1, "content": "백엔드"},
+        {"sequence": 2, "content": "프론트엔드"}
+      ]
+    },
+    {
+      "sequence": 3,
+      "type": "LONG_TEXT",
+      "content": "지원 동기 및 포부",
+      "required": true,
+      "options": []
+    }
+  ]
+}
 ```
+
+**Constraints:**
+
+| Field | Type | Required | Constraints | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| `description` | String | No | 0~500 chars | 폼 설명 |
+| `questions` | Array | **Yes** | - | 질문 목록 |
+
+**Response (201):**
+```json
+{
+  "message": "지원서 폼 생성 성공",
+  "data": {
+    "formId": "uuid"
+  }
+}
+```
+
+**Potential Errors:**
+*   `400`: 요청 오류
+*   `403`: 권한 없음
+*   `404`: 동아리 없음
+
+##### GET `/clubs/{clubUUID}/forms`
+지원서 폼 조회
+
+**권한:** 인증 필요
 
 **Response (200):**
 ```json
 {
-  "message": "지원 결과 알림 완료",
-  "data": null
+  "message": "지원서 폼 조회 성공",
+  "data": {
+    "formId": 101,
+    "questions": [
+      {
+        "questionId": 101,
+        "sequence": 1,
+        "type": "RADIO",
+        "content": "학년을 선택해주세요.",
+        "required": true,
+        "options": [
+          { "optionId": 501, "content": "1학년" }
+        ]
+      }
+    ]
+  }
 }
 ```
+
+> **NOTE**: OptionResponse는 `optionId`와 `content`만 포함하며, `value`와 `sequence` 필드는 제거됨.
 
 ---
 
@@ -1215,8 +1029,7 @@ FCM 토큰 갱신
         "noticeUUID": "uuid",
         "noticeTitle": "string",
         "noticeCreatedAt": "2023-01-01T00:00:00",
-        "adminName": "string",
-        "thumbnailUrl": "url"
+        "authorName": "string"
       }
     ],
     "totalPages": 1,
@@ -1460,14 +1273,6 @@ FCM 토큰 갱신
 
 ### 8. User Profile (사용자 프로필)
 
-> **NOTE**: 기존 Profile(`/profiles/*`), My Page(`/mypages/*`) 엔드포인트가 모두 `/users/*`로 통합됨.
-> - `/profiles/me` → `GET /users/me`
-> - `/profiles/change` → `PATCH /users/me`
-> - `/profiles/duplication-check` → `POST /users/profile/duplication-check`
-> - `/mypages/my-clubs` → `GET /users/me/clubs`
-> - `/mypages/aplict-clubs` → `GET /users/me/applications`
-> - `/mypages/clubs/{floor}/photo` → `GET /users/clubs/{floor}/photo`
-
 ##### GET `/users/me`
 내 프로필 조회
 
@@ -1620,6 +1425,7 @@ FCM 토큰 갱신
       "leaderHp": "string",
       "clubInsta": "string",
       "aplictStatus": "WAIT | PASS | FAIL",
+      "aplictUUID": "uuid",
       "clubRoomNumber": "string"
     }
   ]
@@ -1689,163 +1495,7 @@ FCM 토큰 갱신
 
 ---
 
-### 9. Event Verification (이벤트 인증)
-
-> **NOTE**: 기존 My Page(`/mypages/*`)와 My Notices(`/my-notices/*`) 엔드포인트는 User Profile API로 통합됨.
-> - `/mypages/my-clubs` → `GET /users/me/clubs` (Section 8 참조)
-> - `/mypages/aplict-clubs` → `GET /users/me/applications` (Section 8 참조)
-> - `/mypages/clubs/{floor}/photo` → `GET /users/clubs/{floor}/photo` (Section 8 참조)
-
-##### POST `/users/event/verify`
-이벤트 코드 인증
-
-**권한:** 인증 필요
-
-**Request Body:**
-```json
-{
-  "code": "string"
-}
-```
-
-**Response (200):**
-```json
-{
-  "message": "이벤트 인증 성공",
-  "data": {
-    "clubUUID": "uuid",
-    "isFirstVerify": true,
-    "verified_at": "2026-01-01T00:00:00"
-  }
-}
-```
-
-##### GET `/users/event/status`
-이벤트 인증 상태 확인
-
-**권한:** 인증 필요
-
-**Response (200):**
-```json
-{
-  "message": "이벤트 인증 상태 조회 성공",
-  "data": {
-    "verified": true
-  }
-}
-```
-
----
-
-### 10. Forms (지원서 폼 관리)
-
-#### 10.1 질문 유형 (Question Types)
-
-| TYPE | 설명 |
-| :--- | :--- |
-| `RADIO` | 단일 선택 (라디오) |
-| `CHECKBOX` | 다중 선택 |
-| `DROPDOWN` | 단일 선택 (드롭다운) |
-| `SHORT_TEXT` | 단답형 |
-| `LONG_TEXT` | 서술형 |
-
-#### 10.2 폼 관리 API
-
-##### POST `/clubs/{clubUUID}/forms`
-지원서 폼 생성 (통합)
-
-**권한:** 회장 (LEADER)
-
-**설명:** 지원서 기본 정보, 질문, 옵션을 일괄 생성. 기본 상태는 DRAFT
-
-**Request Body:**
-```json
-{
-  "description": "열정 있는 개발자를 찾습니다!",
-  "questions": [
-    {
-      "sequence": 1,
-      "type": "RADIO",
-      "content": "학년을 선택해주세요.",
-      "required": true,
-      "options": [
-        {"sequence": 1, "content": "1학년", "value": "GRADE_1"},
-        {"sequence": 2, "content": "2학년", "value": "GRADE_2"}
-      ]
-    },
-    {
-      "sequence": 2,
-      "type": "CHECKBOX",
-      "content": "관심 분야 (다중 선택)",
-      "required": false,
-      "options": [
-        {"sequence": 1, "content": "백엔드", "value": "BACK"},
-        {"sequence": 2, "content": "프론트엔드", "value": "FRONT"}
-      ]
-    },
-    {
-      "sequence": 3,
-      "type": "LONG_TEXT",
-      "content": "지원 동기 및 포부",
-      "required": true,
-      "options": []
-    }
-  ]
-}
-```
-
-**Constraints:**
-
-| Field | Type | Required | Constraints | Description |
-| :--- | :--- | :--- | :--- | :--- |
-| `description` | String | No | 0~500 chars | 폼 설명 |
-| `questions` | Array | **Yes** | - | 질문 목록 |
-
-**Response (201):**
-```json
-{
-  "message": "지원서 폼 생성 성공",
-  "data": {
-    "formId": "uuid"
-  }
-}
-```
-
-**Potential Errors:**
-*   `400`: 요청 오류
-*   `403`: 권한 없음
-*   `404`: 동아리 없음
-
-##### GET `/clubs/forms/{clubUUID}`
-지원서 폼 조회
-
-**권한:** 인증 필요
-
-**Response (200):**
-```json
-{
-  "message": "지원서 폼 조회 성공",
-  "data": {
-    "formId": "uuid",
-    "questions": [
-      {
-        "questionId": 101,
-        "sequence": 1,
-        "type": "RADIO",
-        "content": "학년을 선택해주세요.",
-        "required": true,
-        "options": [
-          { "optionId": 501, "sequence": 1, "content": "1학년", "value": "GRADE_1" }
-        ]
-      }
-    ]
-  }
-}
-```
-
----
-
-### 11. Health Check
+### 9. Health Check
 
 ##### GET `/health-check`
 서버 상태 확인

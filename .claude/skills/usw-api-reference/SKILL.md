@@ -7,23 +7,21 @@ description: "Complete reference for USW Circle Link Server API (v1). Use this w
 
 ## Quick Navigation
 
-The USW API is organized into **13 feature domains**. Use this guide to quickly find what you need.
+The USW API is organized into **9 feature domains**. Use this guide to quickly find what you need.
 
 ### API Domains
 
 | Domain | Purpose | Example Endpoints |
 |--------|---------|------------------|
 | **1. Auth** | Unified authentication (login, signup, password reset, withdrawal) | `POST /auth/login`, `POST /auth/signup`, `POST /auth/withdrawal/code` |
-| **2. Clubs** | Club listing, info, members, management | `GET /clubs`, `GET /clubs/{clubUUID}/info`, `PUT /clubs/{clubUUID}`, `PATCH /clubs/{clubUUID}/recruit-status` |
-| **3. Club Leader** | Leader-specific: intro, summary, application review | `GET /clubs/{clubUUID}/leader/intro`, `GET /clubs/{clubUUID}/leader/summary` |
-| **4. Applications** | Handle club applications (submit, review, status) | `POST /clubs/{clubUUID}/applications`, `GET /clubs/{clubUUID}/applicants` |
-| **5. Notices** | Create and manage notices | `POST /notices`, `GET /notices/{noticeUUID}` |
+| **2. Clubs** | Club management, info, members, recruitment, applicants | `GET /clubs`, `GET /clubs/{clubUUID}`, `PUT /clubs/{clubUUID}` |
+| **3. Club Application** | Submit and view club applications | `POST /clubs/{clubUUID}/applications`, `GET /clubs/{clubUUID}/applications/eligibility` |
+| **4. Forms** | Application forms & questions | `POST /clubs/{clubUUID}/forms`, `GET /clubs/{clubUUID}/forms` |
+| **5. Notices** | Create and manage notices (admin views) | `POST /notices`, `GET /notices/{noticeUUID}`, `PUT /notices/{noticeUUID}` |
 | **6. Categories** | Manage club categories | `GET /categories`, `POST /categories`, `DELETE /categories/{uuid}` |
 | **7. Floor Maps** | Manage floor photos (B1, F1, F2) | `GET /floor-maps`, `PUT /floor-maps`, `DELETE /floor-maps/{floor}` |
-| **8. User Profile** | User's personal info, clubs, applications, floor photos | `GET /users/me`, `PATCH /users/me`, `GET /users/me/clubs`, `GET /users/me/applications` |
-| **9. Forms** | Application forms & questions | `POST /clubs/{clubUUID}/forms`, `GET /clubs/forms/{clubUUID}` |
-| **10. Event Verification** | Event code verification | `POST /users/event/verify`, `GET /users/event/status` |
-| **11. Health Check** | Server status | `GET /health-check` |
+| **8. User Profile** | User's personal info, clubs, applications | `GET /users/me`, `PATCH /users/me`, `GET /users/me/clubs`, `GET /users/me/applications` |
+| **9. Health Check** | Server status | `GET /health-check` |
 
 ## Finding Endpoints
 
@@ -41,10 +39,10 @@ The USW API is organized into **13 feature domains**. Use this guide to quickly 
 
 ### By Feature
 - **Authentication**: `/auth/login`, `/auth/signup`, `/auth/refresh`, `/auth/logout`
-- **Club Management**: `/clubs/*`, `/clubs/{clubUUID}/leader/*`
-- **Recruitment**: `/clubs/{clubUUID}/applications`, `/clubs/{clubUUID}/applicants`
+- **Club Management**: `/clubs/*`, `/clubs/{clubUUID}`
+- **Recruitment**: `/clubs/{clubUUID}/applications`, `/clubs/{clubUUID}/applicants`, `/clubs/{clubUUID}/recruit-status`
 - **User Profile**: `/users/me`, `/users/me/clubs`, `/users/me/applications`, `/users/profile/duplication-check`
-- **Public Info**: `/clubs/*`, `/categories` (no auth required for some)
+- **Public Info**: `/clubs`, `/categories` (no auth required for some)
 
 ## Request/Response Structures
 
@@ -132,7 +130,6 @@ Error codes follow a prefix pattern. Use `error-codes.md` for full lookup:
 
 ### Public Endpoints (no auth required)
 - `GET /clubs` - Browse clubs
-- `GET /clubs/open` - Browse recruiting clubs
 - `GET /categories` - Browse categories
 - `POST /auth/login` - Unified login
 - `POST /auth/signup` - Register
@@ -144,8 +141,8 @@ Error codes follow a prefix pattern. Use `error-codes.md` for full lookup:
 - `GET /health-check` - Server status
 
 ### Protected by Role
-- **USER**: Profile management, my clubs/applications, event verification
-- **LEADER**: Club intro/summary, application review via `/clubs/{clubUUID}/leader/*`
+- **USER**: Profile management, my clubs/applications
+- **LEADER**: Club info/summary, application review via `/clubs/{clubUUID}/applications/*`
 - **ADMIN**: Admin functions (notices, categories, clubs CRUD, floor maps)
 
 ### Token Handling
@@ -170,25 +167,22 @@ Error codes follow a prefix pattern. Use `error-codes.md` for full lookup:
 - **Logout**: `POST /auth/logout`
 
 ### Managing Club Information
-- **Get Info**: `GET /clubs/{clubUUID}/info`
-- **Update Info**: `PUT /clubs/{clubUUID}` (multipart: mainPhoto + clubInfoRequest + leaderUpdatePwRequest)
-- **Get Intro** (Leader): `GET /clubs/{clubUUID}/leader/intro`
-- **Update Intro** (Leader): `PUT /clubs/{clubUUID}/leader/intro` (multipart: introPhotos + clubIntroRequest)
-- **Get Summary** (Leader): `GET /clubs/{clubUUID}/leader/summary`
+- **Get Club Detail**: `GET /clubs/{clubUUID}` (returns full club info: AdminClubInfoResponse)
+- **Update Club**: `PUT /clubs/{clubUUID}` (multipart: mainPhoto + clubProfileRequest + leaderUpdatePwRequest + clubInfoRequest + infoPhotos)
 - **Toggle Recruitment**: `PATCH /clubs/{clubUUID}/recruit-status`
-- **Fields**: leaderName, leaderHp, clubInsta, clubRoomNumber, hashtags, categories
+- **Fields**: leaderName, leaderHp, clubInsta, clubRoomNumber, hashtags, categories, clubInfo, clubRecruitment
 
 ### Handling Applications
 - **Check Eligibility**: `GET /clubs/{clubUUID}/applications/eligibility`
 - **Submit**: `POST /clubs/{clubUUID}/applications` (with answers array)
 - **List Applicants**: `GET /clubs/{clubUUID}/applicants?status=WAIT|PASS|FAIL`
-- **Get Detail** (User): `GET /clubs/{clubUUID}/applications/{aplictUUID}`
-- **Get Detail** (Leader): `GET /clubs/{clubUUID}/leader/applications/{applicationUUID}` (marks as read)
-- **Update Status** (Leader): `PATCH /clubs/{clubUUID}/leader/applications/{applicationUUID}/status`
+- **Get Detail**: `GET /clubs/{clubUUID}/applications/{aplictUUID}`
+- **Update Status**: `PATCH /clubs/{clubUUID}/applications/{applicationUUID}/status`
 - **Send Notifications**: `POST /clubs/{clubUUID}/applicants/notifications`
 
 ### File Uploads
-- **Photos**: JPEG/PNG only, max 5 files per request
+- **Photos**: JPEG/PNG only, max 5 files per request, max 20MB per file, max 50MB total
+- **infoPhotos**: `clubInfoRequest`에 `orders` 배열 필수 (없으면 서버가 무시함)
 - **Excel**: XLS/XLSX for member imports
 - **Floor Maps**: Binary upload via `PUT /floor-maps`
 - **Response**: Includes presigned URLs for uploaded files
@@ -205,12 +199,14 @@ Error codes follow a prefix pattern. Use `error-codes.md` for full lookup:
 
 ### Forms Management
 - **Create Form**: `POST /clubs/{clubUUID}/forms` (all at once: form + questions + options)
-- **Get Active Form**: `GET /clubs/forms/{clubUUID}`
+- **Get Active Form**: `GET /clubs/{clubUUID}/forms`
 - **Submit Application**: `POST /clubs/{clubUUID}/applications` (with answers referencing questionId)
 
-### Event Verification (New)
-- **Verify Code**: `POST /users/event/verify` (with event code)
-- **Check Status**: `GET /users/event/status`
+### Admin Club Management
+Admin club management is now part of the Clubs API:
+- **Create Club**: `POST /clubs` (with admin password verification)
+- **Delete Club**: `DELETE /clubs/{clubUUID}` (requires admin password)
+- **Check Duplication**: `GET /clubs/check-duplication?type={type}&val={val}`
 
 ## Reference Files
 

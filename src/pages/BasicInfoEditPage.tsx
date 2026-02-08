@@ -11,26 +11,21 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Textarea } from '@/components/ui/textarea'
 import { toast } from 'sonner'
 import { useAuthStore } from '@/features/auth/store/authStore'
-import { useClubInfo, useClubIntro, useUpdateClubInfo, useUpdateClubIntro } from '@/features/club-leader/hooks/useClubLeader'
+import { useClubDetail, useUpdateClubInfo } from '@/features/club-leader/hooks/useClubLeader'
 
 export function BasicInfoEditPage() {
   const navigate = useNavigate()
   const { clubUUID } = useAuthStore()
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
-  // 파일 크기 제한: 단일 파일 3MB, 전체 10MB
-  const MAX_FILE_SIZE = 3 * 1024 * 1024 // 3MB
-  const MAX_TOTAL_SIZE = 10 * 1024 * 1024 // 10MB
+  // 파일 크기 제한: 단일 파일 20MB, 전체 50MB
+  const MAX_FILE_SIZE = 20 * 1024 * 1024 // 20MB
+  const MAX_TOTAL_SIZE = 50 * 1024 * 1024 // 50MB
 
-  const { data: clubInfoData, isLoading, error } = useClubInfo(clubUUID || '')
+  const { data: clubInfoData, isLoading, error } = useClubDetail(clubUUID || '')
   const clubInfo = clubInfoData?.data
 
-  // For fetching current club intro info
-  const { data: clubIntroData } = useClubIntro(clubUUID || '')
-  const currentClubIntro = clubIntroData?.data
-
   const { mutate: updateClubInfo, isPending: isUpdatingInfo } = useUpdateClubInfo()
-  const { mutate: updateClubIntro, isPending: isUpdatingIntro } = useUpdateClubIntro()
 
   const initialFormData = useMemo(() => {
     if (clubInfo) {
@@ -39,7 +34,7 @@ export function BasicInfoEditPage() {
         leaderHp: clubInfo.leaderHp,
         clubRoomNumber: clubInfo.clubRoomNumber,
         clubInsta: clubInfo.clubInsta || '',
-        clubHashtag: clubInfo.clubHashtag,
+        clubHashtag: clubInfo.clubHashtags,
       }
     }
     return {
@@ -53,11 +48,11 @@ export function BasicInfoEditPage() {
 
   const [formData, setFormData] = useState(initialFormData)
   const [newHashtag, setNewHashtag] = useState('')
-  const [clubIntro, setClubIntro] = useState(currentClubIntro?.clubIntro || '')
+  const [clubInfoText, setClubInfoText] = useState(clubInfo?.clubInfo || '')
   const [mainPhotoFile, setMainPhotoFile] = useState<File | null>(null)
-  const [mainPhotoPreview, setMainPhotoPreview] = useState(clubInfo?.mainPhotoUrl || '')
-  const [introPhotoFiles, setIntroPhotoFiles] = useState<(File | null)[]>(Array(5).fill(null))
-  const [introPhotoPreviews, setIntroPhotoPreviews] = useState<(string | null)[]>(Array(5).fill(null))
+  const [mainPhotoPreview, setMainPhotoPreview] = useState(clubInfo?.mainPhoto || '')
+  const [infoPhotoFiles, setInfoPhotoFiles] = useState<(File | null)[]>(Array(5).fill(null))
+  const [infoPhotoPreviews, setInfoPhotoPreviews] = useState<(string | null)[]>(Array(5).fill(null))
 
   useEffect(() => {
     if (clubInfo) {
@@ -66,26 +61,26 @@ export function BasicInfoEditPage() {
         leaderHp: clubInfo.leaderHp,
         clubRoomNumber: clubInfo.clubRoomNumber,
         clubInsta: clubInfo.clubInsta || '',
-        clubHashtag: clubInfo.clubHashtag,
+        clubHashtag: clubInfo.clubHashtags,
       })
-      setMainPhotoPreview(clubInfo.mainPhotoUrl || '')
+      setMainPhotoPreview(clubInfo.mainPhoto || '')
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clubUUID, clubInfo])
 
   useEffect(() => {
-    if (currentClubIntro) {
-      setClubIntro(currentClubIntro.clubIntro || '')
+    if (clubInfo) {
+      setClubInfoText(clubInfo.clubInfo || '')
       // Initialize 5 slots with existing photos
-      const photos = currentClubIntro.introPhotos || []
+      const photos = clubInfo.infoPhotos || []
       const initialPhotos: (string | null)[] = Array(5).fill(null)
       photos.slice(0, 5).forEach((photo, index) => {
         initialPhotos[index] = photo
       })
-      setIntroPhotoPreviews(initialPhotos)
+      setInfoPhotoPreviews(initialPhotos)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentClubIntro])
+  }, [clubInfo])
 
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -130,15 +125,15 @@ export function BasicInfoEditPage() {
     }
   }
 
-  const handleIntroPhotosUpload = (index: number, file: File | null) => {
+  const handleInfoPhotosUpload = (index: number, file: File | null) => {
     if (!file) {
       // Clear the slot
-      setIntroPhotoFiles((prev) => {
+      setInfoPhotoFiles((prev) => {
         const newFiles = [...prev]
         newFiles[index] = null
         return newFiles
       })
-      setIntroPhotoPreviews((prev) => {
+      setInfoPhotoPreviews((prev) => {
         const newPreviews = [...prev]
         newPreviews[index] = null
         return newPreviews
@@ -153,7 +148,7 @@ export function BasicInfoEditPage() {
     }
 
     // 전체 크기 검증 (기존 파일들 + 새 파일)
-    const currentTotalSize = introPhotoFiles.reduce((total, f) => total + (f?.size || 0), 0)
+    const currentTotalSize = infoPhotoFiles.reduce((total, f) => total + (f?.size || 0), 0)
     if (currentTotalSize + file.size > MAX_TOTAL_SIZE) {
       toast.error(`전체 파일 크기가 너무 큽니다. (최대 ${Math.floor(MAX_TOTAL_SIZE / 1024 / 1024)}MB)`)
       return
@@ -162,7 +157,7 @@ export function BasicInfoEditPage() {
     // Create preview
     const reader = new FileReader()
     reader.onloadend = () => {
-      setIntroPhotoPreviews((prev) => {
+      setInfoPhotoPreviews((prev) => {
         const newPreviews = [...prev]
         newPreviews[index] = reader.result as string
         return newPreviews
@@ -171,20 +166,20 @@ export function BasicInfoEditPage() {
     reader.readAsDataURL(file)
 
     // Store file
-    setIntroPhotoFiles((prev) => {
+    setInfoPhotoFiles((prev) => {
       const newFiles = [...prev]
       newFiles[index] = file
       return newFiles
     })
   }
 
-  const handleRemoveIntroPhoto = (index: number) => {
-    setIntroPhotoFiles((prev) => {
+  const handleRemoveInfoPhoto = (index: number) => {
+    setInfoPhotoFiles((prev) => {
       const newFiles = [...prev]
       newFiles[index] = null
       return newFiles
     })
-    setIntroPhotoPreviews((prev) => {
+    setInfoPhotoPreviews((prev) => {
       const newPreviews = [...prev]
       newPreviews[index] = null
       return newPreviews
@@ -195,14 +190,33 @@ export function BasicInfoEditPage() {
     e.preventDefault()
     if (!clubUUID) return
 
-    let completionCount = 0
-    let hasError = false
+    // Build orders and deletedOrders for infoPhotos
+    const existingPhotos = clubInfo?.infoPhotos || []
+    const orders: number[] = []
+    const deletedOrders: number[] = []
+    const newPhotoFiles: File[] = []
 
-    // Update club info (with or without mainPhoto)
+    for (let i = 0; i < 5; i++) {
+      const hasNewFile = infoPhotoFiles[i] !== null
+      const hadExistingPhoto = i < existingPhotos.length && !!existingPhotos[i]
+      const currentPreviewExists = infoPhotoPreviews[i] !== null && infoPhotoPreviews[i] !== ''
+
+      if (hasNewFile) {
+        orders.push(i + 1) // 1-indexed
+        newPhotoFiles.push(infoPhotoFiles[i]!)
+        if (hadExistingPhoto) {
+          deletedOrders.push(i + 1)
+        }
+      } else if (hadExistingPhoto && !currentPreviewExists) {
+        deletedOrders.push(i + 1)
+      }
+    }
+
+    // Update club profile, main photo, club info, and intro photos in a single request
     updateClubInfo(
       {
         clubUUID,
-        clubInfoRequest: {
+        clubProfileRequest: {
           leaderName: formData.leaderName,
           leaderHp: formData.leaderHp,
           clubRoomNumber: formData.clubRoomNumber,
@@ -210,53 +224,26 @@ export function BasicInfoEditPage() {
           clubHashtag: formData.clubHashtag,
         },
         mainPhoto: mainPhotoFile || undefined,
+        clubInfoRequest: {
+          clubInfo: clubInfoText.trim() || undefined,
+          recruitmentStatus: clubInfo?.recruitmentStatus || 'OPEN',
+          clubRecruitment: clubInfo?.clubRecruitment || undefined,
+          googleFormUrl: clubInfo?.googleFormUrl || undefined,
+          orders: orders.length > 0 ? orders : undefined,
+          deletedOrders: deletedOrders.length > 0 ? deletedOrders : undefined,
+        },
+        infoPhotos: newPhotoFiles.length > 0 ? newPhotoFiles : undefined,
       },
       {
         onSuccess: () => {
-          completionCount++
-          if (completionCount === (clubIntro ? 2 : 1) && !hasError) {
-            toast.success('기본정보가 저장되었습니다.')
-            navigate('/club/dashboard')
-          }
+          toast.success('기본정보가 저장되었습니다.')
+          navigate('/club/dashboard')
         },
         onError: () => {
-          hasError = true
           toast.error('기본정보 저장에 실패했습니다.')
         },
       }
     )
-
-    // Update club intro if it changed
-    if (currentClubIntro) {
-      // Filter out null values to get only uploaded files
-      const validPhotoFiles = introPhotoFiles.filter((file): file is File => file !== null)
-
-      updateClubIntro(
-        {
-          clubUUID,
-          request: {
-            clubIntro: clubIntro.trim() || undefined,
-            recruitmentStatus: currentClubIntro.recruitmentStatus,
-            clubRecruitment: currentClubIntro.clubRecruitment || undefined,
-            googleFormUrl: currentClubIntro.googleFormUrl || undefined,
-          },
-          photos: validPhotoFiles.length > 0 ? validPhotoFiles : undefined,
-        },
-        {
-          onSuccess: () => {
-            completionCount++
-            if (completionCount === 2 && !hasError) {
-              toast.success('기본정보가 저장되었습니다.')
-              navigate('/club/dashboard')
-            }
-          },
-          onError: () => {
-            hasError = true
-            toast.error('소개글 저장에 실패했습니다.')
-          },
-        }
-      )
-    }
   }
 
   if (isLoading) {
@@ -428,18 +415,18 @@ export function BasicInfoEditPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="clubIntro">동아리 소개</Label>
+              <Label htmlFor="clubInfo">동아리 소개</Label>
               <Textarea
-                id="clubIntro"
-                value={clubIntro}
-                onChange={(e) => setClubIntro(e.target.value)}
+                id="clubInfo"
+                value={clubInfoText}
+                onChange={(e) => setClubInfoText(e.target.value)}
                 placeholder="동아리를 소개하는 글을 작성하세요"
                 maxLength={3000}
                 rows={6}
-                disabled={isUpdatingIntro}
+                disabled={isUpdatingInfo}
               />
               <p className="text-xs text-muted-foreground">
-                {clubIntro.length}/3000자
+                {clubInfoText.length}/3000자
               </p>
             </div>
 
@@ -449,7 +436,7 @@ export function BasicInfoEditPage() {
               {/* 5개 고정 슬롯 */}
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
                 {Array.from({ length: 5 }).map((_, index) => {
-                  const photo = introPhotoPreviews[index]
+                  const photo = infoPhotoPreviews[index]
                   const hasPhoto = photo !== null && photo !== ''
 
                   return (
@@ -458,9 +445,9 @@ export function BasicInfoEditPage() {
                         type="file"
                         accept="image/*"
                         className="hidden"
-                        id={`intro-photo-${index}`}
-                        onChange={(e) => handleIntroPhotosUpload(index, e.target.files?.[0] || null)}
-                        disabled={isUpdatingIntro}
+                        id={`info-photo-${index}`}
+                        onChange={(e) => handleInfoPhotosUpload(index, e.target.files?.[0] || null)}
+                        disabled={isUpdatingInfo}
                       />
                       {hasPhoto ? (
                         // 사진이 있는 경우
@@ -471,7 +458,7 @@ export function BasicInfoEditPage() {
                             className="w-full h-32 object-cover bg-muted rounded-lg border"
                             onError={() => {
                               // 유효하지 않은 이미지 처리
-                              handleRemoveIntroPhoto(index)
+                              handleRemoveInfoPhoto(index)
                             }}
                           />
                           <Button
@@ -479,8 +466,8 @@ export function BasicInfoEditPage() {
                             variant="destructive"
                             size="icon-sm"
                             className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                            onClick={() => handleRemoveIntroPhoto(index)}
-                            disabled={isUpdatingIntro}
+                            onClick={() => handleRemoveInfoPhoto(index)}
+                            disabled={isUpdatingInfo}
                           >
                             <HugeiconsIcon icon={ReloadIcon} className="size-3" />
                           </Button>
@@ -492,10 +479,10 @@ export function BasicInfoEditPage() {
                           variant="outline"
                           className="w-full h-32 flex flex-col items-center justify-center border-2 border-dashed rounded-lg hover:bg-muted/50 transition-colors"
                           onClick={() => {
-                            const input = document.getElementById(`intro-photo-${index}`) as HTMLInputElement
+                            const input = document.getElementById(`info-photo-${index}`) as HTMLInputElement
                             input?.click()
                           }}
-                          disabled={isUpdatingIntro}
+                          disabled={isUpdatingInfo}
                         >
                           <HugeiconsIcon icon={Upload01Icon} className="size-6 text-muted-foreground mb-2" />
                           <span className="text-xs text-muted-foreground">
@@ -549,11 +536,11 @@ export function BasicInfoEditPage() {
             </div>
 
             <div className="flex justify-end gap-2">
-              <Button type="button" variant="outline" onClick={() => navigate('/club/dashboard')} disabled={isUpdatingInfo || isUpdatingIntro}>
+              <Button type="button" variant="outline" onClick={() => navigate('/club/dashboard')} disabled={isUpdatingInfo}>
                 취소
               </Button>
-              <Button type="submit" disabled={isUpdatingInfo || isUpdatingIntro}>
-                {isUpdatingInfo || isUpdatingIntro ? '저장 중...' : '저장'}
+              <Button type="submit" disabled={isUpdatingInfo}>
+                {isUpdatingInfo ? '저장 중...' : '저장'}
               </Button>
             </div>
           </form>

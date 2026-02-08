@@ -27,8 +27,8 @@ describe('Form Management API', () => {
             content: '참여 가능 시간을 선택해주세요',
             required: true,
             options: [
-              { sequence: 1, content: '평일 오후', value: 'weekday_pm' },
-              { sequence: 2, content: '주말 오전', value: 'weekend_am' },
+              { sequence: 1, content: '평일 오후' },
+              { sequence: 2, content: '주말 오전' },
             ],
           },
         ],
@@ -63,8 +63,8 @@ describe('Form Management API', () => {
             content: 'Multiple choice',
             required: true,
             options: [
-              { sequence: 1, content: 'Option 1', value: 'opt1' },
-              { sequence: 2, content: 'Option 2', value: 'opt2' },
+              { sequence: 1, content: 'Option 1' },
+              { sequence: 2, content: 'Option 2' },
             ],
           },
         ],
@@ -175,7 +175,7 @@ describe('Form Management API', () => {
   describe('getActiveForm()', () => {
     it('should GET active form for club', async () => {
       server.use(
-        http.get(`${API_BASE}/clubs/forms/${TEST_CLUB_ID}`, () => {
+        http.get(`${API_BASE}/clubs/${TEST_CLUB_ID}/forms`, () => {
           return HttpResponse.json({
             message: '활성 폼 조회 성공',
             data: {

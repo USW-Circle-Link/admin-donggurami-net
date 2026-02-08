@@ -28,7 +28,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { useAuthStore } from '@/features/auth/store/authStore'
-import { useClubSummary } from '@/features/club-leader/hooks/useClubLeader'
+import { useClubDetail } from '@/features/club-leader/hooks/useClubLeader'
 
 import { ModeToggle } from '@/components/mode-toggle'
 
@@ -39,8 +39,8 @@ export function AppSidebar() {
   const { clubUUID } = useAuthStore()
 
   // 클럽 정보 조회
-  const { data: clubSummaryData } = useClubSummary(clubUUID || '')
-  const clubSummary = clubSummaryData?.data
+  const { data: clubDetailData } = useClubDetail(clubUUID || '')
+  const clubDetail = clubDetailData?.data
 
   const handleNavigation = (path: string) => {
     navigate(path)
@@ -61,9 +61,9 @@ export function AppSidebar() {
 
   // 동아리 회장 정보
   const leaderInfo = {
-    name: clubSummary?.leaderName || '동아리 회장',
-    clubName: clubSummary?.clubName || '동아리',
-    mainPhoto: clubSummary?.mainPhoto || null,
+    name: clubDetail?.leaderName || '동아리 회장',
+    clubName: clubDetail?.clubName || '동아리',
+    mainPhoto: clubDetail?.mainPhoto || null,
   }
 
   return (

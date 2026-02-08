@@ -85,7 +85,7 @@ describe('Club Leader API - Applicants', () => {
 
     it('should handle 400 validation error', async () => {
       server.use(
-        http.patch(`${API_BASE}/clubs/${TEST_CLUB_UUID}/leader/applications/invalid-uuid/status`, () => {
+        http.patch(`${API_BASE}/clubs/${TEST_CLUB_UUID}/applications/invalid-uuid/status`, () => {
           return HttpResponse.json(
             {
               exception: 'ValidationException',
@@ -107,7 +107,7 @@ describe('Club Leader API - Applicants', () => {
 
     it('should handle 404 applicant not found', async () => {
       server.use(
-        http.patch(`${API_BASE}/clubs/${TEST_CLUB_UUID}/leader/applications/nonexistent/status`, () => {
+        http.patch(`${API_BASE}/clubs/${TEST_CLUB_UUID}/applications/nonexistent/status`, () => {
           return HttpResponse.json(
             {
               exception: 'ApplicantException',

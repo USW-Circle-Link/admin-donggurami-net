@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { getAllClubs, getOpenClubs } from '../../club/api/clubApi'
+import { getAllClubs } from '../../club/api/clubApi'
 import type { MergedClubItem } from '../domain/adminSchemas'
 import type { ClubListResponse } from '../../club/domain/clubSchemas'
 
@@ -33,7 +33,7 @@ export function useMergedClubList() {
     queryFn: async () => {
       const [allClubsResponse, openClubsResponse] = await Promise.all([
         getAllClubs(),
-        getOpenClubs(),
+        getAllClubs({ open: true }),
       ])
 
       const allClubs = allClubsResponse.data || []

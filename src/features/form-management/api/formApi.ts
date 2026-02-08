@@ -26,12 +26,12 @@ export async function createForm(
 }
 
 /**
- * GET /clubs/forms/{clubUUID}
+ * GET /clubs/{clubUUID}/forms
  * Get the active form for a club
  */
 export async function getActiveForm(clubUUID: string): Promise<FormDetailResponse> {
   const response = await apiClient.get<ApiResponse<FormDetailResponse>>(
-    `/clubs/forms/${clubUUID}`
+    `/clubs/${clubUUID}/forms`
   )
   return response.data.data
 }
@@ -82,30 +82,30 @@ export async function getApplicants(
 }
 
 /**
- * GET /clubs/{clubUUID}/leader/applications/{applicationUUID}
- * Get application detail (includes read status)
+ * GET /clubs/{clubUUID}/applications/{aplictUUID}
+ * Get application detail
  */
 export async function getLeaderApplicationDetail(
   clubUUID: string,
-  applicationUUID: string
+  aplictUUID: string
 ): Promise<ApplicationDetailResponse> {
   const response = await apiClient.get<ApiResponse<ApplicationDetailResponse>>(
-    `/clubs/${clubUUID}/leader/applications/${applicationUUID}`
+    `/clubs/${clubUUID}/applications/${aplictUUID}`
   )
   return response.data.data
 }
 
 /**
- * PATCH /clubs/{clubUUID}/leader/applications/{applicationUUID}/status
+ * PATCH /clubs/{clubUUID}/applications/{aplictUUID}/status
  * Update application status
  */
 export async function updateApplicationStatus(
   clubUUID: string,
-  applicationUUID: string,
+  aplictUUID: string,
   status: 'WAIT' | 'PASS' | 'FAIL'
 ): Promise<void> {
   await apiClient.patch<ApiResponse<void>>(
-    `/clubs/${clubUUID}/leader/applications/${applicationUUID}/status`,
+    `/clubs/${clubUUID}/applications/${aplictUUID}/status`,
     { status }
   )
 }

@@ -101,18 +101,13 @@ describe('Application API', () => {
         department: '컴퓨터공학과',
         submittedAt: '2024-01-15T10:30:00',
         status: 'WAIT',
-        isRead: false,
         qnaList: [
           {
-            questionId: 1,
             question: '지원 동기',
-            type: 'TEXT',
             answer: '열정적으로 활동하고 싶습니다',
           },
           {
-            questionId: 2,
             question: '희망 분야',
-            type: 'TEXT',
             answer: null,
           },
         ],

@@ -3,10 +3,8 @@ import { http, HttpResponse } from 'msw'
 import { server } from '@test/mocks/server'
 import { apiClient, setAccessToken } from '@shared/api/apiClient'
 import {
-  getClubIntro,
-  updateClubIntro,
-  getClubInfo,
-  getClubSummary,
+  getClubDetail,
+  updateClubInfo,
   getLeaderCategories,
   toggleRecruitment,
   getClubMembers,
@@ -26,18 +24,18 @@ describe('Club Leader API', () => {
     setAccessToken('mock_access_token')
   })
 
-  describe('getClubIntro', () => {
-    it('should return club intro', async () => {
-      const result = await getClubIntro(clubUUID)
+  describe('getClubDetail', () => {
+    it('should return club detail', async () => {
+      const result = await getClubDetail(clubUUID)
 
-      expect(result.message).toBe('동아리 소개 조회 성공')
-      expect(result.data.clubIntro).toBe('테스트 동아리 소개입니다.')
+      expect(result.message).toBe('동아리 상세 조회 성공')
+      expect(result.data.clubInfo).toBe('테스트 동아리 소개입니다.')
       expect(result.data.clubRecruitment).toBeDefined()
     })
 
     it('should throw error on unauthorized', async () => {
       server.use(
-        http.get(`${API_BASE}/clubs/:clubUUID/leader/intro`, () => {
+        http.get(`${API_BASE}/clubs/:clubUUID`, () => {
           return HttpResponse.json(
             {
               exception: 'AuthException',
@@ -52,33 +50,33 @@ describe('Club Leader API', () => {
         })
       )
 
-      await expect(getClubIntro(clubUUID)).rejects.toThrow()
+      await expect(getClubDetail(clubUUID)).rejects.toThrow()
     })
   })
 
-  describe('updateClubIntro', () => {
-    it('should update club intro without photos', async () => {
+  describe('updateClubInfo', () => {
+    it('should update club info', async () => {
       // Mock apiClient.put directly for this test due to MSW + FormData + Node.js issue
       const putSpy = vi.spyOn(apiClient, 'put').mockResolvedValueOnce({
         data: {
-          message: '동아리 소개 수정 성공',
+          message: '동아리 정보 수정 성공',
           data: null,
         },
       } as any)
 
       const request = {
-        clubIntro: '새로운 소개',
+        clubInfo: '새로운 소개',
         recruitmentStatus: 'OPEN' as const,
         clubRecruitment: '새로운 공고',
         googleFormUrl: 'https://forms.google.com/new',
       }
 
-      const result = await updateClubIntro(clubUUID, request)
+      const result = await updateClubInfo(clubUUID, undefined, undefined, undefined, request)
 
-      expect(result.message).toBe('동아리 소개 수정 성공')
+      expect(result.message).toBe('동아리 정보 수정 성공')
       expect(result.data).toBeNull()
       expect(putSpy).toHaveBeenCalledWith(
-        `/clubs/${clubUUID}/leader/intro`,
+        `/clubs/${clubUUID}`,
         expect.any(FormData),
         expect.objectContaining({
           headers: { 'Content-Type': 'multipart/form-data' },
@@ -86,26 +84,6 @@ describe('Club Leader API', () => {
       )
 
       putSpy.mockRestore()
-    })
-  })
-
-  describe('getClubInfo', () => {
-    it('should return club info', async () => {
-      const result = await getClubInfo(clubUUID)
-
-      expect(result.message).toBe('동아리 정보 조회 성공')
-      expect(result.data.clubName).toBe('테스트 동아리')
-      expect(result.data.leaderName).toBe('홍길동')
-    })
-  })
-
-  describe('getClubSummary', () => {
-    it('should return club summary', async () => {
-      const result = await getClubSummary(clubUUID)
-
-      expect(result.message).toBe('동아리 요약 조회 성공')
-      expect(result.data.clubName).toBe('테스트 동아리')
-      expect(result.data.recruitmentStatus).toBe('OPEN')
     })
   })
 

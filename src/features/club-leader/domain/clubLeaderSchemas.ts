@@ -8,15 +8,15 @@ export const recruitmentStatusSchema = z.enum(['OPEN', 'CLOSE'])
 // ===== Club Intro =====
 export const clubIntroResponseSchema = z.object({
   clubUUID: z.string().uuid(),
-  clubIntro: z.string().nullable(),
+  clubInfo: z.string().nullable(),
   clubRecruitment: z.string().nullable(),
   recruitmentStatus: recruitmentStatusSchema,
   googleFormUrl: z.string().nullable(),
-  introPhotos: z.array(z.string()),
+  infoPhotos: z.array(z.string()),
 })
 
-export const clubIntroRequestSchema = z.object({
-  clubIntro: z.string().max(3000, '소개글은 3000자 이하여야 합니다.').optional(),
+export const clubInfoRequestSchema = z.object({
+  clubInfo: z.string().max(3000, '소개글은 3000자 이하여야 합니다.').optional(),
   recruitmentStatus: recruitmentStatusSchema,
   clubRecruitment: z.string().max(3000, '모집 공고는 3000자 이하여야 합니다.').optional(),
   googleFormUrl: z.string().url('올바른 URL 형식이 아닙니다.').optional().or(z.literal('')),
@@ -24,20 +24,7 @@ export const clubIntroRequestSchema = z.object({
   deletedOrders: z.array(z.number()).optional(),
 })
 
-// ===== Club Info =====
-export const clubInfoResponseSchema = z.object({
-  mainPhotoUrl: z.string().nullable(),
-  clubName: z.string(),
-  leaderName: z.string(),
-  leaderHp: z.string(),
-  clubInsta: z.string().nullable(),
-  clubRoomNumber: z.string(),
-  clubHashtag: z.array(z.string()),
-  clubCategoryName: z.array(z.string()),
-  department: z.string(),
-})
-
-export const clubInfoRequestSchema = z.object({
+export const clubProfileRequestSchema = z.object({
   leaderName: z.string()
     .min(2, '이름은 2자 이상이어야 합니다.')
     .max(30, '이름은 30자 이하여야 합니다.')
@@ -71,14 +58,14 @@ export const clubSummaryResponseSchema = z.object({
   leaderHp: z.string(),
   clubInsta: z.string().nullable(),
   clubRoomNumber: z.string(),
-  clubHashtag: z.array(z.string()),
+  clubHashtags: z.array(z.string()),
   clubCategories: z.array(z.string()),
-  clubIntro: z.string().nullable(),
+  clubInfo: z.string().nullable(),
   clubRecruitment: z.string().nullable(),
   recruitmentStatus: recruitmentStatusSchema,
   googleFormUrl: z.string().nullable(),
   mainPhoto: z.string().nullable(),
-  introPhotos: z.array(z.string()),
+  infoPhotos: z.array(z.string()),
 })
 
 // ===== Club Members =====
@@ -106,10 +93,9 @@ export const applicantSchema = z.object({
 })
 
 export const qnaItemSchema = z.object({
-  questionId: z.number(),
   question: z.string(),
-  type: z.string(),
   answer: z.string(),
+  optionId: z.number().optional(),
 })
 
 export const applicationDetailResponseSchema = z.object({
@@ -119,7 +105,6 @@ export const applicationDetailResponseSchema = z.object({
   department: z.string(),
   submittedAt: z.string(),
   status: applicantStatusSchema,
-  isRead: z.boolean(),
   qnaList: z.array(qnaItemSchema),
 })
 
@@ -146,9 +131,8 @@ export type MemberType = z.infer<typeof memberTypeSchema>
 export type ApplicantStatus = z.infer<typeof applicantStatusSchema>
 export type RecruitmentStatus = z.infer<typeof recruitmentStatusSchema>
 export type ClubIntroResponse = z.infer<typeof clubIntroResponseSchema>
-export type ClubIntroRequest = z.infer<typeof clubIntroRequestSchema>
-export type ClubInfoResponse = z.infer<typeof clubInfoResponseSchema>
 export type ClubInfoRequest = z.infer<typeof clubInfoRequestSchema>
+export type ClubProfileRequest = z.infer<typeof clubProfileRequestSchema>
 export type LeaderUpdatePwRequest = z.infer<typeof leaderUpdatePwRequestSchema>
 export type ClubSummaryResponse = z.infer<typeof clubSummaryResponseSchema>
 export type ClubMember = z.infer<typeof clubMemberSchema>

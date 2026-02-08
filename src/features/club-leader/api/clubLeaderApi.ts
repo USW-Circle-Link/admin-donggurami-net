@@ -2,12 +2,9 @@ import { apiClient } from '@shared/api/apiClient'
 import type { ApiResponse } from '@shared/types/api'
 import type { ApplicantStatus } from '../domain/clubLeaderSchemas'
 import type {
-  ClubIntroResponse,
-  ClubIntroRequest,
-  ClubInfoResponse,
   ClubInfoRequest,
+  ClubProfileRequest,
   LeaderUpdatePwRequest,
-  ClubSummaryResponse,
   ClubMember,
   ClubMemberDeleteRequest,
   Applicant,
@@ -15,52 +12,31 @@ import type {
   ApplicationStatusUpdateRequest,
   CategoryItem,
   FcmTokenRequest,
+  ClubSummaryResponse,
 } from '../domain/clubLeaderSchemas'
 
-// ===== Club Intro =====
+// ===== Club Detail (Full Info) =====
 
-// GET /clubs/{clubUUID}/leader/intro
-export async function getClubIntro(clubUUID: string): Promise<ApiResponse<ClubIntroResponse>> {
-  const response = await apiClient.get<ApiResponse<ClubIntroResponse>>(`/clubs/${clubUUID}/leader/intro`)
+// GET /clubs/{clubUUID} - Returns full club info (AdminClubInfoResponse)
+export async function getClubDetail(clubUUID: string): Promise<ApiResponse<ClubSummaryResponse>> {
+  const response = await apiClient.get<ApiResponse<ClubSummaryResponse>>(`/clubs/${clubUUID}`)
   return response.data
 }
 
-// PUT /clubs/{clubUUID}/leader/intro
-export async function updateClubIntro(
-  clubUUID: string,
-  request: ClubIntroRequest,
-  photos?: File[]
-): Promise<ApiResponse<null>> {
-  const formData = new FormData()
-  formData.append('clubIntroRequest', new Blob([JSON.stringify(request)], { type: 'application/json' }))
-
-  if (photos && photos.length > 0) {
-    photos.forEach((photo) => formData.append('introPhotos', photo))
-  }
-
-  const response = await apiClient.put<ApiResponse<null>>(`/clubs/${clubUUID}/leader/intro`, formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  })
-  return response.data
-}
-
-// ===== Club Info =====
-
-// GET /clubs/{clubUUID}/info
-export async function getClubInfo(clubUUID: string): Promise<ApiResponse<ClubInfoResponse>> {
-  const response = await apiClient.get<ApiResponse<ClubInfoResponse>>(`/clubs/${clubUUID}/info`)
-  return response.data
-}
-
-// PUT /clubs/{clubUUID}
+// PUT /clubs/{clubUUID} - Club profile and main photo update
 export async function updateClubInfo(
   clubUUID: string,
-  clubInfoRequest: ClubInfoRequest,
+  clubProfileRequest?: ClubProfileRequest,
   leaderUpdatePwRequest?: LeaderUpdatePwRequest,
-  mainPhoto?: File
+  mainPhoto?: File,
+  clubInfoRequest?: ClubInfoRequest,
+  infoPhotos?: File[]
 ): Promise<ApiResponse<null>> {
   const formData = new FormData()
-  formData.append('clubInfoRequest', new Blob([JSON.stringify(clubInfoRequest)], { type: 'application/json' }))
+
+  if (clubProfileRequest) {
+    formData.append('clubProfileRequest', new Blob([JSON.stringify(clubProfileRequest)], { type: 'application/json' }))
+  }
 
   if (leaderUpdatePwRequest) {
     formData.append('leaderUpdatePwRequest', new Blob([JSON.stringify(leaderUpdatePwRequest)], { type: 'application/json' }))
@@ -70,15 +46,17 @@ export async function updateClubInfo(
     formData.append('mainPhoto', mainPhoto)
   }
 
+  if (clubInfoRequest) {
+    formData.append('clubInfoRequest', new Blob([JSON.stringify(clubInfoRequest)], { type: 'application/json' }))
+  }
+
+  if (infoPhotos && infoPhotos.length > 0) {
+    infoPhotos.forEach((photo) => formData.append('infoPhotos', photo))
+  }
+
   const response = await apiClient.put<ApiResponse<null>>(`/clubs/${clubUUID}`, formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
   })
-  return response.data
-}
-
-// GET /clubs/{clubUUID}/leader/summary
-export async function getClubSummary(clubUUID: string): Promise<ApiResponse<ClubSummaryResponse>> {
-  const response = await apiClient.get<ApiResponse<ClubSummaryResponse>>(`/clubs/${clubUUID}/leader/summary`)
   return response.data
 }
 
@@ -120,25 +98,25 @@ export async function getApplicants(clubUUID: string, status?: ApplicantStatus):
   return response.data
 }
 
-// GET /clubs/{clubUUID}/leader/applications/{applicationUUID}
+// GET /clubs/{clubUUID}/applications/{aplictUUID}
 export async function getApplicationDetail(
   clubUUID: string,
-  applicationUUID: string
+  aplictUUID: string
 ): Promise<ApiResponse<ApplicationDetailResponse>> {
   const response = await apiClient.get<ApiResponse<ApplicationDetailResponse>>(
-    `/clubs/${clubUUID}/leader/applications/${applicationUUID}`
+    `/clubs/${clubUUID}/applications/${aplictUUID}`
   )
   return response.data
 }
 
-// PATCH /clubs/{clubUUID}/leader/applications/{applicationUUID}/status
+// PATCH /clubs/{clubUUID}/applications/{aplictUUID}/status
 export async function updateApplicationStatus(
   clubUUID: string,
-  applicationUUID: string,
+  aplictUUID: string,
   data: ApplicationStatusUpdateRequest
 ): Promise<ApiResponse<null>> {
   const response = await apiClient.patch<ApiResponse<null>>(
-    `/clubs/${clubUUID}/leader/applications/${applicationUUID}/status`,
+    `/clubs/${clubUUID}/applications/${aplictUUID}/status`,
     data
   )
   return response.data

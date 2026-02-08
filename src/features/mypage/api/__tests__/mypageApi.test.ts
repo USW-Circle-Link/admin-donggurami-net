@@ -5,8 +5,6 @@ import {
   getMyClubs,
   getAppliedClubs,
   getFloorPhoto,
-  getMyNotices,
-  getMyNoticeDetail,
 } from '../mypageApi'
 
 const API_BASE = 'https://api.donggurami.net'
@@ -65,42 +63,4 @@ describe('MyPage API', () => {
     })
   })
 
-  describe('getMyNotices', () => {
-    it('should return my notices', async () => {
-      const result = await getMyNotices()
-
-      expect(result.message).toBe('내 공지사항 조회 성공')
-      expect(Array.isArray(result.data)).toBe(true)
-    })
-  })
-
-  describe('getMyNoticeDetail', () => {
-    it('should return notice detail', async () => {
-      const result = await getMyNoticeDetail('notice-1')
-
-      expect(result.message).toBe('공지사항 상세 조회 성공')
-      expect(result.data.noticeTitle).toBe('테스트 공지')
-      expect(result.data.noticeContent).toBe('테스트 내용')
-    })
-
-    it('should throw error when notice not found', async () => {
-      server.use(
-        http.get(`${API_BASE}/my-notices/:noticeUUID/details`, () => {
-          return HttpResponse.json(
-            {
-              exception: 'NoticeException',
-              code: 'NTC-404',
-              message: '공지사항을 찾을 수 없습니다',
-              status: 404,
-              error: 'Not Found',
-              additionalData: null,
-            },
-            { status: 404 }
-          )
-        })
-      )
-
-      await expect(getMyNoticeDetail('invalid-uuid')).rejects.toThrow()
-    })
-  })
 })

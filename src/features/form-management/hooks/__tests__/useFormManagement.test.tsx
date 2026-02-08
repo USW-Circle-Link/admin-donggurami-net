@@ -200,7 +200,7 @@ describe('Form Management Hooks', () => {
   describe('useActiveForm()', () => {
     it('should fetch active form for club', async () => {
       server.use(
-        http.get(`${API_BASE}/clubs/forms/club-uuid-123`, () => {
+        http.get(`${API_BASE}/clubs/club-uuid-123/forms`, () => {
           return HttpResponse.json({
             message: '활성 폼 조회 성공',
             data: {

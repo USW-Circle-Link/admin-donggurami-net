@@ -3,7 +3,7 @@ import { z } from 'zod'
 // Common recruitment status enum
 export const recruitmentStatusSchema = z.enum(['OPEN', 'CLOSE'])
 
-// Club list response (GET /clubs, GET /clubs/open)
+// Club list response (GET /clubs)
 export const clubListResponseSchema = z.object({
   clubUUID: z.string().uuid(),
   clubName: z.string(),
@@ -12,6 +12,8 @@ export const clubListResponseSchema = z.object({
   hashtags: z.array(z.string()),
   memberCount: z.number(),
   leaderName: z.string(),
+  leaderHp: z.string(),
+  recruitmentStatus: recruitmentStatusSchema,
 })
 
 // Category response (GET /clubs/categories)
@@ -20,7 +22,7 @@ export const clubCategoryResponseSchema = z.object({
   clubCategoryName: z.string().min(1),
 })
 
-// Club list by category response (GET /clubs/filter, GET /clubs/open/filter)
+// Club list by category response (for category-grouped responses)
 export const clubListByCategoryResponseSchema = z.object({
   clubCategoryUUID: z.string().uuid(),
   clubCategoryName: z.string().min(1),
@@ -31,12 +33,12 @@ export const clubListByCategoryResponseSchema = z.object({
 export const clubIntroResponseSchema = z.object({
   clubUUID: z.string().uuid(),
   mainPhoto: z.string().nullable(),
-  introPhotos: z.array(z.string()),
+  infoPhotos: z.array(z.string()),
   clubName: z.string().min(1),
   leaderName: z.string().min(1),
   leaderHp: z.string(),
   clubInsta: z.string().nullable(),
-  clubIntro: z.string().nullable(),
+  clubInfo: z.string().nullable(),
   recruitmentStatus: recruitmentStatusSchema,
   googleFormUrl: z.string().nullable(),
   clubHashtags: z.array(z.string()),
@@ -56,31 +58,18 @@ export const clubSimpleResponseSchema = z.object({
 export const clubDetailResponseSchema = z.object({
   clubUUID: z.string().uuid(),
   mainPhoto: z.string().nullable(),
-  introPhotos: z.array(z.string()),
+  infoPhotos: z.array(z.string()),
   clubName: z.string().min(1),
   leaderName: z.string().min(1),
   leaderHp: z.string(),
   clubInsta: z.string().nullable(),
-  clubIntro: z.string().nullable(),
+  clubInfo: z.string().nullable(),
   recruitmentStatus: recruitmentStatusSchema,
   googleFormUrl: z.string().nullable(),
   clubHashtags: z.array(z.string()),
   clubCategoryNames: z.array(z.string()),
   clubRoomNumber: z.string(),
   clubRecruitment: z.string().nullable(),
-})
-
-// Club info response (GET /clubs/{clubUUID}/info)
-export const clubInfoResponseSchema = z.object({
-  mainPhotoUrl: z.string().nullable(),
-  clubName: z.string(),
-  leaderName: z.string(),
-  leaderHp: z.string(),
-  clubInsta: z.string().nullable(),
-  clubRoomNumber: z.string(),
-  clubHashtag: z.array(z.string()),
-  clubCategoryName: z.array(z.string()),
-  department: z.string(),
 })
 
 // Recruit status response (GET /clubs/{clubUUID}/recruit-status)
@@ -120,8 +109,8 @@ export const clubCreateRequestSchema = z.object({
   clubRoomNumber: z.string(),
 })
 
-// Club info update request
-export const clubInfoUpdateRequestSchema = z.object({
+// Club profile request
+export const clubProfileRequestSchema = z.object({
   leaderName: z.string().min(2).max(30),
   leaderHp: z.string().regex(/^01\d{8}$/),
   clubInsta: z.string().url().nullable(),
@@ -165,9 +154,7 @@ export const formQuestionResponseSchema = z.object({
   required: z.boolean(),
   options: z.array(z.object({
     optionId: z.number(),
-    sequence: z.number(),
     content: z.string(),
-    value: z.string(),
   })),
 })
 
@@ -185,14 +172,13 @@ export type ClubListByCategoryResponse = z.infer<typeof clubListByCategoryRespon
 export type ClubIntroResponse = z.infer<typeof clubIntroResponseSchema>
 export type ClubSimpleResponse = z.infer<typeof clubSimpleResponseSchema>
 export type ClubDetailResponse = z.infer<typeof clubDetailResponseSchema>
-export type ClubInfoResponse = z.infer<typeof clubInfoResponseSchema>
 export type RecruitStatusResponse = z.infer<typeof recruitStatusResponseSchema>
 export type ClubMemberType = z.infer<typeof clubMemberTypeSchema>
 export type ClubMemberResponse = z.infer<typeof clubMemberResponseSchema>
 export type ClubMemberDeleteRequest = z.infer<typeof clubMemberDeleteRequestSchema>
 export type Department = z.infer<typeof departmentSchema>
 export type ClubCreateRequest = z.infer<typeof clubCreateRequestSchema>
-export type ClubInfoUpdateRequest = z.infer<typeof clubInfoUpdateRequestSchema>
+export type ClubProfileRequest = z.infer<typeof clubProfileRequestSchema>
 export type LeaderUpdatePwRequest = z.infer<typeof leaderUpdatePwRequestSchema>
 export type ClubDeleteRequest = z.infer<typeof clubDeleteRequestSchema>
 export type FcmTokenRequest = z.infer<typeof fcmTokenRequestSchema>

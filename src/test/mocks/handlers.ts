@@ -152,18 +152,13 @@ export const handlers = [
         department: '컴퓨터공학과',
         submittedAt: '2024-01-15T10:30:00',
         status: 'WAIT',
-        isRead: false,
         qnaList: [
           {
-            questionId: 1,
             question: '지원 동기',
-            type: 'TEXT',
             answer: '열정적으로 활동하고 싶습니다',
           },
           {
-            questionId: 2,
             question: '희망 분야',
-            type: 'TEXT',
             answer: null,
           },
         ],
@@ -197,69 +192,25 @@ export const handlers = [
 
   // ===== Club Leader Handlers =====
 
-  // Get club intro
-  http.get(`${API_BASE}/clubs/:clubUUID/leader/intro`, ({ params }) => {
+  // Get club detail (full info including intro, photos, recruitment, etc.)
+  http.get(`${API_BASE}/clubs/:clubUUID`, () => {
     return HttpResponse.json({
-      message: '동아리 소개 조회 성공',
-      data: {
-        clubUUID: params.clubUUID,
-        clubIntro: '테스트 동아리 소개입니다.',
-        clubRecruitment: '모집 공고 내용',
-        recruitmentStatus: 'OPEN',
-        googleFormUrl: 'https://forms.google.com/test',
-        introPhotos: [],
-      },
-    })
-  }),
-
-  // Update club intro
-  http.put(`${API_BASE}/clubs/:clubUUID/leader/intro`, () => {
-    return HttpResponse.json({
-      message: '동아리 소개 수정 성공',
-      data: null,
-    })
-  }),
-
-  // Get club info
-  http.get(`${API_BASE}/clubs/:clubUUID/info`, () => {
-    return HttpResponse.json({
-      message: '동아리 정보 조회 성공',
-      data: {
-        clubName: '테스트 동아리',
-        leaderName: '홍길동',
-        leaderHp: '01012345678',
-        clubRoomNumber: '101호',
-        clubInsta: '@test_club',
-        clubHashtag: ['테스트'],
-        clubCategories: [{ categoryUUID: 'cat-1', categoryName: 'IT' }],
-        mainPhoto: null,
-      },
-    })
-  }),
-
-  // Update club info
-  http.put(`${API_BASE}/clubs/:clubUUID/info`, () => {
-    return HttpResponse.json({
-      message: '동아리 정보 수정 성공',
-      data: null,
-    })
-  }),
-
-  // Get club summary
-  http.get(`${API_BASE}/clubs/:clubUUID/leader/summary`, () => {
-    return HttpResponse.json({
-      message: '동아리 요약 조회 성공',
+      message: '동아리 상세 조회 성공',
       data: {
         clubUUID: '550e8400-e29b-41d4-a716-446655440000',
+        mainPhoto: null,
+        infoPhotos: [],
         clubName: '테스트 동아리',
         leaderName: '홍길동',
         leaderHp: '01012345678',
-        clubRoomNumber: '101호',
         clubInsta: '@test_club',
-        clubHashtag: ['테스트'],
-        clubIntro: '테스트 동아리 소개입니다.',
-        clubCategories: ['IT'],
+        clubInfo: '테스트 동아리 소개입니다.',
         recruitmentStatus: 'OPEN',
+        googleFormUrl: 'https://forms.google.com/test',
+        clubHashtags: ['테스트'],
+        clubCategoryNames: ['IT'],
+        clubRoomNumber: '101호',
+        clubRecruitment: '모집 공고 내용',
       },
     })
   }),
@@ -333,7 +284,7 @@ export const handlers = [
   }),
 
   // Update application status
-  http.patch(`${API_BASE}/clubs/:clubUUID/leader/applications/:applicationUUID/status`, () => {
+  http.patch(`${API_BASE}/clubs/:clubUUID/applications/:aplictUUID/status`, () => {
     return HttpResponse.json({
       message: '지원자 상태 변경 성공',
       data: null,
@@ -516,27 +467,6 @@ export const handlers = [
     return HttpResponse.json({
       message: '층 사진 조회 성공',
       data: { photoUrl: null },
-    })
-  }),
-
-  // Get my notices
-  http.get(`${API_BASE}/my-notices`, () => {
-    return HttpResponse.json({
-      message: '내 공지사항 조회 성공',
-      data: [],
-    })
-  }),
-
-  // Get my notice detail
-  http.get(`${API_BASE}/my-notices/:noticeUUID/details`, () => {
-    return HttpResponse.json({
-      message: '공지사항 상세 조회 성공',
-      data: {
-        noticeUUID: 'notice-1',
-        noticeTitle: '테스트 공지',
-        noticeContent: '테스트 내용',
-        createdAt: new Date().toISOString(),
-      },
     })
   }),
 

@@ -3,9 +3,6 @@ import { http, HttpResponse } from 'msw'
 import { server } from '@test/mocks/server'
 import {
   getAllClubs,
-  getClubsByCategory,
-  getOpenClubs,
-  getOpenClubsByCategory,
   getCategories,
   getClubDetail,
   deleteClub,
@@ -37,84 +34,6 @@ describe('Club API', () => {
       expect(result.message).toBe('전체 동아리 조회 완료')
       expect(result.data).toHaveLength(1)
       expect(result.data[0].clubName).toBe('코딩 동아리')
-    })
-  })
-
-  describe('getClubsByCategory', () => {
-    it('should fetch clubs by category successfully', async () => {
-      server.use(
-        http.get(`${API_BASE}/clubs/filter`, () => {
-          return HttpResponse.json({
-            message: '카테고리별 전체 동아리 조회 완료',
-            data: [
-              {
-                clubCategoryUUID: '550e8400-e29b-41d4-a716-446655440000',
-                clubCategoryName: '학술',
-                clubs: [
-                  {
-                    clubUUID: '550e8400-e29b-41d4-a716-446655440001',
-                    clubName: '코딩 동아리',
-                    mainPhoto: null,
-                    departmentName: '학술',
-                    clubHashtags: [],
-                  },
-                ],
-              },
-            ],
-          })
-        })
-      )
-
-      const result = await getClubsByCategory()
-      expect(result.message).toBe('카테고리별 전체 동아리 조회 완료')
-      expect(result.data[0].clubCategoryName).toBe('학술')
-    })
-  })
-
-  describe('getOpenClubs', () => {
-    it('should fetch recruiting clubs successfully', async () => {
-      server.use(
-        http.get(`${API_BASE}/clubs/open`, () => {
-          return HttpResponse.json({
-            message: '모집 중인 동아리 조회 완료',
-            data: [
-              {
-                clubUUID: '550e8400-e29b-41d4-a716-446655440000',
-                clubName: '모집 중인 동아리',
-                mainPhoto: null,
-                departmentName: '체육',
-                clubHashtags: ['운동'],
-              },
-            ],
-          })
-        })
-      )
-
-      const result = await getOpenClubs()
-      expect(result.message).toBe('모집 중인 동아리 조회 완료')
-      expect(result.data).toHaveLength(1)
-    })
-  })
-
-  describe('getOpenClubsByCategory', () => {
-    it('should fetch recruiting clubs by category successfully', async () => {
-      server.use(
-        http.get(`${API_BASE}/clubs/open/filter`, () => {
-          return HttpResponse.json({
-            message: '카테고리별 모집 중인 동아리 조회 완료',
-            data: [
-              {
-                clubCategoryUUID: '550e8400-e29b-41d4-a716-446655440000',
-                clubCategoryName: '체육',
-                clubs: [],
-              },
-            ],
-          })
-        })
-      )
-
-      const result = await getOpenClubsByCategory()
-      expect(result.message).toBe('카테고리별 모집 중인 동아리 조회 완료')
     })
   })
 

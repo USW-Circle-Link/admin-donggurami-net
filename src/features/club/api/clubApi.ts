@@ -2,45 +2,23 @@ import { apiClient } from '@shared/api/apiClient'
 import type { ApiResponse } from '@shared/types/api'
 import type {
   ClubListResponse,
-  ClubListByCategoryResponse,
   ClubCategoryResponse,
   ClubDetailResponse,
-  ClubInfoResponse,
   RecruitStatusResponse,
   ClubFormResponse,
   ClubMemberResponse,
   ClubMemberDeleteRequest,
   ClubCreateRequest,
-  ClubInfoUpdateRequest,
+  ClubProfileRequest,
   LeaderUpdatePwRequest,
   ClubDeleteRequest,
   FcmTokenRequest,
 } from '../domain/clubSchemas'
 
 // GET /clubs - 전체 동아리 조회 (모바일)
-export async function getAllClubs(): Promise<ApiResponse<ClubListResponse[]>> {
-  const response = await apiClient.get<ApiResponse<ClubListResponse[]>>('/clubs')
-  return response.data
-}
-
-// GET /clubs/filter - 카테고리별 전체 동아리 조회
-export async function getClubsByCategory(clubCategoryUUIDs?: string[]): Promise<ApiResponse<ClubListByCategoryResponse[]>> {
-  const response = await apiClient.get<ApiResponse<ClubListByCategoryResponse[]>>('/clubs/filter', {
-    params: clubCategoryUUIDs ? { clubCategoryUUIDs: clubCategoryUUIDs.join(',') } : undefined,
-  })
-  return response.data
-}
-
-// GET /clubs/open - 모집 중인 전체 동아리 조회
-export async function getOpenClubs(): Promise<ApiResponse<ClubListResponse[]>> {
-  const response = await apiClient.get<ApiResponse<ClubListResponse[]>>('/clubs/open')
-  return response.data
-}
-
-// GET /clubs/open/filter - 카테고리별 모집 중인 동아리 조회
-export async function getOpenClubsByCategory(clubCategoryUUIDs?: string[]): Promise<ApiResponse<ClubListByCategoryResponse[]>> {
-  const response = await apiClient.get<ApiResponse<ClubListByCategoryResponse[]>>('/clubs/open/filter', {
-    params: clubCategoryUUIDs ? { clubCategoryUUIDs: clubCategoryUUIDs.join(',') } : undefined,
+export async function getAllClubs(condition?: Record<string, unknown>): Promise<ApiResponse<ClubListResponse[]>> {
+  const response = await apiClient.get<ApiResponse<ClubListResponse[]>>('/clubs', {
+    params: condition ? { condition: JSON.stringify(condition) } : undefined,
   })
   return response.data
 }
@@ -57,12 +35,6 @@ export async function getClubDetail(clubUUID: string): Promise<ApiResponse<ClubD
   return response.data
 }
 
-// GET /clubs/{clubUUID}/info - 동아리 기본 정보 조회
-export async function getClubInfo(clubUUID: string): Promise<ApiResponse<ClubInfoResponse>> {
-  const response = await apiClient.get<ApiResponse<ClubInfoResponse>>(`/clubs/${clubUUID}/info`)
-  return response.data
-}
-
 // GET /clubs/{clubUUID}/recruit-status - 모집 상태 조회
 export async function getRecruitStatus(clubUUID: string): Promise<ApiResponse<RecruitStatusResponse>> {
   const response = await apiClient.get<ApiResponse<RecruitStatusResponse>>(`/clubs/${clubUUID}/recruit-status`)
@@ -75,9 +47,9 @@ export async function toggleRecruitStatus(clubUUID: string): Promise<ApiResponse
   return response.data
 }
 
-// GET /clubs/forms/{clubUUID} - 동아리 신청서 조회
+// GET /clubs/{clubUUID}/forms - 동아리 신청서 조회
 export async function getClubForm(clubUUID: string): Promise<ApiResponse<ClubFormResponse>> {
-  const response = await apiClient.get<ApiResponse<ClubFormResponse>>(`/clubs/forms/${clubUUID}`)
+  const response = await apiClient.get<ApiResponse<ClubFormResponse>>(`/clubs/${clubUUID}/forms`)
   return response.data
 }
 
@@ -122,12 +94,12 @@ export async function createClub(request: ClubCreateRequest): Promise<ApiRespons
 // PUT /clubs/{clubUUID} - 동아리 정보 수정
 export async function updateClubInfo(
   clubUUID: string,
-  clubInfoRequest: ClubInfoUpdateRequest,
+  clubProfileRequest: ClubProfileRequest,
   leaderUpdatePwRequest?: LeaderUpdatePwRequest,
   mainPhoto?: File
 ): Promise<ApiResponse<null>> {
   const formData = new FormData()
-  formData.append('clubInfoRequest', new Blob([JSON.stringify(clubInfoRequest)], { type: 'application/json' }))
+  formData.append('clubProfileRequest', new Blob([JSON.stringify(clubProfileRequest)], { type: 'application/json' }))
 
   if (leaderUpdatePwRequest) {
     formData.append('leaderUpdatePwRequest', new Blob([JSON.stringify(leaderUpdatePwRequest)], { type: 'application/json' }))

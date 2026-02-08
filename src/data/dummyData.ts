@@ -9,14 +9,14 @@ export const dummyClubSummary: ClubSummaryResponse = {
   leaderHp: '01012345678',
   clubInsta: '@donggurami_official',
   clubRoomNumber: '301호',
-  clubHashtag: ['#IT', '#개발'],
+  clubHashtags: ['#IT', '#개발'],
   clubCategories: ['학술', 'IT/프로그래밍'],
-  clubIntro: '동구라미는 IT 기술을 사랑하는 학생들이 모인 동아리입니다. 웹 개발, 앱 개발, AI 등 다양한 분야의 프로젝트를 진행하고 있습니다.',
+  clubInfo: '동구라미는 IT 기술을 사랑하는 학생들이 모인 동아리입니다. 웹 개발, 앱 개발, AI 등 다양한 분야의 프로젝트를 진행하고 있습니다.',
   clubRecruitment: '2024학년도 1학기 신입 부원을 모집합니다! 프로그래밍에 관심 있는 분이라면 전공 상관없이 누구나 환영합니다.',
   recruitmentStatus: 'OPEN',
   googleFormUrl: 'https://forms.google.com/example',
   mainPhoto: null,
-  introPhotos: [],
+  infoPhotos: [],
 }
 
 // Club Members (동아리 명단)
@@ -142,37 +142,32 @@ export const dummyNotices: NoticeListItem[] = [
     noticeUUID: '550e8400-e29b-41d4-a716-446655440020',
     noticeTitle: '2024년 1학기 정기 모임 안내',
     noticeCreatedAt: '2024-03-15T10:00:00',
-    adminName: '관리자',
-    thumbnailUrl: null,
-  },
+    authorName: '관리자',
+      },
   {
     noticeUUID: '550e8400-e29b-41d4-a716-446655440021',
     noticeTitle: '동아리 MT 참가 신청 안내',
     noticeCreatedAt: '2024-03-10T14:30:00',
-    adminName: '관리자',
-    thumbnailUrl: null,
-  },
+    authorName: '관리자',
+      },
   {
     noticeUUID: '550e8400-e29b-41d4-a716-446655440022',
     noticeTitle: '신입 부원 환영회 개최',
     noticeCreatedAt: '2024-03-05T09:00:00',
-    adminName: '관리자',
-    thumbnailUrl: null,
-  },
+    authorName: '관리자',
+      },
   {
     noticeUUID: '550e8400-e29b-41d4-a716-446655440023',
     noticeTitle: '동아리 회비 납부 안내',
     noticeCreatedAt: '2024-02-28T11:00:00',
-    adminName: '관리자',
-    thumbnailUrl: null,
-  },
+    authorName: '관리자',
+      },
   {
     noticeUUID: '550e8400-e29b-41d4-a716-446655440024',
     noticeTitle: '2024년도 동아리 운영 계획',
     noticeCreatedAt: '2024-02-20T15:00:00',
-    adminName: '관리자',
-    thumbnailUrl: null,
-  },
+    authorName: '관리자',
+      },
 ]
 
 // Application Form Questions (지원서 양식)
@@ -326,7 +321,7 @@ export interface NoticeDetail {
   noticeContent: string
   noticePhotos: string[]
   noticeCreatedAt: string
-  adminName: string
+  authorName: string
 }
 
 export const dummyNoticeDetails: NoticeDetail[] = [
@@ -350,7 +345,7 @@ export const dummyNoticeDetails: NoticeDetail[] = [
 많은 참석 부탁드립니다.`,
     noticePhotos: [],
     noticeCreatedAt: '2024-03-15T10:00:00',
-    adminName: '관리자',
+    authorName: '관리자',
   },
   {
     noticeUUID: '550e8400-e29b-41d4-a716-446655440021',
@@ -368,7 +363,7 @@ export const dummyNoticeDetails: NoticeDetail[] = [
 각 동아리별 최소 2명 이상 참가해주시면 감사하겠습니다.`,
     noticePhotos: [],
     noticeCreatedAt: '2024-03-10T14:30:00',
-    adminName: '관리자',
+    authorName: '관리자',
   },
   {
     noticeUUID: '550e8400-e29b-41d4-a716-446655440022',
@@ -382,7 +377,7 @@ export const dummyNoticeDetails: NoticeDetail[] = [
 많은 참석 부탁드립니다.`,
     noticePhotos: [],
     noticeCreatedAt: '2024-03-05T09:00:00',
-    adminName: '관리자',
+    authorName: '관리자',
   },
   {
     noticeUUID: '550e8400-e29b-41d4-a716-446655440023',
@@ -396,7 +391,7 @@ export const dummyNoticeDetails: NoticeDetail[] = [
 기한 내 납부 부탁드립니다.`,
     noticePhotos: [],
     noticeCreatedAt: '2024-02-28T11:00:00',
-    adminName: '관리자',
+    authorName: '관리자',
   },
   {
     noticeUUID: '550e8400-e29b-41d4-a716-446655440024',
@@ -423,6 +418,6 @@ export const dummyNoticeDetails: NoticeDetail[] = [
 자세한 일정은 추후 공지하겠습니다.`,
     noticePhotos: [],
     noticeCreatedAt: '2024-02-20T15:00:00',
-    adminName: '관리자',
+    authorName: '관리자',
   },
 ]

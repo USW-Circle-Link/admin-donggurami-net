@@ -5,8 +5,7 @@ export const noticeListItemSchema = z.object({
   noticeUUID: z.string().uuid(),
   noticeTitle: z.string().min(1),
   noticeCreatedAt: z.string(),
-  adminName: z.string(),
-  thumbnailUrl: z.string().nullable(),
+  authorName: z.string(),
 })
 
 // Paginated notice list response
@@ -24,7 +23,7 @@ export const noticeDetailSchema = z.object({
   noticeContent: z.string().min(1),
   noticePhotos: z.array(z.string()),
   noticeCreatedAt: z.string(),
-  adminName: z.string(),
+  authorName: z.string(),
 })
 
 // Create notice request (POST /notices)

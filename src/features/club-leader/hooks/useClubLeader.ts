@@ -2,8 +2,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import * as api from '../api/clubLeaderApi'
 import type {
-  ClubIntroRequest,
   ClubInfoRequest,
+  ClubProfileRequest,
   LeaderUpdatePwRequest,
   ClubMemberDeleteRequest,
   FcmTokenRequest,
@@ -12,41 +12,19 @@ import type {
 
 export const clubLeaderKeys = {
   all: ['clubLeader'] as const,
-  intro: (clubUUID: string) => [...clubLeaderKeys.all, 'intro', clubUUID] as const,
+  detail: (clubUUID: string) => [...clubLeaderKeys.all, 'detail', clubUUID] as const,
   info: (clubUUID: string) => [...clubLeaderKeys.all, 'info', clubUUID] as const,
-  summary: (clubUUID: string) => [...clubLeaderKeys.all, 'summary', clubUUID] as const,
   categories: () => [...clubLeaderKeys.all, 'categories'] as const,
   members: (clubUUID: string) => [...clubLeaderKeys.all, 'members', clubUUID] as const,
   applicants: (clubUUID: string) => [...clubLeaderKeys.all, 'applicants', clubUUID] as const,
   failedApplicants: (clubUUID: string) => [...clubLeaderKeys.all, 'failedApplicants', clubUUID] as const,
 }
 
-// Club Intro
-export function useClubIntro(clubUUID: string) {
+// Club Detail (Full info including intro photos, recruitment status, etc.)
+export function useClubDetail(clubUUID: string) {
   return useQuery({
-    queryKey: clubLeaderKeys.intro(clubUUID),
-    queryFn: () => api.getClubIntro(clubUUID),
-    enabled: !!clubUUID,
-  })
-}
-
-export function useUpdateClubIntro() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: ({ clubUUID, request, photos }: { clubUUID: string; request: ClubIntroRequest; photos?: File[] }) =>
-      api.updateClubIntro(clubUUID, request, photos),
-    onSuccess: (_, { clubUUID }) => {
-      queryClient.invalidateQueries({ queryKey: clubLeaderKeys.intro(clubUUID) })
-      queryClient.invalidateQueries({ queryKey: clubLeaderKeys.summary(clubUUID) })
-    },
-  })
-}
-
-// Club Info
-export function useClubInfo(clubUUID: string) {
-  return useQuery({
-    queryKey: clubLeaderKeys.info(clubUUID),
-    queryFn: () => api.getClubInfo(clubUUID),
+    queryKey: clubLeaderKeys.detail(clubUUID),
+    queryFn: () => api.getClubDetail(clubUUID),
     enabled: !!clubUUID,
   })
 }
@@ -56,28 +34,23 @@ export function useUpdateClubInfo() {
   return useMutation({
     mutationFn: ({
       clubUUID,
-      clubInfoRequest,
+      clubProfileRequest,
       leaderUpdatePwRequest,
       mainPhoto,
+      clubInfoRequest,
+      infoPhotos,
     }: {
       clubUUID: string
-      clubInfoRequest: ClubInfoRequest
+      clubProfileRequest?: ClubProfileRequest
       leaderUpdatePwRequest?: LeaderUpdatePwRequest
       mainPhoto?: File
-    }) => api.updateClubInfo(clubUUID, clubInfoRequest, leaderUpdatePwRequest, mainPhoto),
+      clubInfoRequest?: ClubInfoRequest
+      infoPhotos?: File[]
+    }) => api.updateClubInfo(clubUUID, clubProfileRequest, leaderUpdatePwRequest, mainPhoto, clubInfoRequest, infoPhotos),
     onSuccess: (_, { clubUUID }) => {
+      queryClient.invalidateQueries({ queryKey: clubLeaderKeys.detail(clubUUID) })
       queryClient.invalidateQueries({ queryKey: clubLeaderKeys.info(clubUUID) })
-      queryClient.invalidateQueries({ queryKey: clubLeaderKeys.summary(clubUUID) })
     },
-  })
-}
-
-// Club Summary
-export function useClubSummary(clubUUID: string) {
-  return useQuery({
-    queryKey: clubLeaderKeys.summary(clubUUID),
-    queryFn: () => api.getClubSummary(clubUUID),
-    enabled: !!clubUUID,
   })
 }
 
@@ -95,8 +68,7 @@ export function useToggleRecruitment() {
   return useMutation({
     mutationFn: (clubUUID: string) => api.toggleRecruitment(clubUUID),
     onSuccess: (_, clubUUID) => {
-      queryClient.invalidateQueries({ queryKey: clubLeaderKeys.intro(clubUUID) })
-      queryClient.invalidateQueries({ queryKey: clubLeaderKeys.summary(clubUUID) })
+      queryClient.invalidateQueries({ queryKey: clubLeaderKeys.info(clubUUID) })
     },
   })
 }
@@ -136,6 +108,19 @@ export function useApplicants(clubUUID: string) {
 }
 
 /**
+ * Get applicants by status
+ * @param clubUUID - Club UUID
+ * @param status - Applicant status filter ('WAIT', 'PASS', 'FAIL')
+ */
+export function useApplicantsByStatus(clubUUID: string, status: 'WAIT' | 'PASS' | 'FAIL') {
+  return useQuery({
+    queryKey: [...clubLeaderKeys.applicants(clubUUID), status],
+    queryFn: () => api.getApplicants(clubUUID, status),
+    enabled: !!clubUUID && !!status,
+  })
+}
+
+/**
  * Update applicant statuses (bulk operation).
  * Calls updateApplicationStatus for each applicant individually.
  * Invalidates applicants cache on success.
@@ -150,8 +135,11 @@ export function useProcessApplicants() {
         )
       )
     },
-    onSuccess: (_, { clubUUID }) => {
+    onSuccess: (_, { clubUUID, updates }) => {
       queryClient.invalidateQueries({ queryKey: clubLeaderKeys.applicants(clubUUID) })
+      updates.forEach((update) => {
+        queryClient.invalidateQueries({ queryKey: ['application', 'detail', clubUUID, update.aplictUUID] })
+      })
       toast.success('지원자 상태가 업데이트되었습니다.')
     },
     onError: (error) => {
