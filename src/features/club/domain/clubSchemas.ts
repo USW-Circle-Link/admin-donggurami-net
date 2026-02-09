@@ -22,38 +22,6 @@ export const clubCategoryResponseSchema = z.object({
   clubCategoryName: z.string().min(1),
 })
 
-// Club list by category response (for category-grouped responses)
-export const clubListByCategoryResponseSchema = z.object({
-  clubCategoryUUID: z.string().uuid(),
-  clubCategoryName: z.string().min(1),
-  clubs: z.array(clubListResponseSchema),
-})
-
-// Club intro response (GET /clubs/intro/{clubUUID})
-export const clubIntroResponseSchema = z.object({
-  clubUUID: z.string().uuid(),
-  mainPhoto: z.string().nullable(),
-  infoPhotos: z.array(z.string()),
-  clubName: z.string().min(1),
-  leaderName: z.string().min(1),
-  leaderHp: z.string(),
-  clubInsta: z.string().nullable(),
-  clubInfo: z.string().nullable(),
-  recruitmentStatus: recruitmentStatusSchema,
-  googleFormUrl: z.string().nullable(),
-  clubHashtags: z.array(z.string()),
-  clubCategoryNames: z.array(z.string()),
-  clubRoomNumber: z.string(),
-  clubRecruitment: z.string().nullable(),
-})
-
-// Simple club response (GET /clubs/list)
-export const clubSimpleResponseSchema = z.object({
-  clubUUID: z.string().uuid(),
-  clubName: z.string().min(1),
-  mainPhoto: z.string().nullable(),
-})
-
 // Club detail response (GET /clubs/{clubUUID})
 export const clubDetailResponseSchema = z.object({
   clubUUID: z.string().uuid(),
@@ -112,7 +80,7 @@ export const clubCreateRequestSchema = z.object({
 // Club profile request
 export const clubProfileRequestSchema = z.object({
   leaderName: z.string().min(2).max(30),
-  leaderHp: z.string().regex(/^01\d{8}$/),
+  leaderHp: z.string().regex(/^01[0-9]{9}$/),
   clubInsta: z.string().url().nullable(),
   clubRoomNumber: z.string(),
   clubHashtag: z.array(z.string().min(1).max(6)).max(2).optional(),
@@ -160,7 +128,7 @@ export const formQuestionResponseSchema = z.object({
 
 // Club form response (GET /clubs/forms/{clubUUID})
 export const clubFormResponseSchema = z.object({
-  formId: z.string().uuid(),
+  formId: z.number(),
   questions: z.array(formQuestionResponseSchema),
 })
 
@@ -168,9 +136,6 @@ export const clubFormResponseSchema = z.object({
 export type RecruitmentStatus = z.infer<typeof recruitmentStatusSchema>
 export type ClubListResponse = z.infer<typeof clubListResponseSchema>
 export type ClubCategoryResponse = z.infer<typeof clubCategoryResponseSchema>
-export type ClubListByCategoryResponse = z.infer<typeof clubListByCategoryResponseSchema>
-export type ClubIntroResponse = z.infer<typeof clubIntroResponseSchema>
-export type ClubSimpleResponse = z.infer<typeof clubSimpleResponseSchema>
 export type ClubDetailResponse = z.infer<typeof clubDetailResponseSchema>
 export type RecruitStatusResponse = z.infer<typeof recruitStatusResponseSchema>
 export type ClubMemberType = z.infer<typeof clubMemberTypeSchema>

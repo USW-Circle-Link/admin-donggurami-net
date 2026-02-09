@@ -10,7 +10,7 @@ export const dummyClubSummary: ClubSummaryResponse = {
   clubInsta: '@donggurami_official',
   clubRoomNumber: '301호',
   clubHashtags: ['#IT', '#개발'],
-  clubCategories: ['학술', 'IT/프로그래밍'],
+  clubCategoryNames: ['학술', 'IT/프로그래밍'],
   clubInfo: '동구라미는 IT 기술을 사랑하는 학생들이 모인 동아리입니다. 웹 개발, 앱 개발, AI 등 다양한 분야의 프로젝트를 진행하고 있습니다.',
   clubRecruitment: '2024학년도 1학기 신입 부원을 모집합니다! 프로그래밍에 관심 있는 분이라면 전공 상관없이 누구나 환영합니다.',
   recruitmentStatus: 'OPEN',

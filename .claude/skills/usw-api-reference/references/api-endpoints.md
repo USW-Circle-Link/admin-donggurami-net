@@ -3,6 +3,7 @@
 ## 서버 정보
 - Base URL : `https://api.donggurami.net`
 - API 버전: OAS 3.1
+- 최신 업데이트: 2026-02-08 (v3 api-docs 동기화)
 
 ## ⚠️ Error Response Structure (공통)
 
@@ -353,8 +354,8 @@
 > **NOTE**: 모든 동아리 관련 API가 `/clubs` 경로로 통합됨.
 > - `GET /clubs/{clubUUID}` 하나로 동아리 상세 정보 (info + profile + photos) 모두 조회
 > - `PUT /clubs/{clubUUID}` 하나로 프로필 + 소개 + 사진 모두 수정 가능
-> - `GET /clubs/{clubUUID}/applications/{applicationUUID}` → `GET /clubs/{clubUUID}/applications/{aplictUUID}`
-> - `GET /clubs` with `condition` query parameter (open/filter/categoryUUIDs/includeAdminInfo)
+> - `GET /clubs/{clubUUID}/applications/{aplictUUID}`
+> - `GET /clubs` with query parameters (open/filter/adminInfo)
 > - `POST /clubs` (admin 동아리 생성)
 > - `DELETE /clubs/{clubUUID}` (admin 동아리 삭제)
 > - `GET /clubs/check-duplication` (이름/계정 중복 확인)
@@ -366,14 +367,13 @@
 
 **권한:** 공개 (인증 불필요)
 
-**Query Parameters (`ClubSearchCondition`):**
+**Query Parameters:**
 
 | Field | Type | Required | Description |
 | :--- | :--- | :--- | :--- |
 | `open` | Boolean | No | 모집 중인 동아리만 조회 |
-| `filter` | String | No | 검색 키워드 |
-| `categoryUUIDs` | List\<UUID\> | No | 카테고리 UUID 필터 |
-| `includeAdminInfo` | Boolean | No | 관리자 정보 포함 여부 |
+| `filter` | Array of Strings | No | 검색 키워드 배열 |
+| `adminInfo` | Boolean | No | 관리자 정보 포함 여부 |
 
 **Response (200):**
 ```json
@@ -472,25 +472,25 @@
 {
   "mainPhoto": "file",
   "clubProfileRequest": {
-    "leader_name": "string",
-    "leader_hp": "01012345678",
-    "club_insta": "string",
-    "club_room_number": "string",
-    "club_hashtag": ["string"],
-    "club_category_name": ["string"]
+    "leaderName": "string",
+    "leaderHp": "01012345678",
+    "clubInsta": "string",
+    "clubRoomNumber": "string",
+    "clubHashtag": ["string"],
+    "clubCategoryName": ["string"]
   },
   "leaderUpdatePwRequest": {
-    "leader_pw": "string",
-    "new_pw": "string",
-    "confirm_new_pw": "string"
+    "leaderPw": "string",
+    "newPw": "string",
+    "confirmNewPw": "string"
   },
   "clubInfoRequest": {
-    "club_info": "string",
-    "recruitment_status": "OPEN",
-    "club_recruitment": "string",
-    "google_form_url": "string",
+    "clubInfo": "string",
+    "recruitmentStatus": "OPEN",
+    "clubRecruitment": "string",
+    "googleFormUrl": "string",
     "orders": [1, 2],
-    "deleted_orders": [3]
+    "deletedOrders": [3]
   },
   "infoPhotos": ["file"]
 }
@@ -500,38 +500,38 @@
 
 | Field | Type | Required | Constraints | Description |
 | :--- | :--- | :--- | :--- | :--- |
-| `leader_name` | String | No | 2~30 chars, Kor/Eng only | 회장 이름 |
-| `leader_hp` | String | No | 11 digits, starts with 01 | 회장 전화번호 (하이픈 제외) |
-| `club_insta` | String | No | Instagram URL regex | 인스타그램 링크 |
-| `club_room_number` | String | No | - | 동아리방 호수 |
-| `club_hashtag` | List | No | - | 해시태그 목록 |
-| `club_category_name` | List | No | 1~20 chars each | 카테고리 목록 |
+| `leaderName` | String | No | 2~30 chars, Kor/Eng only | 회장 이름 |
+| `leaderHp` | String | No | 11 digits, starts with 01 | 회장 전화번호 (하이픈 제외) |
+| `clubInsta` | String | No | Instagram URL regex | 인스타그램 링크 |
+| `clubRoomNumber` | String | No | - | 동아리방 호수 |
+| `clubHashtag` | List | No | - | 해시태그 목록 |
+| `clubCategoryName` | List | No | 1~20 chars each | 카테고리 목록 |
 
 **Constraints (`leaderUpdatePwRequest`):**
 
 | Field | Type | Required | Constraints | Description |
 | :--- | :--- | :--- | :--- | :--- |
-| `leader_pw` | String | **Yes** | - | 현재 비밀번호 |
-| `new_pw` | String | **Yes** | 8~20 chars, Eng+Num+Special | 새 비밀번호 |
-| `confirm_new_pw` | String | **Yes** | Match `new_pw` | 새 비밀번호 확인 |
+| `leaderPw` | String | **Yes** | - | 현재 비밀번호 |
+| `newPw` | String | **Yes** | 8~20 chars, Eng+Num+Special | 새 비밀번호 |
+| `confirmNewPw` | String | **Yes** | Match `newPw` | 새 비밀번호 확인 |
 
 **Constraints (`clubInfoRequest`):**
 
 | Field | Type | Required | Constraints | Description |
 | :--- | :--- | :--- | :--- | :--- |
-| `club_info` | String | No | Max 3000 chars | 동아리 소개글 |
-| `recruitment_status` | String | No | `OPEN`, `CLOSE` | 모집 상태 (Enum) |
-| `club_recruitment` | String | No | Max 3000 chars | 모집 공고글 |
-| `google_form_url` | String | No | Valid HTTPS URL | 구글 폼 링크 |
+| `clubInfo` | String | No | Max 3000 chars | 동아리 소개글 |
+| `recruitmentStatus` | String | No | `OPEN`, `CLOSE` | 모집 상태 (Enum) |
+| `clubRecruitment` | String | No | Max 3000 chars | 모집 공고글 |
+| `googleFormUrl` | String | No | Valid HTTPS URL | 구글 폼 링크 |
 | `orders` | List\<int\> | No | - | 기존 사진 순서 유지 목록 |
-| `deleted_orders` | List\<int\> | No | - | 삭제할 사진 순서 목록 |
+| `deletedOrders` | List\<int\> | No | - | 삭제할 사진 순서 목록 |
 
 **File Upload Constraints:**
 *   단일 파일 최대 20MB, 전체 최대 50MB
 *   JPEG/PNG만 지원, 최대 5장
 *   `infoPhotos` 업로드 시 `clubInfoRequest`에 `orders` 배열 필수 (없으면 서버가 무시함)
 *   `orders`: 새 사진이 배치될 위치 (1-indexed), `infoPhotos` 파일 순서와 대응
-*   `deleted_orders`: 삭제할 기존 사진 위치 (1-indexed)
+*   `deletedOrders`: 삭제할 기존 사진 위치 (1-indexed)
 
 **Potential Errors:**
 *   `CLUB-201`: 존재하지 않는 동아리입니다.
@@ -1333,7 +1333,6 @@ FCM 토큰 갱신
 **Request Body:**
 ```json
 {
-  "userPw": "string",
   "newPw": "string",
   "confirmNewPw": "string"
 }
@@ -1343,7 +1342,6 @@ FCM 토큰 갱신
 
 | Field | Type | Required | Constraints | Description |
 | :--- | :--- | :--- | :--- | :--- |
-| `userPw` | String | **Yes** | - | 현재 비밀번호 |
 | `newPw` | String | **Yes** | 8~20 chars, Eng+Num+Special | 새 비밀번호 |
 | `confirmNewPw` | String | **Yes** | Match `newPw` | 새 비밀번호 확인 |
 
@@ -1675,4 +1673,4 @@ This section lists all custom error codes used in the USW Circle Link Server, ca
 | `PHOTO-504` | 사진 파일이 비어있습니다. | 400 |
 | `PHOTO-505` | 해당 사진이 존재하지 않습니다. | 404 |
 | `ENUM-401` | 유효하지 않은 Enum 값입니다. | 400 |
-| `CLP-201` | 범위를 벗어난 사진 순서 값입니다. | 400 |
+| `CLP-201` | 범위를 벗어난 사진 순서 값입니다. | 200 |

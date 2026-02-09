@@ -21,6 +21,7 @@ export const appliedClubItemSchema = z.object({
   clubInsta: z.string().nullable(),
   clubRoomNumber: z.string(),
   aplictStatus: z.enum(['WAIT', 'PASS', 'FAIL']),
+  aplictUUID: z.string().uuid(),
 })
 
 // Floor photo response

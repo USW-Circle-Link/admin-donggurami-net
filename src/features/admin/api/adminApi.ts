@@ -3,7 +3,7 @@ import type { ApiResponse } from '@shared/types/api'
 import type {
   FloorPhotoResponse,
   FloorType,
-  AdminClubPageList,
+  AdminClubListItem,
   CreateClubRequest,
   DeleteClubRequest,
   MergedClubItem,
@@ -42,15 +42,16 @@ export async function deleteFloorPhoto(floor: FloorType): Promise<ApiResponse<st
 // ===== Admin Clubs API =====
 
 export interface GetAdminClubsParams {
-  page?: number
-  size?: number
+  open?: boolean
+  filter?: string[]
+  adminInfo?: boolean
 }
 
-// GET /clubs - 전체 동아리 조회 (페이지네이션)
+// GET /clubs - 전체 동아리 조회
 export async function getAdminClubs(
   params?: GetAdminClubsParams
-): Promise<ApiResponse<AdminClubPageList>> {
-  const response = await apiClient.get<ApiResponse<AdminClubPageList>>('/clubs', { params })
+): Promise<ApiResponse<AdminClubListItem[]>> {
+  const response = await apiClient.get<ApiResponse<AdminClubListItem[]>>('/clubs', { params })
   return response.data
 }
 

@@ -15,10 +15,14 @@ import type {
   FcmTokenRequest,
 } from '../domain/clubSchemas'
 
-// GET /clubs - 전체 동아리 조회 (모바일)
-export async function getAllClubs(condition?: Record<string, unknown>): Promise<ApiResponse<ClubListResponse[]>> {
+// GET /clubs - 전체 동아리 조회
+export async function getAllClubs(params?: {
+  open?: boolean
+  filter?: string[]
+  adminInfo?: boolean
+}): Promise<ApiResponse<ClubListResponse[]>> {
   const response = await apiClient.get<ApiResponse<ClubListResponse[]>>('/clubs', {
-    params: condition ? { condition: JSON.stringify(condition) } : undefined,
+    params,
   })
   return response.data
 }

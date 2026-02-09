@@ -44,9 +44,13 @@ describe('Admin Validation Schemas', () => {
       const validData = {
         clubUUID: '550e8400-e29b-41d4-a716-446655440000',
         clubName: '테스트 동아리',
-        leaderName: '홍길동',
+        mainPhotoUrl: null,
         department: '학술',
+        hashtags: ['테스트'],
+        leaderName: '홍길동',
         leaderHp: '01012345678',
+        memberCount: 15,
+        recruitmentStatus: 'OPEN',
       }
 
       const result = adminClubListItemSchema.safeParse(validData)

@@ -36,8 +36,8 @@ export const profileDuplicationCheckResponseSchema = z.object({
   exists: z.boolean(),
   classification: z.string().nullable(),
   inTargetClub: z.boolean().nullable(),
-  clubUUIDs: z.array(z.string()).nullable(),
-  targetClubUUID: z.string().nullable(),
+  clubuuids: z.array(z.string()).nullable(),
+  targetClubuuid: z.string().nullable(),
   profileId: z.number().nullable(),
 })
 

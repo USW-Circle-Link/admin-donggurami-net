@@ -59,7 +59,7 @@ export const clubSummaryResponseSchema = z.object({
   clubInsta: z.string().nullable(),
   clubRoomNumber: z.string(),
   clubHashtags: z.array(z.string()),
-  clubCategories: z.array(z.string()),
+  clubCategoryNames: z.array(z.string()),
   clubInfo: z.string().nullable(),
   clubRecruitment: z.string().nullable(),
   recruitmentStatus: recruitmentStatusSchema,
