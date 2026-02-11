@@ -27,11 +27,11 @@ export function LoginPage() {
       { account, password },
       {
         onSuccess: (response) => {
-          const { role } = response.data
+          const { role, isAgreedTerms } = response.data
           if (role === 'ADMIN') {
             navigate('/union/dashboard')
-          } else if (role === 'LEADER') {
-            navigate('/club/dashboard')
+          } else if (role === 'LEADER' && isAgreedTerms === false) {
+            navigate('/terms')
           } else {
             navigate('/club/dashboard')
           }

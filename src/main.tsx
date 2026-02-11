@@ -24,6 +24,7 @@ import { UnionLayout } from '@/components/layout/UnionLayout'
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 import { AuthInitializer } from '@/components/auth/AuthInitializer'
 import { LoginPage } from '@/pages/LoginPage'
+import { TermsAgreementPage } from '@/pages/TermsAgreementPage'
 import { DashboardPage } from '@/pages/DashboardPage'
 import { BasicInfoEditPage } from '@/pages/BasicInfoEditPage'
 import { RecruitmentEditPage } from '@/pages/RecruitmentEditPage'
@@ -47,6 +48,9 @@ createRoot(document.getElementById('root')!).render(
           <Routes>
             {/* Public routes */}
             <Route path="/login" element={<LoginPage />} />
+
+            {/* Terms agreement (authenticated, no layout) */}
+            <Route path="/terms" element={<ProtectedRoute><TermsAgreementPage /></ProtectedRoute>} />
 
             {/* Club admin routes with sidebar layout */}
             <Route element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
