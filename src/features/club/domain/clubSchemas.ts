@@ -126,7 +126,9 @@ export const formQuestionResponseSchema = z.object({
   })),
 })
 
-// Club form response (GET /clubs/forms/{clubUUID})
+// Club form response (GET /clubs/{clubUUID}/forms)
+// Note: formId is number from GET. POST returns void (no formId).
+// See also: formSchemas.ts formDetailResponseSchema (same shape, used by form-management feature)
 export const clubFormResponseSchema = z.object({
   formId: z.number(),
   questions: z.array(formQuestionResponseSchema),

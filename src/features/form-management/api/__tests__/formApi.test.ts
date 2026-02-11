@@ -34,11 +34,8 @@ describe('Form Management API', () => {
         ],
       }
 
-      const result = await api.createForm(TEST_CLUB_ID, request)
-
-      expect(result).toEqual({
-        formId: '550e8400-e29b-41d4-a716-446655440101',
-      })
+      // POST returns void (no data)
+      await expect(api.createForm(TEST_CLUB_ID, request)).resolves.toBeUndefined()
     })
 
     it('should validate question types', async () => {
@@ -70,9 +67,8 @@ describe('Form Management API', () => {
         ],
       }
 
-      const result = await api.createForm(TEST_CLUB_ID, request)
-
-      expect(result.formId).toBeDefined()
+      // POST returns void (no data)
+      await expect(api.createForm(TEST_CLUB_ID, request)).resolves.toBeUndefined()
     })
 
     it('should handle 400 validation error', async () => {

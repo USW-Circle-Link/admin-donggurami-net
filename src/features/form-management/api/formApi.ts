@@ -2,13 +2,11 @@ import { apiClient } from '@shared/api/apiClient'
 import type { ApiResponse } from '@shared/types/api'
 import type {
   CreateFormRequest,
-  CreateFormResponse,
   FormDetailResponse,
   ApplicationDetailResponse,
   ApplicantListResponse,
 } from '../domain/formSchemas'
 import {
-  createFormResponseSchema,
   formDetailResponseSchema,
 } from '../domain/formSchemas'
 
@@ -17,23 +15,16 @@ import {
 /**
  * POST /clubs/{clubUUID}/forms
  * Create a new application/recruitment form with questions and options
- * Returns: formId as UUID string (from POST response)
+ * Returns: 200 OK with no data (void)
  */
 export async function createForm(
   clubUUID: string,
   request: CreateFormRequest
-): Promise<CreateFormResponse> {
-  const response = await apiClient.post<ApiResponse<CreateFormResponse>>(
+): Promise<void> {
+  await apiClient.post<ApiResponse<void>>(
     `/clubs/${clubUUID}/forms`,
     request
   )
-  // Runtime validation: POST returns formId as UUID string
-  const parsed = createFormResponseSchema.safeParse(response.data.data)
-  if (!parsed.success) {
-    console.error('createForm response validation failed:', parsed.error)
-    throw new Error(`API response validation failed: ${parsed.error.message}`)
-  }
-  return parsed.data
 }
 
 /**

@@ -66,7 +66,8 @@ describe('Form Management Hooks', () => {
         expect(result.current.isSuccess).toBe(true)
       })
 
-      expect(result.current.data?.formId).toBeDefined()
+      // POST returns void — no data to check
+      expect(result.current.data).toBeUndefined()
     })
 
     it('should show success toast on success', async () => {
