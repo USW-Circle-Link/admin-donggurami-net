@@ -5,7 +5,19 @@ import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClient } from '@/shared/lib/queryClient'
 import { ThemeProvider } from '@/components/theme-provider'
 import { Toaster } from '@/components/ui/sonner'
+import { registerSW } from 'virtual:pwa-register'
 import './index.css'
+
+// Register SW with periodic update checks (every 60s)
+registerSW({
+  onRegisteredSW(_swUrl, registration) {
+    if (registration) {
+      setInterval(() => {
+        registration.update()
+      }, 60 * 1000)
+    }
+  },
+})
 
 import { AdminLayout } from '@/components/layout/AdminLayout'
 import { UnionLayout } from '@/components/layout/UnionLayout'
