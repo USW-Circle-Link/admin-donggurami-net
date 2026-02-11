@@ -3,7 +3,7 @@
 ## 서버 정보
 - Base URL : `https://api.donggurami.net`
 - API 버전: OAS 3.1
-- 최신 업데이트: 2026-02-08 (v3 api-docs 동기화)
+- 최신 업데이트: 2026-02-11 (v3 api-docs 동기화)
 
 ## ⚠️ Error Response Structure (공통)
 
@@ -502,7 +502,7 @@
 | :--- | :--- | :--- | :--- | :--- |
 | `leaderName` | String | No | 2~30 chars, Kor/Eng only | 회장 이름 |
 | `leaderHp` | String | No | 11 digits, starts with 01 | 회장 전화번호 (하이픈 제외) |
-| `clubInsta` | String | No | Instagram URL regex | 인스타그램 링크 |
+| `clubInsta` | String | No | Instagram URL regex: `^(https?://)?(www\.)?instagram\.com/.+$\|^$` | 인스타그램 링크 (빈 문자열 허용) |
 | `clubRoomNumber` | String | No | - | 동아리방 호수 |
 | `clubHashtag` | List | No | - | 해시태그 목록 |
 | `clubCategoryName` | List | No | 1~20 chars each | 카테고리 목록 |
@@ -640,6 +640,7 @@
 
 **Query Parameters:**
 - `status`: 지원 상태 필터 (`WAIT`, `PASS`, `FAIL`) (optional)
+- `isResultPublished`: 결과 발표 여부 필터 (boolean) (optional)
 
 **Response (200):**
 ```json
@@ -877,6 +878,36 @@ FCM 토큰 갱신
 }
 ```
 
+##### DELETE `/clubs/{clubUUID}/applications`
+지원자 삭제 (다수)
+
+**권한:** 회장 (LEADER)
+
+**Request Body:**
+```json
+["uuid1", "uuid2"]
+```
+
+> **NOTE**: UUID 문자열 배열로 직접 전달 (객체 wrapping 없음)
+
+**Constraints:**
+
+| Field | Type | Required | Constraints | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| (array item) | UUID | **Yes** | Valid UUID | 삭제할 지원자 UUID |
+
+**Potential Errors:**
+*   `CLUB-201`: 존재하지 않는 동아리입니다.
+*   `APT-201`: 지원서가 존재하지 않습니다.
+
+**Response (200):**
+```json
+{
+  "message": "지원자 삭제 완료",
+  "data": null
+}
+```
+
 ##### GET `/clubs/{clubUUID}/applications/{aplictUUID}`
 지원서 상세 조회 (사용자용)
 
@@ -930,8 +961,8 @@ FCM 토큰 갱신
       "content": "학년을 선택해주세요.",
       "required": true,
       "options": [
-        {"sequence": 1, "content": "1학년"},
-        {"sequence": 2, "content": "2학년"}
+        {"sequence": 1, "content": "1학년", "value": "1"},
+        {"sequence": 2, "content": "2학년", "value": "2"}
       ]
     },
     {
@@ -1422,7 +1453,7 @@ FCM 토큰 갱신
       "leaderName": "string",
       "leaderHp": "string",
       "clubInsta": "string",
-      "aplictStatus": "WAIT | PASS | FAIL",
+      "publicStatus": "WAIT | PASS | FAIL",
       "aplictUUID": "uuid",
       "clubRoomNumber": "string"
     }
@@ -1673,4 +1704,4 @@ This section lists all custom error codes used in the USW Circle Link Server, ca
 | `PHOTO-504` | 사진 파일이 비어있습니다. | 400 |
 | `PHOTO-505` | 해당 사진이 존재하지 않습니다. | 404 |
 | `ENUM-401` | 유효하지 않은 Enum 값입니다. | 400 |
-| `CLP-201` | 범위를 벗어난 사진 순서 값입니다. | 200 |
+| `CLP-201` | 범위를 벗어난 사진 순서 값입니다. | 400 |

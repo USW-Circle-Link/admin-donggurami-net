@@ -15,7 +15,7 @@ The USW API is organized into **8 feature domains**. Use this guide to quickly f
 |--------|---------|------------------|
 | **1. Auth** | Unified authentication (login, signup, password reset, withdrawal) | `POST /auth/login`, `POST /auth/signup`, `POST /auth/withdrawal/code` |
 | **2. Clubs** | Club management, info, members, recruitment, applicants, forms, admin CRUD | `GET /clubs`, `GET /clubs/{clubUUID}`, `PUT /clubs/{clubUUID}`, `POST /clubs/{clubUUID}/forms` |
-| **3. Club Application** | Submit and view club applications | `POST /clubs/{clubUUID}/applications`, `GET /clubs/{clubUUID}/applications/eligibility` |
+| **3. Club Application** | Submit, view, and delete club applications | `POST /clubs/{clubUUID}/applications`, `DELETE /clubs/{clubUUID}/applications`, `GET /clubs/{clubUUID}/applications/eligibility` |
 | **4. User** | User profile, password, my clubs, my applications | `GET /users/me`, `PATCH /users/me`, `GET /users/me/clubs`, `GET /users/me/applications` |
 | **5. Notices** | Create and manage notices | `POST /notices`, `GET /notices/{noticeUUID}`, `PUT /notices/{noticeUUID}` |
 | **6. Categories** | Manage club categories | `GET /categories`, `POST /categories`, `DELETE /categories/{uuid}` |
