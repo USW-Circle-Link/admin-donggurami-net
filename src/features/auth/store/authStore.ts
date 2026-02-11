@@ -18,6 +18,7 @@ interface AuthActions {
     isAgreedTerms?: boolean // optional for ADMIN
   }) => void
   updateAccessToken: (token: string) => void
+  setAgreedTerms: () => void
   clearAuth: () => void
   reset: () => void
 }
@@ -47,6 +48,8 @@ export const useAuthStore = create<AuthStore>()(
         }),
 
       updateAccessToken: (token) => set({ accessToken: token }),
+
+      setAgreedTerms: () => set({ isAgreedTerms: true }),
 
       clearAuth: () => set({ ...initialState }),
 

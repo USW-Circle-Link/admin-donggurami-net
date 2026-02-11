@@ -52,10 +52,12 @@ export function useAuthInitialization() {
         // Update the token in apiClient and store
         setAccessToken(newAccessToken)
 
-        // Redirect authenticated user to appropriate dashboard
-        const role = useAuthStore.getState().role
+        // Redirect authenticated user to appropriate page
+        const { role, isAgreedTerms } = useAuthStore.getState()
         if (role === 'ADMIN') {
           navigate('/union/dashboard', { replace: true })
+        } else if (role === 'LEADER' && isAgreedTerms !== true) {
+          navigate('/terms', { replace: true })
         } else {
           navigate('/club/dashboard', { replace: true })
         }
