@@ -81,7 +81,7 @@ export const clubCreateRequestSchema = z.object({
 export const clubProfileRequestSchema = z.object({
   leaderName: z.string().min(2).max(30),
   leaderHp: z.string().regex(/^01[0-9]{9}$/),
-  clubInsta: z.string().url().nullable(),
+  clubInsta: z.string().regex(/^(https?:\/\/)?(www\.)?instagram\.com\/.+$|^$/).nullable(),
   clubRoomNumber: z.string(),
   clubHashtag: z.array(z.string().min(1).max(6)).max(2).optional(),
   clubCategoryName: z.array(z.string().min(1).max(20)).max(3).optional(),
