@@ -30,7 +30,7 @@ export function LoginPage() {
           const { role, isAgreedTerms } = response.data
           if (role === 'ADMIN') {
             navigate('/union/dashboard')
-          } else if (role === 'LEADER' && isAgreedTerms === false) {
+          } else if (role === 'LEADER' && isAgreedTerms !== true) {
             navigate('/terms')
           } else {
             navigate('/club/dashboard')

@@ -56,7 +56,7 @@ export function useAuthInitialization() {
         const { role, isAgreedTerms } = useAuthStore.getState()
         if (role === 'ADMIN') {
           navigate('/union/dashboard', { replace: true })
-        } else if (role === 'LEADER' && isAgreedTerms === false) {
+        } else if (role === 'LEADER' && isAgreedTerms !== true) {
           navigate('/terms', { replace: true })
         } else {
           navigate('/club/dashboard', { replace: true })

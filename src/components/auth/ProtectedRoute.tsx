@@ -23,7 +23,7 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     }
 
     // LEADER must agree to terms before accessing the app
-    if (role === 'LEADER' && isAgreedTerms === false && location.pathname !== '/terms') {
+    if (role === 'LEADER' && isAgreedTerms !== true && location.pathname !== '/terms') {
       navigate('/terms', { replace: true })
     }
   }, [isAuthenticated, accessToken, role, isAgreedTerms, navigate, location.pathname])
