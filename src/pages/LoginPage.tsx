@@ -90,11 +90,11 @@ export function LoginPage() {
           </form>
 
           <div className="mt-6 flex justify-center gap-4 text-xs text-muted-foreground">
-            <a href="/privacy" className="hover:underline">
+            <a href="https://donggurami.net/assets/assets/html/privacy_policy.html" target="_blank" rel="noopener noreferrer" className="hover:underline">
               개인정보처리방침
             </a>
             <span>|</span>
-            <a href="/terms" className="hover:underline">
+            <a href="https://donggurami.net/assets/assets/html/terms_of_service.html" target="_blank" rel="noopener noreferrer" className="hover:underline">
               이용약관
             </a>
           </div>

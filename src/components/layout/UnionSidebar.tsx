@@ -186,10 +186,10 @@ export function UnionSidebar() {
           </SidebarMenu>
 
           <div className="flex gap-4 px-2 py-2 text-xs text-muted-foreground">
-            <a href="/privacy" className="hover:underline">
+            <a href="https://donggurami.net/assets/assets/html/privacy_policy.html" target="_blank" rel="noopener noreferrer" className="hover:underline">
               개인정보처리방침
             </a>
-            <a href="/terms" className="hover:underline">
+            <a href="https://donggurami.net/assets/assets/html/terms_of_service.html" target="_blank" rel="noopener noreferrer" className="hover:underline">
               이용약관
             </a>
           </div>
