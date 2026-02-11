@@ -128,9 +128,9 @@ export const userApplicationResponseSchema = z.object({
 })
 
 // ===== Form Detail Response =====
-
+// GET /clubs/{clubUUID}/forms returns formId as number
 export const formDetailResponseSchema = z.object({
-  formId: z.string().uuid(),
+  formId: z.number(),
   questions: z.array(questionDetailSchema),
 })
 

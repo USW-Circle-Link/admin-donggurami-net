@@ -19,7 +19,7 @@ function mergeClubData(
     clubName: club.clubName,
     leaderName: club.leaderName,
     department: club.department as MergedClubItem['department'],
-    leaderHp: undefined,
+    leaderHp: club.leaderHp,
     numberOfClubMembers: club.memberCount,
     mainPhoto: club.mainPhotoUrl,
     clubHashtags: club.hashtags,
@@ -32,14 +32,14 @@ export function useMergedClubList() {
     queryKey: mergedClubKeys.list(),
     queryFn: async () => {
       const [allClubsResponse, openClubsResponse] = await Promise.all([
-        getAllClubs(),
-        getAllClubs({ open: true }),
+        getAllClubs({ adminInfo: true }), // 관리자 정보 + 모집/비모집 모든 동아리
+        getAllClubs({ adminInfo: true, open: true }), // 관리자 정보 + 모집 동아리
       ])
 
       const allClubs = allClubsResponse.data || []
       const openClubs = openClubsResponse.data || []
 
-      const mergedClubs = mergeClubData(allClubs, openClubs)
+      const mergedClubs = mergeClubData(allClubs, openClubs) // isRecruiting 변수 추가 
 
       return {
         data: mergedClubs,

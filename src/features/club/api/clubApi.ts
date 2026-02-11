@@ -14,6 +14,7 @@ import type {
   ClubDeleteRequest,
   FcmTokenRequest,
 } from '../domain/clubSchemas'
+import { clubFormResponseSchema } from '../domain/clubSchemas'
 
 // GET /clubs - 전체 동아리 조회
 export async function getAllClubs(params?: {
@@ -52,9 +53,16 @@ export async function toggleRecruitStatus(clubUUID: string): Promise<ApiResponse
 }
 
 // GET /clubs/{clubUUID}/forms - 동아리 신청서 조회
+// Runtime validation: GET returns formId as number
 export async function getClubForm(clubUUID: string): Promise<ApiResponse<ClubFormResponse>> {
   const response = await apiClient.get<ApiResponse<ClubFormResponse>>(`/clubs/${clubUUID}/forms`)
-  return response.data
+  // Runtime validation: GET returns formId as number
+  const parsed = clubFormResponseSchema.safeParse(response.data.data)
+  if (!parsed.success) {
+    console.error('getClubForm response validation failed:', parsed.error)
+    throw new Error(`API response validation failed: ${parsed.error.message}`)
+  }
+  return { ...response.data, data: parsed.data }
 }
 
 // GET /clubs/check-duplication - 중복 체크

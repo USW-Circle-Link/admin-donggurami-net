@@ -7,12 +7,17 @@ import type {
   ApplicationDetailResponse,
   ApplicantListResponse,
 } from '../domain/formSchemas'
+import {
+  createFormResponseSchema,
+  formDetailResponseSchema,
+} from '../domain/formSchemas'
 
 // ===== Form Management API =====
 
 /**
  * POST /clubs/{clubUUID}/forms
  * Create a new application/recruitment form with questions and options
+ * Returns: formId as UUID string (from POST response)
  */
 export async function createForm(
   clubUUID: string,
@@ -22,18 +27,31 @@ export async function createForm(
     `/clubs/${clubUUID}/forms`,
     request
   )
-  return response.data.data
+  // Runtime validation: POST returns formId as UUID string
+  const parsed = createFormResponseSchema.safeParse(response.data.data)
+  if (!parsed.success) {
+    console.error('createForm response validation failed:', parsed.error)
+    throw new Error(`API response validation failed: ${parsed.error.message}`)
+  }
+  return parsed.data
 }
 
 /**
  * GET /clubs/{clubUUID}/forms
  * Get the active form for a club
+ * Returns: formId as number (from GET response)
  */
 export async function getActiveForm(clubUUID: string): Promise<FormDetailResponse> {
   const response = await apiClient.get<ApiResponse<FormDetailResponse>>(
     `/clubs/${clubUUID}/forms`
   )
-  return response.data.data
+  // Runtime validation: GET returns formId as number
+  const parsed = formDetailResponseSchema.safeParse(response.data.data)
+  if (!parsed.success) {
+    console.error('getActiveForm response validation failed:', parsed.error)
+    throw new Error(`API response validation failed: ${parsed.error.message}`)
+  }
+  return parsed.data
 }
 
 /**

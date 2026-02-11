@@ -660,12 +660,12 @@ export const handlers = [
 
   // ===== Form Management Handlers =====
 
-  // Create form
+  // Create form - POST returns formId as UUID string
   http.post(`${API_BASE}/clubs/:clubUUID/forms`, () => {
     return HttpResponse.json({
       message: '지원서 폼 생성 성공',
       data: {
-        formId: 101,
+        formId: '550e8400-e29b-41d4-a716-446655440101',
       },
     })
   }),
