@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback, useEffect } from 'react'
 import { useNavigate } from 'react-router'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { HugeiconsIcon } from '@hugeicons/react'
-import { FileDownloadIcon, Delete01Icon, Edit01Icon, ArrowUp01Icon, ArrowDown01Icon, Search01Icon } from '@hugeicons/core-free-icons'
+import { FileDownloadIcon, Delete01Icon, Edit01Icon, ArrowUp01Icon, ArrowDown01Icon, Search01Icon, InstagramIcon } from '@hugeicons/core-free-icons'
 import type { ClubMember } from '@/features/club-leader/domain/clubLeaderSchemas'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -331,8 +331,9 @@ export function DashboardPage() {
                     href={`https://instagram.com/${instaId}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 font-medium text-white hover:text-white transition-colors"
+                    className="inline-flex items-center gap-1.5 font-medium text-foreground hover:text-foreground/80 transition-colors"
                   >
+                    <HugeiconsIcon icon={InstagramIcon} className="size-4" aria-hidden="true" />
                     @{instaId}
                   </a>
                 )

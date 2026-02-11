@@ -993,15 +993,15 @@ FCM 토큰 갱신
 | `description` | String | No | 0~500 chars | 폼 설명 |
 | `questions` | Array | **Yes** | - | 질문 목록 |
 
-**Response (201):**
+**Response (200):**
 ```json
 {
   "message": "지원서 폼 생성 성공",
-  "data": {
-    "formId": "uuid"
-  }
+  "data": null
 }
 ```
+
+> **NOTE**: POST returns 200 OK with `data: null` (void). No `formId` is returned in the response body.
 
 **Potential Errors:**
 *   `400`: 요청 오류

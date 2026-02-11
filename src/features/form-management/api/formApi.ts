@@ -80,9 +80,12 @@ export async function checkApplicationEligibility(
  */
 export async function getApplicants(
   clubUUID: string,
-  status?: 'WAIT' | 'PASS' | 'FAIL'
+  status?: 'WAIT' | 'PASS' | 'FAIL',
+  isResultPublished?: boolean
 ): Promise<ApplicantListResponse> {
-  const params = status ? { status } : {}
+  const params: Record<string, string | boolean> = {}
+  if (status) params.status = status
+  if (isResultPublished !== undefined) params.isResultPublished = isResultPublished
   const response = await apiClient.get<ApiResponse<ApplicantListResponse>>(
     `/clubs/${clubUUID}/applicants`,
     { params }

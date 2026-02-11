@@ -358,6 +358,14 @@ export const handlers = [
     })
   }),
 
+  // Bulk delete applicants
+  http.delete(`${API_BASE}/clubs/:clubUUID/applications`, () => {
+    return HttpResponse.json({
+      message: '지원자 일괄 삭제 성공',
+      data: null,
+    })
+  }),
+
   // Process applicants
   http.post(`${API_BASE}/clubs/:clubUUID/applicants/notifications`, () => {
     return HttpResponse.json({
