@@ -134,7 +134,12 @@ export const myApplicationSummarySchema = z.object({
   clubUUID: z.string().uuid(),
   mainPhotoPath: z.string().nullable(),
   clubName: z.string(),
+  leaderName: z.string(),
+  leaderHp: z.string(),
+  clubInsta: z.string().nullable(),
   aplictStatus: z.string(),
+  aplictUUID: z.string().uuid(),
+  clubRoomNumber: z.string(),
 })
 
 // ===== User Exit =====

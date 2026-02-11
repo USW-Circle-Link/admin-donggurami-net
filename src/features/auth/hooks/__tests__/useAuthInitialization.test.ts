@@ -45,6 +45,7 @@ describe('useAuthInitialization - Session Timeout Behavior', () => {
       server.use(
         http.post(`${API_BASE}/auth/refresh`, () => {
           return HttpResponse.json({
+            message: '토큰 갱신 성공',
             data: {
               accessToken: 'refreshed_valid_token',
               refreshToken: 'new_refresh_token',
@@ -73,8 +74,8 @@ describe('useAuthInitialization - Session Timeout Behavior', () => {
       expect(authState.role).toBe('LEADER')
       expect(authState.clubUUID).toBe('club-uuid-123')
 
-      // Should NOT redirect to login
-      expect(mockNavigate).not.toHaveBeenCalled()
+      // Should redirect to dashboard after successful auth initialization
+      expect(mockNavigate).toHaveBeenCalledWith('/club/dashboard', { replace: true })
     })
 
     it('should verify refresh endpoint is called on app startup', async () => {
@@ -89,6 +90,7 @@ describe('useAuthInitialization - Session Timeout Behavior', () => {
         http.post(`${API_BASE}/auth/refresh`, () => {
           refreshEndpointCalled = true
           return HttpResponse.json({
+            message: '토큰 갱신 성공',
             data: {
               accessToken: 'new_token',
               refreshToken: 'new_refresh',
@@ -232,6 +234,7 @@ describe('useAuthInitialization - Session Timeout Behavior', () => {
       server.use(
         http.post(`${API_BASE}/auth/refresh`, () => {
           return HttpResponse.json({
+            message: '토큰 갱신 성공',
             data: {
               accessToken: 'brand_new_token',
               refreshToken: 'brand_new_refresh_token',
@@ -265,6 +268,7 @@ describe('useAuthInitialization - Session Timeout Behavior', () => {
       server.use(
         http.post(`${API_BASE}/auth/refresh`, () => {
           return HttpResponse.json({
+            message: '토큰 갱신 성공',
             data: {
               accessToken: 'new_persisted_token',
               refreshToken: 'new_refresh',
@@ -301,6 +305,7 @@ describe('useAuthInitialization - Session Timeout Behavior', () => {
       server.use(
         http.post(`${API_BASE}/auth/refresh`, () => {
           return HttpResponse.json({
+            message: '토큰 갱신 성공',
             data: {
               accessToken: 'refreshed_token',
               refreshToken: 'refreshed_refresh_token',
@@ -318,8 +323,8 @@ describe('useAuthInitialization - Session Timeout Behavior', () => {
         expect(authState.accessToken).toBe('refreshed_token')
       })
 
-      // Should NOT redirect
-      expect(mockNavigate).not.toHaveBeenCalled()
+      // Should redirect to dashboard after successful auth initialization
+      expect(mockNavigate).toHaveBeenCalledWith('/club/dashboard', { replace: true })
     })
   })
 
@@ -568,6 +573,7 @@ describe('useAuthInitialization - Session Timeout Behavior', () => {
       server.use(
         http.post(`${API_BASE}/auth/refresh`, () => {
           return HttpResponse.json({
+            message: '토큰 갱신 성공',
             data: {
               accessToken: 'refreshed_after_reload',
               refreshToken: 'new_refresh',
@@ -601,6 +607,7 @@ describe('useAuthInitialization - Session Timeout Behavior', () => {
       server.use(
         http.post(`${API_BASE}/auth/refresh`, () => {
           return HttpResponse.json({
+            message: '토큰 갱신 성공',
             data: {
               accessToken: 'synced_token',
               refreshToken: 'synced_refresh',
@@ -635,6 +642,7 @@ describe('useAuthInitialization - Session Timeout Behavior', () => {
       server.use(
         http.post(`${API_BASE}/auth/refresh`, () => {
           return HttpResponse.json({
+            message: '토큰 갱신 성공',
             data: {
               accessToken: 'session_1_refreshed',
               refreshToken: 'session_1_refresh',
@@ -659,6 +667,7 @@ describe('useAuthInitialization - Session Timeout Behavior', () => {
       server.use(
         http.post(`${API_BASE}/auth/refresh`, () => {
           return HttpResponse.json({
+            message: '토큰 갱신 성공',
             data: {
               accessToken: 'session_2_refreshed',
               refreshToken: 'session_2_refresh',

@@ -66,7 +66,8 @@ describe('Form Management Hooks', () => {
         expect(result.current.isSuccess).toBe(true)
       })
 
-      expect(result.current.data?.formId).toBeDefined()
+      // POST returns void — no data to check
+      expect(result.current.data).toBeUndefined()
     })
 
     it('should show success toast on success', async () => {
@@ -204,7 +205,7 @@ describe('Form Management Hooks', () => {
           return HttpResponse.json({
             message: '활성 폼 조회 성공',
             data: {
-              formId: '550e8400-e29b-41d4-a716-446655440001',
+              formId: 101,  // GET returns formId as number
               questions: [
                 {
                   questionId: 1,
@@ -228,7 +229,7 @@ describe('Form Management Hooks', () => {
         expect(result.current.isSuccess).toBe(true)
       })
 
-      expect(result.current.data?.formId).toBe('550e8400-e29b-41d4-a716-446655440001')
+      expect(result.current.data?.formId).toBe(101)
       expect(result.current.data?.questions).toHaveLength(1)
     })
 

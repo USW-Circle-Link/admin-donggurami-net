@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback, useEffect } from 'react'
 import { useNavigate } from 'react-router'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { HugeiconsIcon } from '@hugeicons/react'
-import { FileDownloadIcon, Delete01Icon, Edit01Icon, ArrowUp01Icon, ArrowDown01Icon, Search01Icon } from '@hugeicons/core-free-icons'
+import { FileDownloadIcon, Delete01Icon, Edit01Icon, ArrowUp01Icon, ArrowDown01Icon, Search01Icon, InstagramIcon } from '@hugeicons/core-free-icons'
 import type { ClubMember } from '@/features/club-leader/domain/clubLeaderSchemas'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -46,6 +46,18 @@ const getMemberTypeLabel = (memberType?: ClubMember['memberType']) => {
       return '비회원'
     default:
       return '회원'
+  }
+}
+
+const extractInstagramId = (url: string | null): string | null => {
+  if (!url) return null
+  try {
+    const pathname = new URL(url).pathname
+    const id = pathname.replace(/^\/+|\/+$/g, '').split('/')[0]
+    return id || null
+  } catch {
+    // Not a URL — treat the raw value as the ID itself
+    return url.replace(/^@/, '') || null
   }
 }
 
@@ -311,7 +323,21 @@ export function DashboardPage() {
             </div>
             <div className="space-y-1">
               <p className="text-sm text-muted-foreground">인스타그램</p>
-              <p className="font-medium">{club.clubInsta || '-'}</p>
+              {(() => {
+                const instaId = extractInstagramId(club.clubInsta)
+                if (!instaId) return <p className="font-medium">-</p>
+                return (
+                  <a
+                    href={`https://instagram.com/${instaId}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 font-medium text-foreground hover:text-foreground/80 transition-colors"
+                  >
+                    <HugeiconsIcon icon={InstagramIcon} className="size-4" aria-hidden="true" />
+                    @{instaId}
+                  </a>
+                )
+              })()}
             </div>
           </div>
 

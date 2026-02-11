@@ -150,6 +150,27 @@ export function useProcessApplicants() {
 }
 
 /**
+ * Delete applicants (bulk operation).
+ * Calls DELETE /clubs/{clubUUID}/applications with UUID array.
+ * Invalidates applicants cache on success.
+ */
+export function useDeleteApplicants() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ clubUUID, aplictUUIDs }: { clubUUID: string; aplictUUIDs: string[] }) =>
+      api.deleteApplicants(clubUUID, aplictUUIDs),
+    onSuccess: (_, { clubUUID }) => {
+      queryClient.invalidateQueries({ queryKey: clubLeaderKeys.applicants(clubUUID) })
+      toast.success('선택한 지원서가 삭제되었습니다.')
+    },
+    onError: (error) => {
+      toast.error('지원서 삭제에 실패했습니다.')
+      console.error('Failed to delete applicants:', error)
+    },
+  })
+}
+
+/**
  * Fetch applicants who failed the initial selection (status: FAIL).
  * Used for additional selection (추합) process.
  */

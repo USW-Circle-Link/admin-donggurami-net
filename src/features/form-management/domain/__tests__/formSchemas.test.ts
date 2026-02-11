@@ -5,7 +5,6 @@ import {
   formOptionSchema,
   formQuestionSchema,
   createFormRequestSchema,
-  createFormResponseSchema,
   updateFormStatusRequestSchema,
   formAnswerSchema,
   submitApplicationRequestSchema,
@@ -155,21 +154,7 @@ describe('Form Management Schemas', () => {
     })
   })
 
-  describe('createFormResponseSchema', () => {
-    it('should parse valid create form response', () => {
-      const validResponse = {
-        formId: '550e8400-e29b-41d4-a716-446655440000',
-      }
-      expect(() => createFormResponseSchema.parse(validResponse)).not.toThrow()
-    })
-
-    it('should reject response with invalid UUID', () => {
-      const invalidResponse = {
-        formId: 'not-a-uuid',
-      }
-      expect(() => createFormResponseSchema.parse(invalidResponse)).toThrow()
-    })
-  })
+  // createFormResponseSchema removed: POST /clubs/{clubUUID}/forms returns void
 
   describe('updateFormStatusRequestSchema', () => {
     it('should parse valid update status request', () => {

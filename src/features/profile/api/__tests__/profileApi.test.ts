@@ -91,7 +91,7 @@ describe('Profile API', () => {
 
       const result = await checkProfileDuplication(request)
 
-      expect(result.message).toBe('중복 확인 성공')
+      expect(result.message).toBe('프로필 중복 확인 성공')
       expect(result.data.exists).toBe(false)
     })
 
@@ -104,8 +104,8 @@ describe('Profile API', () => {
               exists: true,
               classification: 'MEMBER',
               inTargetClub: false,
-              clubUUIDs: [],
-              targetClubUUID: null,
+              clubuuids: [],
+              targetClubuuid: null,
               profileId: 1,
             },
           })

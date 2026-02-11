@@ -13,6 +13,7 @@ export const applicantStatusSchema = z.enum(['WAIT', 'PASS', 'FAIL'])
 export const formOptionSchema = z.object({
   sequence: z.number(),
   content: z.string(),
+  value: z.string().optional(),
 })
 
 // ===== Form Question =====
@@ -32,9 +33,8 @@ export const createFormRequestSchema = z.object({
   questions: z.array(formQuestionSchema).min(1, '질문은 최소 1개 이상이어야 합니다.'),
 })
 
-export const createFormResponseSchema = z.object({
-  formId: z.string().uuid(),
-})
+// POST /clubs/{clubUUID}/forms returns 200 OK with no data (void)
+// No createFormResponseSchema needed
 
 // ===== Update Form Status =====
 
@@ -128,26 +128,10 @@ export const userApplicationResponseSchema = z.object({
 })
 
 // ===== Form Detail Response =====
-
+// GET /clubs/{clubUUID}/forms returns formId as number
 export const formDetailResponseSchema = z.object({
-  formId: z.string().uuid(),
+  formId: z.number(),
   questions: z.array(questionDetailSchema),
-})
-
-// ===== Forms List Response =====
-
-export const formSummarySchema = z.object({
-  formId: z.string().uuid(),
-  title: z.string().optional(),
-  status: formStatusSchema,
-  startDate: z.string().optional(),
-  endDate: z.string().optional(),
-  totalApplications: z.number().optional(),
-  createdAt: z.string(),
-})
-
-export const formsListResponseSchema = z.object({
-  forms: z.array(formSummarySchema),
 })
 
 // ===== Legacy Schemas (deprecated, kept for backward compatibility) =====
@@ -183,7 +167,6 @@ export type ApplicantStatus = z.infer<typeof applicantStatusSchema>
 export type FormOption = z.infer<typeof formOptionSchema>
 export type FormQuestion = z.infer<typeof formQuestionSchema>
 export type CreateFormRequest = z.infer<typeof createFormRequestSchema>
-export type CreateFormResponse = z.infer<typeof createFormResponseSchema>
 export type UpdateFormStatusRequest = z.infer<typeof updateFormStatusRequestSchema>
 export type FormAnswer = z.infer<typeof formAnswerSchema>
 export type SubmitApplicationRequest = z.infer<typeof submitApplicationRequestSchema>
@@ -195,9 +178,6 @@ export type ApplicantSummary = z.infer<typeof applicantSummarySchema>
 export type ApplicantListResponse = z.infer<typeof applicantListResponseSchema>
 export type UserApplicationResponse = z.infer<typeof userApplicationResponseSchema>
 export type FormDetailResponse = z.infer<typeof formDetailResponseSchema>
-export type FormSummary = z.infer<typeof formSummarySchema>
-export type FormsListResponse = z.infer<typeof formsListResponseSchema>
-
 // Legacy types
 export type ApplicationApplicant = z.infer<typeof applicationApplicantSchema>
 export type ApplicationAnswer = z.infer<typeof applicationAnswerSchema>

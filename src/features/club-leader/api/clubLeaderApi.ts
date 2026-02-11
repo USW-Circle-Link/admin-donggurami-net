@@ -122,6 +122,12 @@ export async function updateApplicationStatus(
   return response.data
 }
 
+// DELETE /clubs/{clubUUID}/applications
+export async function deleteApplicants(clubUUID: string, aplictUUIDs: string[]): Promise<ApiResponse<null>> {
+  const response = await apiClient.delete<ApiResponse<null>>(`/clubs/${clubUUID}/applications`, { data: aplictUUIDs })
+  return response.data
+}
+
 // POST /clubs/{clubUUID}/applicants/notifications
 export async function sendApplicantNotifications(clubUUID: string, aplictUUIDs: Array<{ aplictUUID: string }>): Promise<ApiResponse<null>> {
   const response = await apiClient.post<ApiResponse<null>>(`/clubs/${clubUUID}/applicants/notifications`, aplictUUIDs)

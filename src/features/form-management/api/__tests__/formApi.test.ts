@@ -6,7 +6,6 @@ import type { CreateFormRequest } from '../../domain/formSchemas'
 
 const API_BASE = 'https://api.donggurami.net'
 const TEST_CLUB_ID = '550e8400-e29b-41d4-a716-446655440000'
-const TEST_FORM_ID = '550e8400-e29b-41d4-a716-446655440001'
 const TEST_APPLICATION_ID = '550e8400-e29b-41d4-a716-446655440002'
 
 describe('Form Management API', () => {
@@ -34,11 +33,8 @@ describe('Form Management API', () => {
         ],
       }
 
-      const result = await api.createForm(TEST_CLUB_ID, request)
-
-      expect(result).toEqual({
-        formId: '550e8400-e29b-41d4-a716-446655440001',
-      })
+      // POST returns void (no data)
+      await expect(api.createForm(TEST_CLUB_ID, request)).resolves.toBeUndefined()
     })
 
     it('should validate question types', async () => {
@@ -70,9 +66,8 @@ describe('Form Management API', () => {
         ],
       }
 
-      const result = await api.createForm(TEST_CLUB_ID, request)
-
-      expect(result.formId).toBeDefined()
+      // POST returns void (no data)
+      await expect(api.createForm(TEST_CLUB_ID, request)).resolves.toBeUndefined()
     })
 
     it('should handle 400 validation error', async () => {
@@ -179,15 +174,10 @@ describe('Form Management API', () => {
           return HttpResponse.json({
             message: '활성 폼 조회 성공',
             data: {
-              formId: TEST_FORM_ID,
-              title: '2024 신입 모집',
-              description: '2024년 신입 회원을 모집합니다',
-              status: 'PUBLISHED',
-              startDate: '2024-03-01',
-              endDate: '2024-03-31',
+              formId: 101,  // GET returns formId as number
               questions: [
                 {
-                  questionId: 'q1',
+                  questionId: 1,  // questionId is number
                   sequence: 1,
                   type: 'SHORT_TEXT',
                   content: '지원 동기',
@@ -195,8 +185,6 @@ describe('Form Management API', () => {
                   options: [],
                 },
               ],
-              createdAt: '2024-02-01T00:00:00Z',
-              updatedAt: '2024-02-01T00:00:00Z',
             },
           })
         })
@@ -204,7 +192,7 @@ describe('Form Management API', () => {
 
       const result = await api.getActiveForm(TEST_CLUB_ID)
 
-      expect(result.formId).toBe(TEST_FORM_ID)
+      expect(result.formId).toBe(101)
       expect(result.questions).toHaveLength(1)
     })
   })

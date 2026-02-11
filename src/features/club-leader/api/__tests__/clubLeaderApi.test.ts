@@ -156,7 +156,7 @@ describe('Club Leader API', () => {
     it('should agree to terms', async () => {
       const result = await agreeTerms()
 
-      expect(result.message).toBe('약관 동의 성공')
+      expect(result.message).toBe('약관 동의 완료')
       expect(result.data).toBeNull()
     })
   })
