@@ -30,7 +30,8 @@ argument-hint: "[선택사항: 특정 스킬 이름 또는 집중할 영역]"
 
 | 스킬 | 설명 | 커버 파일 패턴 |
 |------|------|---------------|
-| `verify-experience-node` | 경험 노드 모델(categories JSONB, category_labels 등) 레이어 간 일관성 검증 | `supabase/migrations/*.sql`, `types/index.ts`, `lib/validators/index.ts`, `app/actions/storage.ts`, `app/api/**/*.ts`, `app/(dashboard)/**/*.tsx` |
+| `verify-feature-layer` | Feature layer(Domain → API → Hooks) 구조 일관성 검증 | `src/features/*/domain/*.ts`, `src/features/*/api/*.ts`, `src/features/*/hooks/*.ts` |
+| `verify-e2e-tests` | E2E 테스트 패턴 일관성 검증 (helpers, page objects, hybrid 전략) | `e2e/helpers/*.ts`, `e2e/page-objects/**/*.ts`, `e2e/tests/**/*.spec.ts`, `e2e/playwright.config.ts` |
 
 ## 워크플로우
 

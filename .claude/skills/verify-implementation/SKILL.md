@@ -29,7 +29,8 @@ argument-hint: "[선택사항: 특정 verify 스킬 이름]"
 
 | # | 스킬 | 설명 |
 |---|------|------|
-| 1 | `verify-experience-node` | 경험 노드 모델(categories JSONB, category_labels 등) 레이어 간 일관성 검증 |
+| 1 | `verify-feature-layer` | Feature layer(Domain → API → Hooks) 구조 일관성 검증 |
+| 2 | `verify-e2e-tests` | E2E 테스트 패턴 일관성 검증 (helpers, page objects, hybrid 전략) |
 
 ## 워크플로우
 
