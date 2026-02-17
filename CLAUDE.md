@@ -2,6 +2,17 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## 커스텀 검증 및 유지보수 스킬
+
+커스텀 검증 및 유지보수 스킬은 `.claude/skills/`에 정의되어 있습니다.
+
+| Skill | Purpose |
+|-------|---------|
+| `verify-implementation` | 프로젝트의 모든 verify 스킬을 순차 실행하여 통합 검증 보고서를 생성합니다 |
+| `manage-skills` | 세션 변경사항을 분석하고, 검증 스킬을 생성/업데이트하며, CLAUDE.md를 관리합니다 |
+| `verify-experience-node` | 경험 노드 모델(categories JSONB, category_labels 등)의 레이어 간 일관성을 검증합니다 |
+
+
 ## Project Overview
 
 This is an admin dashboard application for donggurami.net built with React 19, TypeScript, and Vite 7. Development follows TDD principles, focusing on data layer and API communication without UI work.
