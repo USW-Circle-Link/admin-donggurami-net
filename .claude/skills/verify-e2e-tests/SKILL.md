@@ -31,8 +31,10 @@ E2E 테스트 스위트가 프로젝트의 하이브리드 테스트 전략(Real
 | `e2e/helpers/write-mocks.ts` | Write 차단 — mockWriteEndpoints(), mockSpecificWrite() |
 | `e2e/helpers/constants.ts` | API_BASE, ROUTES, CREDENTIALS, AUTH_STORAGE_KEY |
 | `e2e/helpers/api-mocks.ts` | 선택적 엔드포인트 모킹 — mockApi(), mockApiError() |
-| `e2e/helpers/api-client.ts` | API 레벨 테스트용 클라이언트 |
-| `e2e/playwright.config.ts` | Playwright 설정 (timeout, retries, projects) |
+| `e2e/helpers/api-client.ts` | API 레벨 테스트용 클라이언트 (캐싱 포함) |
+| `e2e/helpers/test-data/club-leader-fixtures.ts` | 테스트 픽스처 데이터 |
+| `e2e/global-setup.ts` | 테스트 전 토큰 사전 캐싱 (rate limit 방지) |
+| `e2e/playwright.config.ts` | Playwright 설정 (timeout, retries, projects, globalSetup) |
 | `e2e/page-objects/LoginPage.ts` | 로그인 페이지 오브젝트 |
 | `e2e/page-objects/club/*.ts` | Club feature 페이지 오브젝트 |
 | `e2e/page-objects/union/*.ts` | Union feature 페이지 오브젝트 |
@@ -163,7 +165,56 @@ grep -n "locale:" e2e/playwright.config.ts
 **PASS:** 모든 설정이 기준 충족.
 **FAIL:** 설정 불일치 — 해당 값을 수정.
 
-### Step 7: 토큰 캐시 파일 검증
+### Step 7: globalSetup 설정 검증
+
+**도구:** Grep
+
+playwright.config.ts에 `globalSetup`이 설정되어 있고, `global-setup.ts` 파일이 존재하는지 확인합니다.
+
+```bash
+# globalSetup 설정 확인
+grep -n "globalSetup" e2e/playwright.config.ts
+# global-setup.ts 파일 존재 확인
+ls e2e/global-setup.ts 2>/dev/null || echo "FAIL: e2e/global-setup.ts 파일 없음"
+```
+
+**PASS:** `globalSetup: './global-setup.ts'` 설정이 있고 파일 존재.
+**FAIL:** globalSetup 미설정 — rate limiting 방지를 위해 테스트 전 토큰을 사전 캐싱하는 globalSetup 필요.
+
+### Step 8: API 로그인 캐싱 검증
+
+**도구:** Grep
+
+`apiLogin()` 함수가 파일 기반 캐싱을 사용하여 rate limiting을 방지하는지 확인합니다.
+
+```bash
+# apiLogin에 캐시 로직 존재 확인
+grep -n "cache\|Cache\|CACHE" e2e/helpers/api-client.ts
+# realLogin에 캐시 로직 존재 확인
+grep -n "cache\|Cache\|CACHE" e2e/helpers/auth.ts
+```
+
+**PASS:** `apiLogin()`과 `realLogin()` 모두 파일 기반 캐싱 사용.
+**FAIL:** 캐싱 미적용 — IP 기반 rate limit(5회/5분)으로 인해 병렬 테스트 시 로그인 실패. 파일 캐싱 필수.
+
+### Step 9: Serial 플로우 테스트 cleanup 검증
+
+**도구:** Grep
+
+`test.describe.serial` 패턴을 사용하는 테스트가 마지막에 cleanup(데이터 정리) 단계를 포함하는지 확인합니다.
+
+```bash
+# serial 플로우 테스트 파일 찾기
+grep -rl "describe\.serial" e2e/tests/ 2>/dev/null | while read f; do
+  has_cleanup=$(grep -c "정리\|cleanup\|Cleanup\|삭제\|delete\|revert" "$f" 2>/dev/null)
+  [ "$has_cleanup" = "0" ] && echo "WARN: $f — serial 플로우에 cleanup 단계 없음"
+done
+```
+
+**PASS:** serial 플로우 테스트에 cleanup 단계 존재.
+**FAIL:** cleanup 누락 — 테스트 데이터가 축적되어 후속 실행에 영향을 줄 수 있음.
+
+### Step 10: 토큰 캐시 파일 검증
 
 **도구:** Bash
 
@@ -192,6 +243,9 @@ grep -q "auth-cache" .gitignore 2>/dev/null || \
 | Page Object 패턴 | PASS/WARN | raw locator 과다 사용 파일 |
 | Page Object 커버리지 | PASS/WARN | 누락된 page object |
 | Playwright 설정 | PASS/FAIL | 불일치 항목 |
+| globalSetup 설정 | PASS/FAIL | globalSetup 미설정 또는 파일 누락 |
+| API 로그인 캐싱 | PASS/FAIL | 캐싱 미적용 함수 |
+| Serial 플로우 cleanup | PASS/WARN | cleanup 누락 파일 |
 | 토큰 캐시 gitignore | PASS/FAIL | 추적 여부 |
 ```
 
