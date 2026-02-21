@@ -3,7 +3,7 @@
 ## 서버 정보
 - Base URL : `https://api.donggurami.net`
 - API 버전: OAS 3.1
-- 최신 업데이트: 2026-02-11 (v3 api-docs 동기화)
+- 최신 업데이트: 2026-02-21 (응답 구조, 권한, publicStatus/privateStatus 반영)
 
 ## ⚠️ Error Response Structure (공통)
 
@@ -429,6 +429,8 @@
 ##### POST `/clubs`
 동아리 생성 (Admin)
 
+**권한:** 관리자 (ADMIN)
+
 **Request Body:**
 ```json
 {
@@ -457,13 +459,16 @@
 **Response (200):**
 ```json
 {
-  "message": "동아리 생성 성공",
-  "data": "uuid"
+  "message": "동아리 생성 성공"
 }
 ```
 
+> **NOTE**: 응답 body에 `data` 필드가 없거나 null입니다. 생성된 동아리의 `clubUUID`를 얻으려면 `GET /clubs?adminInfo=true`로 별도 조회해야 합니다.
+
 ##### PUT `/clubs/{clubUUID}`
 동아리 통합 수정 (프로필 + 소개 + 사진)
+
+**권한:** 회장 (LEADER)
 
 > **NOTE**: 프로필, 소개 정보, 비밀번호 변경, 사진 업로드를 하나의 엔드포인트에서 처리. 각 part는 선택적으로 포함 가능.
 
@@ -555,6 +560,8 @@
 ##### DELETE `/clubs/{clubUUID}`
 동아리 삭제
 
+**권한:** 관리자 (ADMIN)
+
 **Request Body:**
 ```json
 {
@@ -578,6 +585,8 @@
 
 ##### GET `/clubs/{clubUUID}/members`
 동아리 회원 목록 조회
+
+**권한:** 회장 (LEADER)
 
 **Query Parameters:**
 - `sort`: 정렬 기준 (optional, default: "default")
@@ -605,6 +614,8 @@
 
 ##### DELETE `/clubs/{clubUUID}/members`
 동아리 회원 퇴출 (다수)
+
+**권한:** 회장 (LEADER)
 
 **Request Body:**
 ```json
@@ -638,9 +649,11 @@
 ##### GET `/clubs/{clubUUID}/applicants`
 지원자 목록 조회
 
+**권한:** 회장 (LEADER)
+
 **Query Parameters:**
-- `status`: 지원 상태 필터 (`WAIT`, `PASS`, `FAIL`) (optional)
-- `isResultPublished`: 결과 발표 여부 필터 (boolean) (optional)
+- `status`: privateStatus 필터 (`WAIT`, `PASS`, `FAIL`) (optional)
+- `isResultPublished`: 결과 발표(확정) 여부 필터 (boolean) (optional)
 
 **Response (200):**
 ```json
@@ -653,14 +666,18 @@
       "major": "string",
       "studentNumber": "string",
       "userHp": "string",
-      "status": "WAIT | PASS | FAIL"
+      "privateStatus": "WAIT | PASS | FAIL"
     }
   ]
 }
 ```
 
+> **Note**: `privateStatus`는 LEADER가 관리하는 내부 상태이며, `publicStatus`(USER가 보는 상태)와 별도로 관리됩니다. 확정(finalize) 시 `privateStatus`가 `publicStatus`에 반영됩니다.
+
 ##### GET `/clubs/{clubUUID}/applications/{aplictUUID}`
 지원서 상세 조회
+
+**권한:** 회장 (LEADER)
 
 **Response (200):**
 ```json
@@ -672,7 +689,7 @@
     "studentNumber": "string",
     "department": "string",
     "submittedAt": "2026-03-02T14:00:00",
-    "status": "WAIT | PASS | FAIL",
+    "privateStatus": "WAIT | PASS | FAIL",
     "qnaList": [
       {
         "question": "질문 내용",
@@ -684,8 +701,14 @@
 }
 ```
 
+> **Note**: LEADER 전용 엔드포인트이므로 `privateStatus`를 반환합니다. USER가 보는 `publicStatus`와 별도입니다.
+
 ##### PATCH `/clubs/{clubUUID}/applications/{applicationUUID}/status`
-지원서 상태 변경
+지원서 상태 변경 (privateStatus)
+
+**권한:** 회장 (LEADER)
+
+> **Note**: 이 API는 `privateStatus`만 변경합니다. USER가 보는 `publicStatus`에는 영향을 주지 않습니다. `publicStatus`에 반영하려면 `POST .../applicants/notifications` (확정 API)를 호출해야 합니다.
 
 **Request Body:**
 ```json
@@ -698,7 +721,7 @@
 
 | Field | Type | Required | Constraints | Description |
 | :--- | :--- | :--- | :--- | :--- |
-| `status` | String | **Yes** | `WAIT`, `PASS`, `FAIL` | 변경할 상태 |
+| `status` | String | **Yes** | `WAIT`, `PASS`, `FAIL` | 변경할 privateStatus |
 
 **Response (200):**
 ```json
@@ -709,7 +732,11 @@
 ```
 
 ##### POST `/clubs/{clubUUID}/applicants/notifications`
-지원 결과 알림 전송
+지원 결과 확정 및 알림 전송
+
+**권한:** 회장 (LEADER)
+
+> **Note**: 이 API가 호출되면 대상 지원자의 `privateStatus`가 `publicStatus`에 반영됩니다. 즉, LEADER가 검토한 결과(PASS/FAIL)가 USER에게 공개됩니다.
 
 **Request Body:**
 ```json
@@ -758,6 +785,8 @@
 ##### PATCH `/clubs/{clubUUID}/recruit-status`
 모집 상태 토글
 
+**권한:** 회장 (LEADER)
+
 **Potential Errors:**
 *   `CLUB-201`: 존재하지 않는 동아리입니다.
 *   `CINT-201`: 해당 동아리 소개글이 존재하지 않습니다.
@@ -774,6 +803,8 @@
 
 ##### PATCH `/clubs/terms/agreement`
 약관 동의 완료 업데이트
+
+**권한:** 회장 (LEADER)
 
 **Response (200):**
 ```json
@@ -825,6 +856,8 @@ FCM 토큰 갱신
 ##### GET `/clubs/{clubUUID}/applications/eligibility`
 지원 가능 여부 확인
 
+**권한:** 인증 필요 (USER)
+
 **Potential Errors:**
 *   `CLUB-201`: 존재하지 않는 동아리입니다.
 
@@ -838,6 +871,8 @@ FCM 토큰 갱신
 
 ##### POST `/clubs/{clubUUID}/applications`
 지원서 제출
+
+**권한:** 인증 필요 (USER)
 
 **Request Body:**
 ```json
@@ -870,7 +905,7 @@ FCM 토큰 갱신
 *   `APT-205`: 이미 지원한 동아리입니다.
 *   `APT-206`: 이미 해당 동아리 회원입니다.
 
-**Response (201):**
+**Response (200):**
 ```json
 {
   "message": "지원서 제출 성공",
@@ -908,24 +943,7 @@ FCM 토큰 갱신
 }
 ```
 
-##### GET `/clubs/{clubUUID}/applications/{aplictUUID}`
-지원서 상세 조회 (사용자용)
-
-**Response (200):**
-```json
-{
-  "message": "지원서 상세 조회 성공",
-  "data": {
-    "aplictUUID": "uuid",
-    "applicantName": "string",
-    "studentNumber": "string",
-    "department": "string",
-    "submittedAt": "2026-03-02T14:00:00",
-    "status": "WAIT",
-    "qnaList": [...]
-  }
-}
-```
+> **NOTE**: `GET /clubs/{clubUUID}/applications/{aplictUUID}` (지원서 상세 조회)는 Section 2.4 지원자 관리 참조.
 
 ---
 
@@ -1019,6 +1037,7 @@ FCM 토큰 갱신
   "message": "지원서 폼 조회 성공",
   "data": {
     "formId": 101,
+    "description": "열정 있는 개발자를 찾습니다!",
     "questions": [
       {
         "questionId": 101,

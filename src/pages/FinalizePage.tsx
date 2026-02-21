@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { ArrowRight01Icon, ArrowLeft01Icon, Notification01Icon } from '@hugeicons/core-free-icons'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -20,14 +20,29 @@ import {
   useSendApplicantNotifications,
 } from '@/features/club-leader/hooks/useClubLeader'
 import { useApplicationDetail } from '@/features/application/hooks/useApplication'
+import { useActiveForm } from '@/features/form-management/hooks'
 import type { ApplicantStatus, Applicant } from '@features/club-leader/domain/clubLeaderSchemas'
+import type { FormDetailResponse } from '@/features/form-management/domain/formSchemas'
+
+function buildOptionContentMap(formData: FormDetailResponse | undefined): Map<number, string> {
+  const map = new Map<number, string>()
+  if (!formData) return map
+  for (const question of formData.questions) {
+    for (const option of question.options) {
+      map.set(option.optionId, option.content)
+    }
+  }
+  return map
+}
 
 function ApplicantDetailContent({
   clubUUID,
   applicant,
+  optionContentMap,
 }: {
   clubUUID: string
   applicant: Applicant
+  optionContentMap: Map<number, string>
 }) {
   const { data, isLoading, error } = useApplicationDetail(clubUUID, applicant.aplictUUID)
 
@@ -64,16 +79,22 @@ function ApplicantDetailContent({
       </div>
       <Separator />
       <div className="space-y-2">
-        {detail.qnaList.slice(0, 2).map((item, index) => (
-          <div key={item.questionId} className="space-y-1">
-            <p className="text-xs font-medium text-muted-foreground">
-              Q{index + 1}. {item.question}
-            </p>
-            <p className="text-sm bg-muted/50 rounded p-2 line-clamp-2">
-              {item.answer || '(답변 없음)'}
-            </p>
-          </div>
-        ))}
+        {detail.qnaList.slice(0, 2).map((item, index) => {
+          const resolvedAnswer = item.answer
+            ?? (item.optionId != null ? optionContentMap.get(item.optionId) : undefined)
+            ?? null
+
+          return (
+            <div key={item.questionId} className="space-y-1">
+              <p className="text-xs font-medium text-muted-foreground">
+                Q{index + 1}. {item.question}
+              </p>
+              <p className="text-sm bg-muted/50 rounded p-2 line-clamp-2">
+                {resolvedAnswer || '(답변 없음)'}
+              </p>
+            </div>
+          )
+        })}
         {detail.qnaList.length > 2 && (
           <p className="text-xs text-muted-foreground">
             외 {detail.qnaList.length - 2}개 질문...
@@ -86,6 +107,11 @@ function ApplicantDetailContent({
 
 export function FinalizePage() {
   const { clubUUID } = useAuthStore()
+
+  // Fetch active form to resolve optionId → content
+  const { data: formData } = useActiveForm(clubUUID || '')
+  const optionContentMap = useMemo(() => buildOptionContentMap(formData), [formData])
+
   // Fetch each status separately since API filters by status parameter
   const { data: passedData, isLoading: passedLoading, error: passedError } = useApplicantsByStatus(clubUUID || '', 'PASS')
   const { data: failedData, isLoading: failedLoading, error: failedError } = useApplicantsByStatus(clubUUID || '', 'FAIL')
@@ -266,7 +292,7 @@ export function FinalizePage() {
               </div>
             </div>
             <AccordionContent>
-              <ApplicantDetailContent clubUUID={clubUUID} applicant={applicant} />
+              <ApplicantDetailContent clubUUID={clubUUID} applicant={applicant} optionContentMap={optionContentMap} />
             </AccordionContent>
           </AccordionItem>
         ))}
