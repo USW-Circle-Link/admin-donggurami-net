@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -27,7 +27,20 @@ import { Delete01Icon } from '@hugeicons/core-free-icons'
 import { useAuthStore } from '@/features/auth/store/authStore'
 import { useApplicantsByStatus, useProcessApplicants, useDeleteApplicants } from '@/features/club-leader/hooks/useClubLeader'
 import { useApplicationDetail } from '@/features/application/hooks/useApplication'
+import { useActiveForm } from '@/features/form-management/hooks'
 import type { ApplicantStatus, Applicant } from '@/features/club-leader/domain/clubLeaderSchemas'
+import type { FormDetailResponse } from '@/features/form-management/domain/formSchemas'
+
+function buildOptionContentMap(formData: FormDetailResponse | undefined): Map<number, string> {
+  const map = new Map<number, string>()
+  if (!formData) return map
+  for (const question of formData.questions) {
+    for (const option of question.options) {
+      map.set(option.optionId, option.content)
+    }
+  }
+  return map
+}
 
 function ApplicantDetailContent({
   clubUUID,
@@ -35,12 +48,14 @@ function ApplicantDetailContent({
   sectionStatus,
   onStatusChange,
   isProcessing,
+  optionContentMap,
 }: {
   clubUUID: string
   applicant: Applicant
   sectionStatus: ApplicantStatus
   onStatusChange: (uuid: string, status: ApplicantStatus) => void
   isProcessing: boolean
+  optionContentMap: Map<number, string>
 }) {
   const { data, isLoading, error } = useApplicationDetail(clubUUID, applicant.aplictUUID)
 
@@ -91,16 +106,22 @@ function ApplicantDetailContent({
 
       {/* 지원서 답변 */}
       <div className="space-y-3">
-        {detail.qnaList.map((item, index) => (
-          <div key={item.questionId} className="space-y-1">
-            <p className="text-sm font-medium text-muted-foreground">
-              Q{index + 1}. {item.question}
-            </p>
-            <p className="text-sm bg-muted/50 rounded-lg p-3">
-              {item.answer || '(답변 없음)'}
-            </p>
-          </div>
-        ))}
+        {detail.qnaList.map((item, index) => {
+          const resolvedAnswer = item.answer
+            ?? (item.optionId != null ? optionContentMap.get(item.optionId) : undefined)
+            ?? null
+
+          return (
+            <div key={item.questionId} className="space-y-1">
+              <p className="text-sm font-medium text-muted-foreground">
+                Q{index + 1}. {item.question}
+              </p>
+              <p className="text-sm bg-muted/50 rounded-lg p-3">
+                {resolvedAnswer || '(답변 없음)'}
+              </p>
+            </div>
+          )
+        })}
       </div>
 
       <Separator />
@@ -175,6 +196,10 @@ function ApplicantDetailContent({
 export function ApplicationReviewPage() {
   const clubUUID = useAuthStore((state) => state.clubUUID)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
+
+  // Fetch active form to resolve optionId → content
+  const { data: formData } = useActiveForm(clubUUID || '')
+  const optionContentMap = useMemo(() => buildOptionContentMap(formData), [formData])
 
   // Fetch each status separately since API filters by status parameter
   const { data: waitingData, isLoading: waitingLoading, error: waitingError } = useApplicantsByStatus(clubUUID || '', 'WAIT')
@@ -332,6 +357,7 @@ export function ApplicationReviewPage() {
                   sectionStatus={sectionStatus}
                   onStatusChange={handleStatusChange}
                   isProcessing={processApplicants.isPending}
+                  optionContentMap={optionContentMap}
                 />
               </AccordionContent>
             </AccordionItem>

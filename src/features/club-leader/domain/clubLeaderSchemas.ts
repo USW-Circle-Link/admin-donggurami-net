@@ -94,7 +94,7 @@ export const applicantSchema = z.object({
 
 export const qnaItemSchema = z.object({
   question: z.string(),
-  answer: z.string(),
+  answer: z.string().nullable(),
   optionId: z.number().optional(),
 })
 
