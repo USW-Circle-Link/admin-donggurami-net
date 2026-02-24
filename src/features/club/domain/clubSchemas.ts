@@ -64,7 +64,16 @@ export const clubMemberDeleteRequestSchema = z.object({
 })
 
 // Department enum
-export const departmentSchema = z.enum(['학술', '종교', '예술', '체육', '공연', '봉사'])
+export const departmentSchema = z.enum(['ACADEMIC', 'RELIGION', 'ART', 'SPORT', 'SHOW', 'VOLUNTEER'])
+
+export const DEPARTMENT_LABELS: Record<Department, string> = {
+  ACADEMIC: '학술',
+  RELIGION: '종교',
+  ART: '예술',
+  SPORT: '체육',
+  SHOW: '공연',
+  VOLUNTEER: '봉사',
+}
 
 // Club create request (POST /clubs)
 export const clubCreateRequestSchema = z.object({
