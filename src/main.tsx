@@ -1,5 +1,5 @@
 import { createRoot } from 'react-dom/client'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router'
+import { BrowserRouter, Routes, Route } from 'react-router'
 import { Suspense } from 'react'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClient } from '@/shared/lib/queryClient'
@@ -23,6 +23,8 @@ import { AdminLayout } from '@/components/layout/AdminLayout'
 import { UnionLayout } from '@/components/layout/UnionLayout'
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 import { AuthInitializer } from '@/components/auth/AuthInitializer'
+import { LandingPage } from '@/pages/landing/LandingPage'
+import { PreviewDashboard } from '@/pages/preview/PreviewDashboard'
 import { LoginPage } from '@/pages/LoginPage'
 import { TermsAgreementPage } from '@/pages/TermsAgreementPage'
 import { DashboardPage } from '@/pages/DashboardPage'
@@ -75,8 +77,11 @@ createRoot(document.getElementById('root')!).render(
               } />
             </Route>
 
-            {/* Redirect root to login */}
-            <Route path="/" element={<Navigate to="/login" replace />} />
+            {/* Landing page */}
+            <Route path="/" element={<LandingPage />} />
+
+            {/* Preview page for landing page iframe */}
+            <Route path="/preview/dashboard" element={<PreviewDashboard />} />
           </Routes>
         </AuthInitializer>
       </BrowserRouter>
