@@ -18,6 +18,7 @@ export const qnaItemSchema = z.object({
   question: z.string(),
   type: z.string(),
   answer: z.string().nullable(),
+  optionId: z.number().nullable().optional(),
 });
 
 // Application detail response
