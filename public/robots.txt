@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Disallow: /login
+Disallow: /club/
+Disallow: /union/
+Disallow: /applicants/
+Disallow: /notices
+Disallow: /preview/
+
+Sitemap: https://admin.donggurami.net/sitemap.xml
