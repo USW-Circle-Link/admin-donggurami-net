@@ -38,6 +38,7 @@ import {
 import { useMergedClubList } from '@/features/admin'
 import { mergedClubKeys } from '@/features/admin/hooks/useMergedClubList'
 import { useDeleteClub } from '@/features/club'
+import { DEPARTMENT_LABELS, type Department } from '@/features/club/domain/clubSchemas'
 import type { MergedClubItem } from '@/features/admin'
 import { toast } from 'sonner'
 
@@ -143,7 +144,7 @@ export function UnionDashboardPage() {
           club.clubName,
           club.leaderName,
           club.numberOfClubMembers || 0,
-          club.department || '-',
+          DEPARTMENT_LABELS[club.department as Department] || club.department || '-',
         ].join(',')
       ),
     ].join('\n')
@@ -356,7 +357,7 @@ export function UnionDashboardPage() {
                       <TableCell>{club.numberOfClubMembers || 0}명</TableCell>
                       <TableCell>
                         <Badge variant="secondary" className="text-xs">
-                          {club.department || '-'}
+                          {DEPARTMENT_LABELS[club.department as Department] || club.department || '-'}
                         </Badge>
                       </TableCell>
                       <TableCell>

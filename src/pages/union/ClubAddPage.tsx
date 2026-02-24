@@ -14,17 +14,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { clubCreateRequestSchema, type Department } from '@/features/club/domain/clubSchemas'
+import { clubCreateRequestSchema, DEPARTMENT_LABELS, type Department } from '@/features/club/domain/clubSchemas'
 import { useCheckDuplication, useCreateClub } from '@/features/club/hooks/useClubs'
 
-const DEPARTMENTS: { value: Department; label: string }[] = [
-  { value: '학술', label: '학술' },
-  { value: '종교', label: '종교' },
-  { value: '예술', label: '예술' },
-  { value: '체육', label: '체육' },
-  { value: '공연', label: '공연' },
-  { value: '봉사', label: '봉사' },
-]
+const DEPARTMENTS: { value: Department; label: string }[] = (
+  Object.entries(DEPARTMENT_LABELS) as [Department, string][]
+).map(([value, label]) => ({ value, label }))
 
 interface FormData {
   leaderAccount: string
