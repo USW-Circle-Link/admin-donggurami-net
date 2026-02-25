@@ -119,14 +119,18 @@ export function UnionNoticesPage() {
       }
 
       if (succeeded.length > 0) {
+        const previews = await Promise.all(
+          succeeded.map(
+            (file) =>
+              new Promise<string>((resolve) => {
+                const reader = new FileReader()
+                reader.onloadend = () => resolve(reader.result as string)
+                reader.readAsDataURL(file)
+              }),
+          ),
+        )
         setNewPhotos((prev) => [...prev, ...succeeded])
-        succeeded.forEach((file) => {
-          const reader = new FileReader()
-          reader.onloadend = () => {
-            setPreviewPhotos((prev) => [...prev, reader.result as string])
-          }
-          reader.readAsDataURL(file)
-        })
+        setPreviewPhotos((prev) => [...prev, ...previews])
       }
     }
   }

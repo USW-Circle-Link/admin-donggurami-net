@@ -156,8 +156,9 @@ export function BasicInfoEditPage() {
       return
     }
 
-    // 전체 크기 검증 (기존 파일들 + 새 파일)
-    const currentTotalSize = infoPhotoFiles.reduce((total, f) => total + (f?.size || 0), 0)
+    // 전체 크기 검증 (교체 시 기존 슬롯 크기 제외)
+    const existingSlotSize = infoPhotoFiles[index]?.size || 0
+    const currentTotalSize = infoPhotoFiles.reduce((total, f) => total + (f?.size || 0), 0) - existingSlotSize
     if (currentTotalSize + file.size > MAX_TOTAL_SIZE) {
       toast.error(`전체 파일 크기가 너무 큽니다. (최대 ${Math.floor(MAX_TOTAL_SIZE / 1024 / 1024)}MB)`)
       return
@@ -196,16 +197,6 @@ export function BasicInfoEditPage() {
       })
     } catch {
       toast.error('이미지 처리에 실패했습니다.')
-      setInfoPhotoFiles((prev) => {
-        const newFiles = [...prev]
-        newFiles[index] = null
-        return newFiles
-      })
-      setInfoPhotoPreviews((prev) => {
-        const newPreviews = [...prev]
-        newPreviews[index] = null
-        return newPreviews
-      })
     }
   }
 
