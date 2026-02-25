@@ -70,7 +70,7 @@ export function BasicInfoEditPage() {
 
   useEffect(() => {
     if (clubInfo) {
-      setClubInfoText(clubInfo.clubInfo || '')
+      setClubInfoText((clubInfo.clubInfo || '').replace(/<br\s*\/?>/g, '\n'))
       // Initialize 5 slots with existing photos
       const photos = clubInfo.infoPhotos || []
       const initialPhotos: (string | null)[] = Array(5).fill(null)
@@ -225,7 +225,7 @@ export function BasicInfoEditPage() {
         },
         mainPhoto: mainPhotoFile || undefined,
         clubInfoRequest: {
-          clubInfo: clubInfoText.trim() || undefined,
+          clubInfo: clubInfoText.trim().replace(/\n/g, '<br>') || undefined,
           recruitmentStatus: clubInfo?.recruitmentStatus || 'OPEN',
           clubRecruitment: clubInfo?.clubRecruitment || undefined,
           googleFormUrl: clubInfo?.googleFormUrl || undefined,

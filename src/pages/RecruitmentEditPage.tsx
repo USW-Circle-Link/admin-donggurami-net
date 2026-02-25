@@ -258,7 +258,7 @@ export function RecruitmentEditPage() {
   useEffect(() => {
     if (clubInfo) {
       setIsRecruiting(clubInfo.recruitmentStatus === 'OPEN')
-      setRecruitmentContent(clubInfo.clubRecruitment || '')
+      setRecruitmentContent((clubInfo.clubRecruitment || '').replace(/<br\s*\/?>/g, '\n'))
       // Load existing form questions if available
       if (transformFormToUiQuestions.length > 0) {
         setQuestions(transformFormToUiQuestions)
@@ -414,7 +414,7 @@ export function RecruitmentEditPage() {
       await updateClubInfo({
         clubUUID,
         clubInfoRequest: {
-          clubRecruitment: recruitmentContent || '',
+          clubRecruitment: recruitmentContent.replace(/\n/g, '<br>') || '',
           recruitmentStatus: isRecruiting ? 'OPEN' : 'CLOSE',
         },
       })
