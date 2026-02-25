@@ -29,6 +29,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { useNotices, useNotice, useCreateNotice, useDeleteNotice } from '@/features/notice/hooks/useNotices'
 import type { NoticeListItem } from '@/features/notice/domain/noticeSchemas'
+import { convertToWebP } from '@/shared/utils/convertToWebP'
 
 type ViewMode = 'list' | 'detail' | 'create'
 
@@ -97,13 +98,14 @@ export function UnionNoticesPage() {
     setViewMode('create')
   }
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
     if (files) {
       const fileArray = Array.from(files)
-      setNewPhotos((prev) => [...prev, ...fileArray])
+      const webpFiles = await Promise.all(fileArray.map((file) => convertToWebP(file)))
+      setNewPhotos((prev) => [...prev, ...webpFiles])
 
-      fileArray.forEach((file) => {
+      webpFiles.forEach((file) => {
         const reader = new FileReader()
         reader.onloadend = () => {
           setPreviewPhotos((prev) => [...prev, reader.result as string])

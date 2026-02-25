@@ -12,6 +12,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { toast } from 'sonner'
 import { useAuthStore } from '@/features/auth/store/authStore'
 import { useClubDetail, useUpdateClubInfo } from '@/features/club-leader/hooks/useClubLeader'
+import { convertToWebP } from '@/shared/utils/convertToWebP'
 
 export function BasicInfoEditPage() {
   const navigate = useNavigate()
@@ -105,15 +106,16 @@ export function BasicInfoEditPage() {
     }))
   }
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
-      setMainPhotoFile(file)
+      const webpFile = await convertToWebP(file)
+      setMainPhotoFile(webpFile)
       const reader = new FileReader()
       reader.onloadend = () => {
         setMainPhotoPreview(reader.result as string)
       }
-      reader.readAsDataURL(file)
+      reader.readAsDataURL(webpFile)
     }
   }
 
@@ -125,7 +127,7 @@ export function BasicInfoEditPage() {
     }
   }
 
-  const handleInfoPhotosUpload = (index: number, file: File | null) => {
+  const handleInfoPhotosUpload = async (index: number, file: File | null) => {
     if (!file) {
       // Clear the slot
       setInfoPhotoFiles((prev) => {
@@ -154,6 +156,8 @@ export function BasicInfoEditPage() {
       return
     }
 
+    const webpFile = await convertToWebP(file)
+
     // Create preview
     const reader = new FileReader()
     reader.onloadend = () => {
@@ -163,12 +167,12 @@ export function BasicInfoEditPage() {
         return newPreviews
       })
     }
-    reader.readAsDataURL(file)
+    reader.readAsDataURL(webpFile)
 
     // Store file
     setInfoPhotoFiles((prev) => {
       const newFiles = [...prev]
-      newFiles[index] = file
+      newFiles[index] = webpFile
       return newFiles
     })
   }
