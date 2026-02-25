@@ -29,24 +29,19 @@ export async function createNotice(
   request: CreateNoticeRequest,
   photos?: File[]
 ): Promise<ApiResponse<string[]>> {
-  // If there are photos, use multipart form data
+  const formData = new FormData()
+  formData.append('request', new Blob([JSON.stringify(request)], { type: 'application/json' }))
   if (photos && photos.length > 0) {
-    const formData = new FormData()
-    formData.append('request', new Blob([JSON.stringify(request)], { type: 'application/json' }))
     photos.forEach((photo) => {
       formData.append('photos', photo)
     })
-
-    const response = await apiClient.post<ApiResponse<string[]>>('/notices', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    })
-    return response.data
   }
 
-  // Without photos, just send JSON
-  const response = await apiClient.post<ApiResponse<string[]>>('/notices', { request })
+  const response = await apiClient.post<ApiResponse<string[]>>('/notices', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  })
   return response.data
 }
 
@@ -56,24 +51,19 @@ export async function updateNotice(
   request: UpdateNoticeRequest,
   photos?: File[]
 ): Promise<ApiResponse<string[]>> {
-  // If there are photos, use multipart form data
+  const formData = new FormData()
+  formData.append('request', new Blob([JSON.stringify(request)], { type: 'application/json' }))
   if (photos && photos.length > 0) {
-    const formData = new FormData()
-    formData.append('request', new Blob([JSON.stringify(request)], { type: 'application/json' }))
     photos.forEach((photo) => {
       formData.append('photos', photo)
     })
-
-    const response = await apiClient.put<ApiResponse<string[]>>(`/notices/${noticeUUID}`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    })
-    return response.data
   }
 
-  // Without photos, just send JSON
-  const response = await apiClient.put<ApiResponse<string[]>>(`/notices/${noticeUUID}`, { request })
+  const response = await apiClient.put<ApiResponse<string[]>>(`/notices/${noticeUUID}`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  })
   return response.data
 }
 

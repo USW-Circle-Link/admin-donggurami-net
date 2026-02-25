@@ -107,7 +107,7 @@ export function UnionNoticesPage() {
       {
         request: {
           noticeTitle: newTitle.trim(),
-          noticeContent: newContent.trim(),
+          noticeContent: newContent.trim().replace(/\n/g, '<br>'),
           photoOrders: newPhotos.map((_, index) => index + 1),
         },
         photos: newPhotos.length > 0 ? newPhotos : undefined,
