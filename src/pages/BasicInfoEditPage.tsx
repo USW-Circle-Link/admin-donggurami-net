@@ -12,6 +12,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { toast } from 'sonner'
 import { useAuthStore } from '@/features/auth/store/authStore'
 import { useClubDetail, useUpdateClubInfo } from '@/features/club-leader/hooks/useClubLeader'
+import { convertToWebP } from '@/shared/utils/convertToWebP'
 
 export function BasicInfoEditPage() {
   const navigate = useNavigate()
@@ -105,15 +106,23 @@ export function BasicInfoEditPage() {
     }))
   }
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
-      setMainPhotoFile(file)
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setMainPhotoPreview(reader.result as string)
+      try {
+        const webpFile = await convertToWebP(file)
+        setMainPhotoFile(webpFile)
+        const reader = new FileReader()
+        reader.onloadend = () => {
+          setMainPhotoPreview(reader.result as string)
+        }
+        reader.readAsDataURL(webpFile)
+      } catch {
+        toast.error('이미지 처리에 실패했습니다.')
+        if (fileInputRef.current) {
+          fileInputRef.current.value = ''
+        }
       }
-      reader.readAsDataURL(file)
     }
   }
 
@@ -125,7 +134,7 @@ export function BasicInfoEditPage() {
     }
   }
 
-  const handleInfoPhotosUpload = (index: number, file: File | null) => {
+  const handleInfoPhotosUpload = async (index: number, file: File | null) => {
     if (!file) {
       // Clear the slot
       setInfoPhotoFiles((prev) => {
@@ -147,30 +156,48 @@ export function BasicInfoEditPage() {
       return
     }
 
-    // 전체 크기 검증 (기존 파일들 + 새 파일)
-    const currentTotalSize = infoPhotoFiles.reduce((total, f) => total + (f?.size || 0), 0)
+    // 전체 크기 검증 (교체 시 기존 슬롯 크기 제외)
+    const existingSlotSize = infoPhotoFiles[index]?.size || 0
+    const currentTotalSize = infoPhotoFiles.reduce((total, f) => total + (f?.size || 0), 0) - existingSlotSize
     if (currentTotalSize + file.size > MAX_TOTAL_SIZE) {
       toast.error(`전체 파일 크기가 너무 큽니다. (최대 ${Math.floor(MAX_TOTAL_SIZE / 1024 / 1024)}MB)`)
       return
     }
 
-    // Create preview
-    const reader = new FileReader()
-    reader.onloadend = () => {
-      setInfoPhotoPreviews((prev) => {
-        const newPreviews = [...prev]
-        newPreviews[index] = reader.result as string
-        return newPreviews
-      })
-    }
-    reader.readAsDataURL(file)
+    try {
+      const webpFile = await convertToWebP(file)
 
-    // Store file
-    setInfoPhotoFiles((prev) => {
-      const newFiles = [...prev]
-      newFiles[index] = file
-      return newFiles
-    })
+      // 변환 후 크기 재검증
+      if (webpFile.size > MAX_FILE_SIZE) {
+        toast.error(`변환된 이미지가 너무 큽니다. (최대 ${Math.floor(MAX_FILE_SIZE / 1024 / 1024)}MB)`)
+        return
+      }
+      const currentTotalSizeAfter = infoPhotoFiles.reduce((total, f, i) => total + (i === index ? 0 : (f?.size || 0)), 0)
+      if (currentTotalSizeAfter + webpFile.size > MAX_TOTAL_SIZE) {
+        toast.error(`전체 파일 크기가 너무 큽니다. (최대 ${Math.floor(MAX_TOTAL_SIZE / 1024 / 1024)}MB)`)
+        return
+      }
+
+      // Create preview
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setInfoPhotoPreviews((prev) => {
+          const newPreviews = [...prev]
+          newPreviews[index] = reader.result as string
+          return newPreviews
+        })
+      }
+      reader.readAsDataURL(webpFile)
+
+      // Store file
+      setInfoPhotoFiles((prev) => {
+        const newFiles = [...prev]
+        newFiles[index] = webpFile
+        return newFiles
+      })
+    } catch {
+      toast.error('이미지 처리에 실패했습니다.')
+    }
   }
 
   const handleRemoveInfoPhoto = (index: number) => {

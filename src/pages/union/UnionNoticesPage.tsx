@@ -29,6 +29,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { useNotices, useNotice, useCreateNotice, useDeleteNotice } from '@/features/notice/hooks/useNotices'
 import type { NoticeListItem } from '@/features/notice/domain/noticeSchemas'
+import { convertToWebP } from '@/shared/utils/convertToWebP'
 
 type ViewMode = 'list' | 'detail' | 'create'
 
@@ -97,19 +98,40 @@ export function UnionNoticesPage() {
     setViewMode('create')
   }
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
     if (files) {
       const fileArray = Array.from(files)
-      setNewPhotos((prev) => [...prev, ...fileArray])
+      const results = await Promise.allSettled(fileArray.map((file) => convertToWebP(file)))
 
-      fileArray.forEach((file) => {
-        const reader = new FileReader()
-        reader.onloadend = () => {
-          setPreviewPhotos((prev) => [...prev, reader.result as string])
+      const succeeded: File[] = []
+      let failCount = 0
+      for (const result of results) {
+        if (result.status === 'fulfilled') {
+          succeeded.push(result.value)
+        } else {
+          failCount++
         }
-        reader.readAsDataURL(file)
-      })
+      }
+
+      if (failCount > 0) {
+        toast.error(`${failCount}개 이미지 처리에 실패했습니다.`)
+      }
+
+      if (succeeded.length > 0) {
+        const previews = await Promise.all(
+          succeeded.map(
+            (file) =>
+              new Promise<string>((resolve) => {
+                const reader = new FileReader()
+                reader.onloadend = () => resolve(reader.result as string)
+                reader.readAsDataURL(file)
+              }),
+          ),
+        )
+        setNewPhotos((prev) => [...prev, ...succeeded])
+        setPreviewPhotos((prev) => [...prev, ...previews])
+      }
     }
   }
 
