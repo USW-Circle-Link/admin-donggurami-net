@@ -33,7 +33,13 @@ export function convertToWebP(file: File, quality = 0.85): Promise<File> {
             return
           }
 
-          const fileName = file.name.replace(/\.[^.]+$/, '.webp')
+          if (blob.type !== 'image/webp') {
+            // 브라우저가 WebP를 지원하지 않으면 원본 반환
+            resolve(file)
+            return
+          }
+
+          const fileName = file.name.replace(/\.[^.]+$/, '') + '.webp'
           resolve(new File([blob], fileName, { type: 'image/webp' }))
         },
         'image/webp',

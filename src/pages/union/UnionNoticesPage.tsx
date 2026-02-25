@@ -102,16 +102,32 @@ export function UnionNoticesPage() {
     const files = e.target.files
     if (files) {
       const fileArray = Array.from(files)
-      const webpFiles = await Promise.all(fileArray.map((file) => convertToWebP(file)))
-      setNewPhotos((prev) => [...prev, ...webpFiles])
+      const results = await Promise.allSettled(fileArray.map((file) => convertToWebP(file)))
 
-      webpFiles.forEach((file) => {
-        const reader = new FileReader()
-        reader.onloadend = () => {
-          setPreviewPhotos((prev) => [...prev, reader.result as string])
+      const succeeded: File[] = []
+      let failCount = 0
+      for (const result of results) {
+        if (result.status === 'fulfilled') {
+          succeeded.push(result.value)
+        } else {
+          failCount++
         }
-        reader.readAsDataURL(file)
-      })
+      }
+
+      if (failCount > 0) {
+        toast.error(`${failCount}개 이미지 처리에 실패했습니다.`)
+      }
+
+      if (succeeded.length > 0) {
+        setNewPhotos((prev) => [...prev, ...succeeded])
+        succeeded.forEach((file) => {
+          const reader = new FileReader()
+          reader.onloadend = () => {
+            setPreviewPhotos((prev) => [...prev, reader.result as string])
+          }
+          reader.readAsDataURL(file)
+        })
+      }
     }
   }
 

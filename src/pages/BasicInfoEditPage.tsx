@@ -109,13 +109,20 @@ export function BasicInfoEditPage() {
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
-      const webpFile = await convertToWebP(file)
-      setMainPhotoFile(webpFile)
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setMainPhotoPreview(reader.result as string)
+      try {
+        const webpFile = await convertToWebP(file)
+        setMainPhotoFile(webpFile)
+        const reader = new FileReader()
+        reader.onloadend = () => {
+          setMainPhotoPreview(reader.result as string)
+        }
+        reader.readAsDataURL(webpFile)
+      } catch {
+        toast.error('이미지 처리에 실패했습니다.')
+        if (fileInputRef.current) {
+          fileInputRef.current.value = ''
+        }
       }
-      reader.readAsDataURL(webpFile)
     }
   }
 
@@ -156,25 +163,50 @@ export function BasicInfoEditPage() {
       return
     }
 
-    const webpFile = await convertToWebP(file)
+    try {
+      const webpFile = await convertToWebP(file)
 
-    // Create preview
-    const reader = new FileReader()
-    reader.onloadend = () => {
+      // 변환 후 크기 재검증
+      if (webpFile.size > MAX_FILE_SIZE) {
+        toast.error(`변환된 이미지가 너무 큽니다. (최대 ${Math.floor(MAX_FILE_SIZE / 1024 / 1024)}MB)`)
+        return
+      }
+      const currentTotalSizeAfter = infoPhotoFiles.reduce((total, f, i) => total + (i === index ? 0 : (f?.size || 0)), 0)
+      if (currentTotalSizeAfter + webpFile.size > MAX_TOTAL_SIZE) {
+        toast.error(`전체 파일 크기가 너무 큽니다. (최대 ${Math.floor(MAX_TOTAL_SIZE / 1024 / 1024)}MB)`)
+        return
+      }
+
+      // Create preview
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setInfoPhotoPreviews((prev) => {
+          const newPreviews = [...prev]
+          newPreviews[index] = reader.result as string
+          return newPreviews
+        })
+      }
+      reader.readAsDataURL(webpFile)
+
+      // Store file
+      setInfoPhotoFiles((prev) => {
+        const newFiles = [...prev]
+        newFiles[index] = webpFile
+        return newFiles
+      })
+    } catch {
+      toast.error('이미지 처리에 실패했습니다.')
+      setInfoPhotoFiles((prev) => {
+        const newFiles = [...prev]
+        newFiles[index] = null
+        return newFiles
+      })
       setInfoPhotoPreviews((prev) => {
         const newPreviews = [...prev]
-        newPreviews[index] = reader.result as string
+        newPreviews[index] = null
         return newPreviews
       })
     }
-    reader.readAsDataURL(webpFile)
-
-    // Store file
-    setInfoPhotoFiles((prev) => {
-      const newFiles = [...prev]
-      newFiles[index] = webpFile
-      return newFiles
-    })
   }
 
   const handleRemoveInfoPhoto = (index: number) => {
