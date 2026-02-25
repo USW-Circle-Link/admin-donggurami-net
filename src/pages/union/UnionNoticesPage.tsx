@@ -16,7 +16,18 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { useNotices, useNotice, useCreateNotice } from '@/features/notice/hooks/useNotices'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
+import { useNotices, useNotice, useCreateNotice, useDeleteNotice } from '@/features/notice/hooks/useNotices'
 import type { NoticeListItem } from '@/features/notice/domain/noticeSchemas'
 
 type ViewMode = 'list' | 'detail' | 'create'
@@ -32,6 +43,7 @@ export function UnionNoticesPage() {
   const noticeDetail = noticeDetailData?.data
 
   const { mutate: createNotice, isPending: isCreating } = useCreateNotice()
+  const { mutate: deleteNoticeMutation, isPending: isDeleting } = useDeleteNotice()
 
   // 새 공지 작성 상태
   const [newTitle, setNewTitle] = useState('')
@@ -62,6 +74,19 @@ export function UnionNoticesPage() {
     setNewContent('')
     setNewPhotos([])
     setPreviewPhotos([])
+  }
+
+  const handleDeleteNotice = () => {
+    if (!selectedNoticeUUID) return
+    deleteNoticeMutation(selectedNoticeUUID, {
+      onSuccess: () => {
+        handleBackToList()
+        toast.success('공지사항이 삭제되었습니다.')
+      },
+      onError: () => {
+        toast.error('공지사항 삭제에 실패했습니다.')
+      },
+    })
   }
 
   const handleStartCreate = () => {
@@ -271,10 +296,40 @@ export function UnionNoticesPage() {
   if (viewMode === 'detail' && selectedNoticeUUID) {
     return (
       <div className="space-y-6">
-        <Button variant="ghost" onClick={handleBackToList} className="gap-2">
-          <HugeiconsIcon icon={ArrowLeft01Icon} />
-          목록으로 돌아가기
-        </Button>
+        <div className="flex items-center justify-between">
+          <Button variant="ghost" onClick={handleBackToList} className="gap-2">
+            <HugeiconsIcon icon={ArrowLeft01Icon} />
+            목록으로 돌아가기
+          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger
+              render={
+                <Button variant="destructive" size="sm" disabled={isDeleting}>
+                  <HugeiconsIcon icon={Delete01Icon} className="mr-2 size-4" />
+                  {isDeleting ? '삭제 중...' : '삭제'}
+                </Button>
+              }
+            />
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>공지사항을 삭제하시겠습니까?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  이 공지사항을 영구적으로 삭제합니다. 이 작업은 되돌릴 수 없습니다.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>취소</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={handleDeleteNotice}
+                  className="bg-red-600 hover:bg-red-700"
+                  disabled={isDeleting}
+                >
+                  {isDeleting ? '삭제 중...' : '삭제'}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
 
         {detailLoading ? (
           <Card>
