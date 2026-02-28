@@ -5,6 +5,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useLogin } from '@/features/auth/hooks/useLogin'
+import { useAuthStore } from '@/features/auth/store/authStore'
+import { setAccessToken } from '@/shared/api/apiClient'
 
 export function LoginPage() {
   const navigate = useNavigate()
@@ -28,6 +30,15 @@ export function LoginPage() {
       {
         onSuccess: (response) => {
           const { role, isAgreedTerms } = response.data
+
+          if (role === 'USER') {
+            // 일반 사용자는 admin에서 로그인할 수 없음 - auth 상태 초기화
+            useAuthStore.getState().clearAuth()
+            setAccessToken('')
+            setError('일반 사용자는 이 페이지에서 로그인할 수 없습니다. donggurami.net에서 이용해주세요.')
+            return
+          }
+
           if (role === 'ADMIN') {
             navigate('/union/dashboard')
           } else if (role === 'LEADER' && isAgreedTerms !== true) {
@@ -60,6 +71,18 @@ export function LoginPage() {
             {error && (
               <div className="text-sm text-destructive text-center p-2 bg-destructive/10 rounded">
                 {error}
+                {error.includes('donggurami.net') && (
+                  <div className="mt-1">
+                    <a
+                      href="https://donggurami.net"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary underline hover:text-primary/80"
+                    >
+                      donggurami.net 바로가기
+                    </a>
+                  </div>
+                )}
               </div>
             )}
             <div className="space-y-2">
