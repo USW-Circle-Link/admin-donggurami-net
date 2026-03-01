@@ -28,13 +28,25 @@ export function BasicInfoEditPage() {
 
   const { mutate: updateClubInfo, isPending: isUpdatingInfo } = useUpdateClubInfo()
 
+  const extractInstaId = (url: string | null): string => {
+    if (!url) return ''
+    try {
+      const pathname = new URL(url).pathname
+      const id = pathname.replace(/^\/+|\/+$/g, '').split('/')[0]
+      return id ? `@${id}` : ''
+    } catch {
+      const cleaned = url.replace(/^@/, '')
+      return cleaned ? `@${cleaned}` : ''
+    }
+  }
+
   const initialFormData = useMemo(() => {
     if (clubInfo) {
       return {
         leaderName: clubInfo.leaderName,
         leaderHp: clubInfo.leaderHp,
         clubRoomNumber: clubInfo.clubRoomNumber,
-        clubInsta: clubInfo.clubInsta || '',
+        clubInsta: extractInstaId(clubInfo.clubInsta),
         clubHashtag: clubInfo.clubHashtags,
       }
     }
@@ -61,7 +73,7 @@ export function BasicInfoEditPage() {
         leaderName: clubInfo.leaderName,
         leaderHp: clubInfo.leaderHp,
         clubRoomNumber: clubInfo.clubRoomNumber,
-        clubInsta: clubInfo.clubInsta || '',
+        clubInsta: extractInstaId(clubInfo.clubInsta),
         clubHashtag: clubInfo.clubHashtags,
       })
       setMainPhotoPreview(clubInfo.mainPhoto || '')
@@ -86,6 +98,12 @@ export function BasicInfoEditPage() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
+    if (name === 'clubInsta') {
+      // Strip everything to just the username, then prefix with @
+      const raw = value.replace(/^https?:\/\/(www\.)?instagram\.com\//, '').replace(/^@+/, '').replace(/\/+$/, '')
+      setFormData((prev) => ({ ...prev, clubInsta: raw ? `@${raw}` : '' }))
+      return
+    }
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
@@ -247,7 +265,9 @@ export function BasicInfoEditPage() {
           leaderName: formData.leaderName,
           leaderHp: formData.leaderHp,
           clubRoomNumber: formData.clubRoomNumber,
-          clubInsta: formData.clubInsta || undefined,
+          clubInsta: formData.clubInsta
+            ? `https://www.instagram.com/${formData.clubInsta.replace(/^@/, '')}`
+            : undefined,
           clubHashtag: formData.clubHashtag,
         },
         mainPhoto: mainPhotoFile || undefined,
