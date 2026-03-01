@@ -176,6 +176,14 @@ export function AppSidebar() {
                       <span>합격자 확정</span>
                     </SidebarMenuSubButton>
                   </SidebarMenuSubItem>
+                  <SidebarMenuSubItem>
+                    <SidebarMenuSubButton
+                      onClick={() => handleNavigation('/applicants/final-list')}
+                      isActive={location.pathname === '/applicants/final-list'}
+                    >
+                      <span>최종 명단</span>
+                    </SidebarMenuSubButton>
+                  </SidebarMenuSubItem>
                 </SidebarMenuSub>
               </SidebarMenuItem>
 
