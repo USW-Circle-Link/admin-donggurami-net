@@ -91,9 +91,16 @@ export async function deleteClubMembers(clubUUID: string, members: ClubMemberDel
 // ===== Applicants =====
 
 // GET /clubs/{clubUUID}/applicants
-export async function getApplicants(clubUUID: string, status?: ApplicantStatus): Promise<ApiResponse<Applicant[]>> {
+export async function getApplicants(
+  clubUUID: string,
+  status?: ApplicantStatus,
+  isResultPublished?: boolean
+): Promise<ApiResponse<Applicant[]>> {
+  const params: Record<string, string | boolean> = {}
+  if (status) params.status = status
+  if (isResultPublished !== undefined) params.isResultPublished = isResultPublished
   const response = await apiClient.get<ApiResponse<Applicant[]>>(`/clubs/${clubUUID}/applicants`, {
-    params: status ? { status } : undefined,
+    params: Object.keys(params).length > 0 ? params : undefined,
   })
   return response.data
 }

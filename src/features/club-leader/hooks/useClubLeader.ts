@@ -99,10 +99,10 @@ export function useDeleteClubMembers() {
  * Fetch all applicants for a club.
  * Returns applicants with status WAIT, PASS, or FAIL.
  */
-export function useApplicants(clubUUID: string) {
+export function useApplicants(clubUUID: string, isResultPublished?: boolean) {
   return useQuery({
-    queryKey: clubLeaderKeys.applicants(clubUUID),
-    queryFn: () => api.getApplicants(clubUUID),
+    queryKey: [...clubLeaderKeys.applicants(clubUUID), { isResultPublished }],
+    queryFn: () => api.getApplicants(clubUUID, undefined, isResultPublished),
     enabled: !!clubUUID,
   })
 }
@@ -111,11 +111,12 @@ export function useApplicants(clubUUID: string) {
  * Get applicants by status
  * @param clubUUID - Club UUID
  * @param status - Applicant status filter ('WAIT', 'PASS', 'FAIL')
+ * @param isResultPublished - Filter by result published (finalized) status
  */
-export function useApplicantsByStatus(clubUUID: string, status: 'WAIT' | 'PASS' | 'FAIL') {
+export function useApplicantsByStatus(clubUUID: string, status: 'WAIT' | 'PASS' | 'FAIL', isResultPublished?: boolean) {
   return useQuery({
-    queryKey: [...clubLeaderKeys.applicants(clubUUID), status],
-    queryFn: () => api.getApplicants(clubUUID, status),
+    queryKey: [...clubLeaderKeys.applicants(clubUUID), status, { isResultPublished }],
+    queryFn: () => api.getApplicants(clubUUID, status, isResultPublished),
     enabled: !!clubUUID && !!status,
   })
 }
@@ -213,10 +214,12 @@ export function useProcessFailedApplicants() {
  * Used in the finalization page to notify pass/fail results.
  */
 export function useSendApplicantNotifications() {
+  const queryClient = useQueryClient()
   return useMutation({
     mutationFn: ({ clubUUID, aplictUUIDs }: { clubUUID: string; aplictUUIDs: Array<{ aplictUUID: string }> }) =>
       api.sendApplicantNotifications(clubUUID, aplictUUIDs),
-    onSuccess: () => {
+    onSuccess: (_, { clubUUID }) => {
+      queryClient.invalidateQueries({ queryKey: clubLeaderKeys.applicants(clubUUID) })
       toast.success('알림이 발송되었습니다.')
     },
     onError: (error) => {

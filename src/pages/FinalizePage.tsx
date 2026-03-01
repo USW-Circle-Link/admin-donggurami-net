@@ -112,9 +112,9 @@ export function FinalizePage() {
   const { data: formData } = useActiveForm(clubUUID || '')
   const optionContentMap = useMemo(() => buildOptionContentMap(formData), [formData])
 
-  // Fetch each status separately since API filters by status parameter
-  const { data: passedData, isLoading: passedLoading, error: passedError } = useApplicantsByStatus(clubUUID || '', 'PASS')
-  const { data: failedData, isLoading: failedLoading, error: failedError } = useApplicantsByStatus(clubUUID || '', 'FAIL')
+  // Fetch only non-finalized applicants (isResultPublished=false)
+  const { data: passedData, isLoading: passedLoading, error: passedError } = useApplicantsByStatus(clubUUID || '', 'PASS', false)
+  const { data: failedData, isLoading: failedLoading, error: failedError } = useApplicantsByStatus(clubUUID || '', 'FAIL', false)
 
   const isLoading = passedLoading || failedLoading
   const hasError = passedError || failedError
