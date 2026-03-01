@@ -12,6 +12,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { toast } from 'sonner'
 import { useAuthStore } from '@/features/auth/store/authStore'
 import { useClubDetail, useUpdateClubInfo } from '@/features/club-leader/hooks/useClubLeader'
+import { useCategories } from '@/features/category'
 import { convertToWebP } from '@/shared/utils/convertToWebP'
 
 export function BasicInfoEditPage() {
@@ -25,8 +26,12 @@ export function BasicInfoEditPage() {
 
   const { data: clubInfoData, isLoading, error } = useClubDetail(clubUUID || '')
   const clubInfo = clubInfoData?.data
+  const { data: categoriesData } = useCategories()
+  const allCategories = categoriesData?.data || []
 
   const { mutate: updateClubInfo, isPending: isUpdatingInfo } = useUpdateClubInfo()
+
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([])
 
   const extractInstaId = (url: string | null): string => {
     if (!url) return ''
@@ -77,6 +82,7 @@ export function BasicInfoEditPage() {
         clubHashtag: clubInfo.clubHashtags,
       })
       setMainPhotoPreview(clubInfo.mainPhoto || '')
+      setSelectedCategories(clubInfo.clubCategoryNames || [])
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clubUUID, clubInfo])
@@ -269,6 +275,7 @@ export function BasicInfoEditPage() {
             ? `https://www.instagram.com/${formData.clubInsta.replace(/^@/, '')}`
             : undefined,
           clubHashtag: formData.clubHashtag,
+          clubCategoryName: selectedCategories.length > 0 ? selectedCategories : undefined,
         },
         mainPhoto: mainPhotoFile || undefined,
         clubInfoRequest: {
@@ -549,6 +556,7 @@ export function BasicInfoEditPage() {
 
             <div className="space-y-2">
               <Label>해시태그 (최대 2개)</Label>
+              <p className="text-xs text-muted-foreground">동아리를 표현하는 키워드를 자유롭게 추가하세요</p>
               <div className="flex gap-2">
                 <Input
                   value={newHashtag}
@@ -580,6 +588,41 @@ export function BasicInfoEditPage() {
                   </Badge>
                 ))}
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>카테고리 (최대 3개)</Label>
+              <p className="text-xs text-muted-foreground">검색 분류 목적으로 사용되며, 카테고리 목록은 동아리 연합회에서 관리합니다</p>
+              <div className="flex flex-wrap gap-2">
+                {allCategories.map((category) => {
+                  const isSelected = selectedCategories.includes(category.clubCategoryName)
+                  return (
+                    <Badge
+                      key={category.clubCategoryUUID}
+                      variant={isSelected ? 'default' : 'outline'}
+                      className={`cursor-pointer px-3 py-1.5 h-8 text-sm transition-colors ${
+                        isSelected
+                          ? ''
+                          : selectedCategories.length >= 3
+                            ? 'opacity-50 cursor-not-allowed'
+                            : 'hover:bg-accent'
+                      }`}
+                      onClick={() => {
+                        if (isSelected) {
+                          setSelectedCategories((prev) => prev.filter((name) => name !== category.clubCategoryName))
+                        } else if (selectedCategories.length < 3) {
+                          setSelectedCategories((prev) => [...prev, category.clubCategoryName])
+                        }
+                      }}
+                    >
+                      {category.clubCategoryName}
+                    </Badge>
+                  )
+                })}
+              </div>
+              {selectedCategories.length === 0 && (
+                <p className="text-xs text-muted-foreground">카테고리를 1개 이상 선택하세요</p>
+              )}
             </div>
 
             <div className="flex justify-end gap-2">
