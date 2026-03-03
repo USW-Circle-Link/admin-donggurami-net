@@ -38,16 +38,17 @@ import { useClubDetail, useClubMembers, useDeleteClubMembers } from '@/features/
 type SortField = 'userName' | 'studentNumber' | 'major' | 'userHp' | 'memberType'
 type SortDirection = 'asc' | 'desc'
 
-const getMemberTypeLabel = (memberType?: ClubMember['memberType']) => {
-  switch (memberType) {
-    case 'REGULARMEMBER':
-      return '정회원'
-    case 'NONMEMBER':
-      return '비회원'
-    default:
-      return '회원'
-  }
-}
+// TODO: 회원유형 컬럼 - 나중에 추가 예정
+// const getMemberTypeLabel = (memberType?: ClubMember['memberType']) => {
+//   switch (memberType) {
+//     case 'REGULARMEMBER':
+//       return '정회원'
+//     case 'NONMEMBER':
+//       return '비회원'
+//     default:
+//       return '회원'
+//   }
+// }
 
 const extractInstagramId = (url: string | null): string | null => {
   if (!url) return null
@@ -556,6 +557,7 @@ export function DashboardPage() {
                     )}
                   </div>
                 </TableHead>
+                {/* TODO: 회원유형 컬럼 - 나중에 추가 예정
                 <TableHead
                   className="cursor-pointer hover:bg-muted/50"
                   onClick={() => handleSort('memberType')}
@@ -570,12 +572,13 @@ export function DashboardPage() {
                     )}
                   </div>
                 </TableHead>
+                */}
               </TableRow>
             </TableHeader>
             <TableBody>
               {sortedMembers.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-10 text-muted-foreground">
+                  <TableCell colSpan={5} className="text-center py-10 text-muted-foreground">
                     {debouncedSearch
                       ? `"${debouncedSearch}" 검색 결과가 없습니다.`
                       : '등록된 회원이 없습니다.'}
@@ -597,6 +600,7 @@ export function DashboardPage() {
                     <TableCell>{member.studentNumber}</TableCell>
                     <TableCell>{member.major}</TableCell>
                     <TableCell>{member.userHp.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3')}</TableCell>
+                    {/* TODO: 회원유형 컬럼 - 나중에 추가 예정
                     <TableCell>
                       <Badge
                         variant={
@@ -608,6 +612,7 @@ export function DashboardPage() {
                         {getMemberTypeLabel(member.memberType)}
                       </Badge>
                     </TableCell>
+                    */}
                   </TableRow>
                 ))
               )}

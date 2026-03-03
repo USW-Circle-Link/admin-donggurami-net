@@ -32,6 +32,7 @@ import { BasicInfoEditPage } from '@/pages/BasicInfoEditPage'
 import { RecruitmentEditPage } from '@/pages/RecruitmentEditPage'
 import { ApplicationReviewPage } from '@/pages/ApplicationReviewPage'
 import { FinalizePage } from '@/pages/FinalizePage'
+import { FinalListPage } from '@/pages/FinalListPage'
 import { NoticesPage } from '@/pages/NoticesPage'
 import { UnionDashboardPage } from '@/pages/union/UnionDashboardPage'
 import { CategoryEditPage } from '@/pages/union/CategoryEditPage'
@@ -61,6 +62,7 @@ createRoot(document.getElementById('root')!).render(
               <Route path="/club/recruitment" element={<RecruitmentEditPage />} />
               <Route path="/applicants/review" element={<ApplicationReviewPage />} />
               <Route path="/applicants/finalize" element={<FinalizePage />} />
+              <Route path="/applicants/final-list" element={<FinalListPage />} />
               <Route path="/notices" element={<NoticesPage />} />
             </Route>
 
