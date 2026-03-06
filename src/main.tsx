@@ -3,10 +3,16 @@ import { BrowserRouter, Routes, Route } from 'react-router'
 import { Suspense } from 'react'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClient } from '@/shared/lib/queryClient'
+import { initSentry } from '@/shared/lib/sentry'
+import { initGA } from '@/shared/lib/analytics'
 import { ThemeProvider } from '@/components/theme-provider'
 import { Toaster } from '@/components/ui/sonner'
 import { registerSW } from 'virtual:pwa-register'
 import './index.css'
+
+// Initialize monitoring before app render
+initSentry()
+initGA()
 
 // Register SW with periodic update checks (every 60s)
 registerSW({
@@ -38,6 +44,7 @@ import { UnionDashboardPage } from '@/pages/union/UnionDashboardPage'
 import { CategoryEditPage } from '@/pages/union/CategoryEditPage'
 import { UnionNoticesPage } from '@/pages/union/UnionNoticesPage'
 import { ClubAddPage } from '@/pages/union/ClubAddPage'
+import { PageTracker } from '@/components/analytics/PageTracker'
 import { lazy } from 'react'
 
 // Lazy load floor maps page
@@ -48,6 +55,7 @@ createRoot(document.getElementById('root')!).render(
     <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
       <BrowserRouter basename={import.meta.env.BASE_URL}>
         <AuthInitializer>
+          <PageTracker />
           <Routes>
             {/* Public routes */}
             <Route path="/login" element={<LoginPage />} />
