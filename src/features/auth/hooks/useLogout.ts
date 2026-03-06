@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { logoutUnified } from '../api/authApi'
 import { useAuthStore } from '../store/authStore'
 import { clearAccessToken } from '@shared/api/apiClient'
+import { clearSentryUser } from '@shared/lib/sentry'
 
 export function useLogout() {
   const queryClient = useQueryClient()
@@ -13,6 +14,7 @@ export function useLogout() {
       // Clear all auth state
       clearAccessToken()
       clearAuth()
+      clearSentryUser()
 
       // Clear all cached queries
       queryClient.clear()
@@ -21,6 +23,7 @@ export function useLogout() {
       // Even on error, clear local auth state
       clearAccessToken()
       clearAuth()
+      clearSentryUser()
       queryClient.clear()
     },
   })

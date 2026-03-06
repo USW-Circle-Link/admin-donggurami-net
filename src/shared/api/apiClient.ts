@@ -1,5 +1,6 @@
 import axios from 'axios'
 import type { AxiosError, InternalAxiosRequestConfig } from 'axios'
+import * as Sentry from '@sentry/react'
 import { useAuthStore } from '@features/auth/store/authStore'
 
 const BASE_URL = 'https://api.donggurami.net'
@@ -123,6 +124,25 @@ apiClient.interceptors.response.use(
       } finally {
         isRefreshing = false
       }
+    }
+
+    // Capture API errors to Sentry (skip 401 - handled by token refresh)
+    if (error.response && error.response.status !== 401) {
+      const { role, clubUUID } = useAuthStore.getState()
+
+      Sentry.captureException(error, {
+        tags: {
+          api_url: error.config?.url,
+          http_status: error.response.status,
+          http_method: error.config?.method?.toUpperCase(),
+          role: role ?? 'unknown',
+        },
+        extra: {
+          response_data: error.response.data,
+          request_params: error.config?.params,
+          clubUUID,
+        },
+      })
     }
 
     return Promise.reject(error)
