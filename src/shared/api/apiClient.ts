@@ -127,8 +127,10 @@ apiClient.interceptors.response.use(
     }
 
     // Capture API errors to Sentry (skip 401 - handled by token refresh)
+    const { role, clubUUID } = useAuthStore.getState()
+
     if (error.response && error.response.status !== 401) {
-      const { role, clubUUID } = useAuthStore.getState()
+      const responseData = error.response.data as Record<string, unknown> | undefined
 
       Sentry.captureException(error, {
         tags: {
@@ -138,8 +140,27 @@ apiClient.interceptors.response.use(
           role: role ?? 'unknown',
         },
         extra: {
-          response_data: error.response.data,
-          request_params: error.config?.params,
+          status_text: error.response.statusText,
+          error_code: responseData?.code,
+          error_message: responseData?.message,
+          request_url: error.config?.url,
+          request_param_keys: error.config?.params ? Object.keys(error.config.params) : undefined,
+          clubUUID,
+        },
+      })
+    } else if (!error.response) {
+      // Network/timeout/DNS/CORS failures (no response from server)
+      Sentry.captureException(error, {
+        tags: {
+          api_url: error.config?.url,
+          http_method: error.config?.method?.toUpperCase(),
+          role: role ?? 'unknown',
+          network_failure: true,
+        },
+        extra: {
+          error_message: error.message,
+          error_code: error.code,
+          request_url: error.config?.url,
           clubUUID,
         },
       })

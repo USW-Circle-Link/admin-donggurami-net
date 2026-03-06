@@ -24,6 +24,7 @@ export function initGA() {
   window.gtag('js', new Date())
   window.gtag('config', GA_ID, {
     debug_mode: !import.meta.env.PROD,
+    send_page_view: false,
   })
 }
 
@@ -52,4 +53,13 @@ export function trackEvent(
 export function setUserProperties(properties: Record<string, string | null>) {
   if (!GA_ID) return
   window.gtag('set', 'user_properties', properties)
+}
+
+/** 유저 속성 초기화 (로그아웃 시) */
+export function clearUserProperties() {
+  if (!GA_ID) return
+  window.gtag('set', 'user_properties', {
+    role: null,
+    club_uuid: null,
+  })
 }

@@ -11,7 +11,7 @@ export function initSentry() {
     dsn,
     environment: import.meta.env.MODE,
     release: `admin-donggurami@${import.meta.env.VITE_APP_VERSION ?? '0.0.0'}`,
-    sendDefaultPii: true,
+    sendDefaultPii: false,
     enabled: import.meta.env.PROD,
   })
 }
