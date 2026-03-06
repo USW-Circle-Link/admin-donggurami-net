@@ -877,7 +877,7 @@ FCM 토큰 갱신
 **Request Body:**
 ```json
 {
-  "answers": [
+  "qnaList": [
     {
       "questionId": 101,
       "optionId": 501,
@@ -892,7 +892,7 @@ FCM 토큰 갱신
 }
 ```
 
-**Constraints (`answers` Item):**
+**Constraints (`qnaList` Item):**
 
 | Field | Type | Required | Constraints | Description |
 | :--- | :--- | :--- | :--- | :--- |

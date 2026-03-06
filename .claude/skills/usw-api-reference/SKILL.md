@@ -176,7 +176,7 @@ Error codes follow a prefix pattern. Use `error-codes.md` for full lookup:
 
 ### Handling Applications
 - **Check Eligibility**: `GET /clubs/{clubUUID}/applications/eligibility`
-- **Submit**: `POST /clubs/{clubUUID}/applications` (with answers array)
+- **Submit**: `POST /clubs/{clubUUID}/applications` (with qnaList array)
 - **List Applicants**: `GET /clubs/{clubUUID}/applicants?status=WAIT|PASS|FAIL`
 - **Get Detail**: `GET /clubs/{clubUUID}/applications/{aplictUUID}`
 - **Update Status**: `PATCH /clubs/{clubUUID}/applications/{applicationUUID}/status`
@@ -185,7 +185,7 @@ Error codes follow a prefix pattern. Use `error-codes.md` for full lookup:
 ### Forms Management
 - **Create Form**: `POST /clubs/{clubUUID}/forms` (all at once: description + questions + options)
 - **Get Active Form**: `GET /clubs/{clubUUID}/forms`
-- **Submit Application**: `POST /clubs/{clubUUID}/applications` (with answers referencing questionId)
+- **Submit Application**: `POST /clubs/{clubUUID}/applications` (with qnaList referencing questionId)
 
 ### Admin Club Management
 - **List Clubs**: `GET /clubs` (with `adminInfo=true` query param for admin data)
