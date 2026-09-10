@@ -10,10 +10,20 @@ import type { UserRole } from '@shared/types/api'
 
 const API_BASE = 'https://api.donggurami.net'
 
-// Mock react-router's useNavigate
+// Mock react-router's useNavigate / useLocation
+// 훅은 useLocation().pathname 으로 "지금 공개 페이지인가"를 판단해 리다이렉트 여부를 정한다.
+// 기본값은 앱 진입점인 '/login' 으로 두고, 필요한 테스트에서 mockPathname 을 바꿔 쓴다.
 const mockNavigate = vi.fn()
+let mockPathname = '/login'
 vi.mock('react-router', () => ({
   useNavigate: () => mockNavigate,
+  useLocation: () => ({
+    pathname: mockPathname,
+    search: '',
+    hash: '',
+    state: null,
+    key: 'test',
+  }),
 }))
 
 describe('useAuthInitialization - Session Timeout Behavior', () => {
@@ -22,6 +32,8 @@ describe('useAuthInitialization - Session Timeout Behavior', () => {
     useAuthStore.getState().reset()
     // Clear mocks
     mockNavigate.mockClear()
+    // Reset location to a public page
+    mockPathname = '/login'
     // Clear localStorage
     localStorage.clear()
   })
