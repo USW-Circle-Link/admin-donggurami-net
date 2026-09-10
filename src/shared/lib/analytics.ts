@@ -28,10 +28,22 @@ export function initGA() {
   })
 }
 
+/**
+ * gtag 호출 게이트.
+ *
+ * GA_ID 만 확인하면 부족하다. initGA() 가 아직 실행되지 않았거나(로그인이 먼저 일어난 경우),
+ * 테스트·SSR 처럼 window.gtag 이 존재하지 않는 환경에서는 window.gtag(...) 가 TypeError 를 던진다.
+ * 분석은 부가 기능이므로 어떤 경우에도 호출부(로그인·로그아웃 등)를 깨뜨리면 안 된다.
+ */
+function sendToGA(...args: unknown[]) {
+  if (!GA_ID) return
+  if (typeof window === 'undefined' || typeof window.gtag !== 'function') return
+  window.gtag(...args)
+}
+
 /** 페이지 뷰 추적 */
 export function trackPageView(path: string) {
-  if (!GA_ID) return
-  window.gtag('event', 'page_view', { page_path: path })
+  sendToGA('event', 'page_view', { page_path: path })
 }
 
 /** 커스텀 이벤트 추적 */
@@ -41,8 +53,7 @@ export function trackEvent(
   label?: string,
   value?: number,
 ) {
-  if (!GA_ID) return
-  window.gtag('event', action, {
+  sendToGA('event', action, {
     event_category: category,
     event_label: label,
     value,
@@ -51,14 +62,12 @@ export function trackEvent(
 
 /** 유저 속성 설정 */
 export function setUserProperties(properties: Record<string, string | null>) {
-  if (!GA_ID) return
-  window.gtag('set', 'user_properties', properties)
+  sendToGA('set', 'user_properties', properties)
 }
 
 /** 유저 속성 초기화 (로그아웃 시) */
 export function clearUserProperties() {
-  if (!GA_ID) return
-  window.gtag('set', 'user_properties', {
+  sendToGA('set', 'user_properties', {
     role: null,
     club_uuid: null,
   })

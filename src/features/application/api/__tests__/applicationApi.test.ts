@@ -107,8 +107,9 @@ describe('Application API', () => {
             answer: '열정적으로 활동하고 싶습니다',
           },
           {
-            question: '희망 분야',
+            question: '학년을 선택해주세요.',
             answer: null,
+            optionId: 501,
           },
         ],
       })
